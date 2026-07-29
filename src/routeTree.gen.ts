@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellIndexRouteImport } from './routes/_shell.index'
+import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
+import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
 import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 
 const AuthRoute = AuthRouteImport.update({
@@ -28,6 +30,16 @@ const ShellIndexRoute = ShellIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellScannerRoute = ShellScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellRecipesRoute = ShellRecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellPantryRoute = ShellPantryRouteImport.update({
   id: '/pantry',
   path: '/pantry',
@@ -38,10 +50,14 @@ export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
   '/auth': typeof AuthRoute
   '/pantry': typeof ShellPantryRoute
+  '/recipes': typeof ShellRecipesRoute
+  '/scanner': typeof ShellScannerRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/pantry': typeof ShellPantryRoute
+  '/recipes': typeof ShellRecipesRoute
+  '/scanner': typeof ShellScannerRoute
   '/': typeof ShellIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +65,23 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/auth': typeof AuthRoute
   '/_shell/pantry': typeof ShellPantryRoute
+  '/_shell/recipes': typeof ShellRecipesRoute
+  '/_shell/scanner': typeof ShellScannerRoute
   '/_shell/': typeof ShellIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/pantry'
+  fullPaths: '/' | '/auth' | '/pantry' | '/recipes' | '/scanner'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/pantry' | '/'
-  id: '__root__' | '/_shell' | '/auth' | '/_shell/pantry' | '/_shell/'
+  to: '/auth' | '/pantry' | '/recipes' | '/scanner' | '/'
+  id:
+    | '__root__'
+    | '/_shell'
+    | '/auth'
+    | '/_shell/pantry'
+    | '/_shell/recipes'
+    | '/_shell/scanner'
+    | '/_shell/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,6 +112,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellIndexRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/scanner': {
+      id: '/_shell/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ShellScannerRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/recipes': {
+      id: '/_shell/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof ShellRecipesRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/pantry': {
       id: '/_shell/pantry'
       path: '/pantry'
@@ -99,11 +138,15 @@ declare module '@tanstack/react-router' {
 
 interface ShellRouteChildren {
   ShellPantryRoute: typeof ShellPantryRoute
+  ShellRecipesRoute: typeof ShellRecipesRoute
+  ShellScannerRoute: typeof ShellScannerRoute
   ShellIndexRoute: typeof ShellIndexRoute
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
   ShellPantryRoute: ShellPantryRoute,
+  ShellRecipesRoute: ShellRecipesRoute,
+  ShellScannerRoute: ShellScannerRoute,
   ShellIndexRoute: ShellIndexRoute,
 }
 
