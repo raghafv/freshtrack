@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellIndexRouteImport } from './routes/_shell.index'
 import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
+import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
 import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
 import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
@@ -36,6 +37,11 @@ const ShellIndexRoute = ShellIndexRouteImport.update({
 const ShellShoppingRoute = ShellShoppingRouteImport.update({
   id: '/shopping',
   path: '/shopping',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellSettingsRoute = ShellSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellScannerRoute = ShellScannerRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ShellProfileRoute
   '/recipes': typeof ShellRecipesRoute
   '/scanner': typeof ShellScannerRoute
+  '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
 }
 export interface FileRoutesByTo {
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ShellProfileRoute
   '/recipes': typeof ShellRecipesRoute
   '/scanner': typeof ShellScannerRoute
+  '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
   '/': typeof ShellIndexRoute
 }
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/_shell/profile': typeof ShellProfileRoute
   '/_shell/recipes': typeof ShellRecipesRoute
   '/_shell/scanner': typeof ShellScannerRoute
+  '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
   '/_shell/': typeof ShellIndexRoute
 }
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recipes'
     | '/scanner'
+    | '/settings'
     | '/shopping'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recipes'
     | '/scanner'
+    | '/settings'
     | '/shopping'
     | '/'
   id:
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/_shell/profile'
     | '/_shell/recipes'
     | '/_shell/scanner'
+    | '/_shell/settings'
     | '/_shell/shopping'
     | '/_shell/'
   fileRoutesById: FileRoutesById
@@ -163,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/shopping'
       fullPath: '/shopping'
       preLoaderRoute: typeof ShellShoppingRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/settings': {
+      id: '/_shell/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof ShellSettingsRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/scanner': {
@@ -209,6 +228,7 @@ interface ShellRouteChildren {
   ShellProfileRoute: typeof ShellProfileRoute
   ShellRecipesRoute: typeof ShellRecipesRoute
   ShellScannerRoute: typeof ShellScannerRoute
+  ShellSettingsRoute: typeof ShellSettingsRoute
   ShellShoppingRoute: typeof ShellShoppingRoute
   ShellIndexRoute: typeof ShellIndexRoute
 }
@@ -219,6 +239,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellProfileRoute: ShellProfileRoute,
   ShellRecipesRoute: ShellRecipesRoute,
   ShellScannerRoute: ShellScannerRoute,
+  ShellSettingsRoute: ShellSettingsRoute,
   ShellShoppingRoute: ShellShoppingRoute,
   ShellIndexRoute: ShellIndexRoute,
 }
