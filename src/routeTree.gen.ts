@@ -15,6 +15,7 @@ import { Route as ShellIndexRouteImport } from './routes/_shell.index'
 import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
 import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
 import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
+import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
 import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
 
@@ -47,6 +48,11 @@ const ShellRecipesRoute = ShellRecipesRouteImport.update({
   path: '/recipes',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellProfileRoute = ShellProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellPantryRoute = ShellPantryRouteImport.update({
   id: '/pantry',
   path: '/pantry',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/notifications': typeof ShellNotificationsRoute
   '/pantry': typeof ShellPantryRoute
+  '/profile': typeof ShellProfileRoute
   '/recipes': typeof ShellRecipesRoute
   '/scanner': typeof ShellScannerRoute
   '/shopping': typeof ShellShoppingRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/notifications': typeof ShellNotificationsRoute
   '/pantry': typeof ShellPantryRoute
+  '/profile': typeof ShellProfileRoute
   '/recipes': typeof ShellRecipesRoute
   '/scanner': typeof ShellScannerRoute
   '/shopping': typeof ShellShoppingRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
   '/_shell/pantry': typeof ShellPantryRoute
+  '/_shell/profile': typeof ShellProfileRoute
   '/_shell/recipes': typeof ShellRecipesRoute
   '/_shell/scanner': typeof ShellScannerRoute
   '/_shell/shopping': typeof ShellShoppingRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/notifications'
     | '/pantry'
+    | '/profile'
     | '/recipes'
     | '/scanner'
     | '/shopping'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/notifications'
     | '/pantry'
+    | '/profile'
     | '/recipes'
     | '/scanner'
     | '/shopping'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_shell/notifications'
     | '/_shell/pantry'
+    | '/_shell/profile'
     | '/_shell/recipes'
     | '/_shell/scanner'
     | '/_shell/shopping'
@@ -167,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellRecipesRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/profile': {
+      id: '/_shell/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ShellProfileRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/pantry': {
       id: '/_shell/pantry'
       path: '/pantry'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 interface ShellRouteChildren {
   ShellNotificationsRoute: typeof ShellNotificationsRoute
   ShellPantryRoute: typeof ShellPantryRoute
+  ShellProfileRoute: typeof ShellProfileRoute
   ShellRecipesRoute: typeof ShellRecipesRoute
   ShellScannerRoute: typeof ShellScannerRoute
   ShellShoppingRoute: typeof ShellShoppingRoute
@@ -196,6 +216,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellNotificationsRoute: ShellNotificationsRoute,
   ShellPantryRoute: ShellPantryRoute,
+  ShellProfileRoute: ShellProfileRoute,
   ShellRecipesRoute: ShellRecipesRoute,
   ShellScannerRoute: ShellScannerRoute,
   ShellShoppingRoute: ShellShoppingRoute,
