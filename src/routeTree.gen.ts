@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ShellRouteImport } from './routes/_shell'
+import { Route as ShellIndexRouteImport } from './routes/_shell.index'
+import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -21,30 +23,44 @@ const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShellIndexRoute = ShellIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellPantryRoute = ShellPantryRouteImport.update({
+  id: '/pantry',
+  path: '/pantry',
+  getParentRoute: () => ShellRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof ShellRoute
+  '/': typeof ShellIndexRoute
   '/auth': typeof AuthRoute
+  '/pantry': typeof ShellPantryRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof ShellRoute
   '/auth': typeof AuthRoute
+  '/pantry': typeof ShellPantryRoute
+  '/': typeof ShellIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_shell': typeof ShellRoute
+  '/_shell': typeof ShellRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_shell/pantry': typeof ShellPantryRoute
+  '/_shell/': typeof ShellIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth'
+  fullPaths: '/' | '/auth' | '/pantry'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth'
-  id: '__root__' | '/_shell' | '/auth'
+  to: '/auth' | '/pantry' | '/'
+  id: '__root__' | '/_shell' | '/auth' | '/_shell/pantry' | '/_shell/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  ShellRoute: typeof ShellRoute
+  ShellRoute: typeof ShellRouteWithChildren
   AuthRoute: typeof AuthRoute
 }
 
@@ -64,11 +80,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_shell/': {
+      id: '/_shell/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof ShellIndexRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/pantry': {
+      id: '/_shell/pantry'
+      path: '/pantry'
+      fullPath: '/pantry'
+      preLoaderRoute: typeof ShellPantryRouteImport
+      parentRoute: typeof ShellRoute
+    }
   }
 }
 
+interface ShellRouteChildren {
+  ShellPantryRoute: typeof ShellPantryRoute
+  ShellIndexRoute: typeof ShellIndexRoute
+}
+
+const ShellRouteChildren: ShellRouteChildren = {
+  ShellPantryRoute: ShellPantryRoute,
+  ShellIndexRoute: ShellIndexRoute,
+}
+
+const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  ShellRoute: ShellRoute,
+  ShellRoute: ShellRouteWithChildren,
   AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
