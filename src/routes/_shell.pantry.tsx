@@ -381,13 +381,29 @@ function PantryPage() {
         </ul>
       )}
 
+      <QuickAddDialog
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        defaultStorage={settings?.default_storage}
+        defaultUnit={settings?.default_unit}
+        onDetails={(p) => {
+          setEditing(null);
+          setPrefill(p);
+          setFormOpen(true);
+        }}
+      />
+
       <ItemFormDialog
         open={formOpen}
         onOpenChange={(o) => {
           setFormOpen(o);
-          if (!o) setEditing(null);
+          if (!o) {
+            setEditing(null);
+            setPrefill(undefined);
+          }
         }}
         item={editing}
+        prefill={prefill}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
       />
