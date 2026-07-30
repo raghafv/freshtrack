@@ -199,41 +199,16 @@ export function QuickAddDialog({
             </DialogHeader>
 
             <div className="grid gap-4 overflow-y-auto py-1">
-              <div className="grid gap-2">
-                <Label htmlFor="qa-qty">Quantity ({selected.unit})</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    aria-label="Decrease quantity"
-                    className="h-11 w-11 shrink-0 rounded-xl"
-                    onClick={() =>
-                      setQuantity((q) => String(Math.max(0.5, (Number(q) || 1) - 1)))
-                    }
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    id="qa-qty"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.5"
-                    className="h-11 text-center text-base font-semibold"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                  />
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    aria-label="Increase quantity"
-                    className="h-11 w-11 shrink-0 rounded-xl"
-                    onClick={() => setQuantity((q) => String((Number(q) || 0) + 1))}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <MeasureInput
+                id="qa-qty"
+                label="Quantity"
+                form={selected.form}
+                value={quantity}
+                unit={unit}
+                onValueChange={setQuantity}
+                onUnitChange={setUnit}
+              />
+
 
               <div className="grid gap-2">
                 <Label>Storage</Label>
