@@ -94,6 +94,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "FreshTrack" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "FreshTrack — Smart Pantry & Expiry Tracker" },
+      { name: "twitter:title", content: "FreshTrack — Smart Pantry & Expiry Tracker" },
+      { property: "og:description", content: "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste." },
+      { name: "twitter:description", content: "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/569a0c3c-a99d-47bb-9fe2-37b0bc7feb5d/id-preview-12887dcc--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1785340561939.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/569a0c3c-a99d-47bb-9fe2-37b0bc7feb5d/id-preview-12887dcc--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1785340561939.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
