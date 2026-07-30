@@ -11,7 +11,7 @@ const NAV = [
 ] as const;
 
 
-export function BottomNav({ unread = 0 }: { unread?: number }) {
+export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
