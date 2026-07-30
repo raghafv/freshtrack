@@ -206,7 +206,7 @@ function Bubble({ message }: { message: AssistantMessage }) {
         {mine ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none dark:prose-invert [&_li]:my-0.5 [&_p]:my-1.5 [&_strong]:text-foreground [&_ul]:my-1.5 [&_ul]:pl-4">
+          <div className="space-y-2 [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_table]:w-full [&_td]:py-0.5 [&_td]:pr-3 [&_th]:py-0.5 [&_th]:pr-3 [&_th]:text-left [&_ul]:list-disc [&_ul]:pl-5">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
           </div>
         )}
