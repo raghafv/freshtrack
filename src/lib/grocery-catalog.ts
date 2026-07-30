@@ -7,17 +7,41 @@ export interface ShelfLife {
   Pantry?: number;
 }
 
+/** How a product is measured by default. */
+export type ProductForm = "solid" | "liquid" | "count";
+
+export function formForUnit(unit: string): ProductForm {
+  if (unit === "mL" || unit === "L") return "liquid";
+  if (unit === "g" || unit === "kg") return "solid";
+  return "count";
+}
+
+/** Measure units offered for a product form — weight/volume plus piece count. */
+export function unitOptionsFor(form: ProductForm): string[] {
+  if (form === "liquid") return ["mL", "L", "pcs"];
+  if (form === "solid") return ["g", "kg", "pcs"];
+  return ["pcs", "g", "kg"];
+}
+
+export function stepForUnit(unit: string): number {
+  if (unit === "g" || unit === "mL") return 50;
+  if (unit === "kg" || unit === "L") return 0.5;
+  return 1;
+}
+
 export interface GroceryProduct {
   id: string;
   name: string;
   category: string;
   unit: string;
+  form: ProductForm;
   storage: StorageType;
   shelf: ShelfLife;
   /** Lower rank = more popular. */
   rank: number;
   aliases: string[];
 }
+
 
 /**
  * Compact tuple form: [name, category, unit, defaultStorage, shelfLife, aliases?]
