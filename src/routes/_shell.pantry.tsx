@@ -33,7 +33,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
-import { ItemFormDialog } from "@/components/item-form-dialog";
+import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
+import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
 import {
   CATEGORIES,
