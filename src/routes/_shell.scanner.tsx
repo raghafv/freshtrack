@@ -26,7 +26,8 @@ import { learnProduct, lookupLearned } from "@/lib/custom-products";
 import { useAuth } from "@/lib/auth";
 import { useAddPantryItem, useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
 import { expiryText } from "@/lib/freshtrack";
-import { findProduct } from "@/lib/grocery-catalog";
+import { findProduct, shelfDaysFrom } from "@/lib/grocery-catalog";
+import type { StorageType } from "@/lib/freshtrack";
 import {
   buildCandidate,
   candidateExpiry,
