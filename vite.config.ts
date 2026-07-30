@@ -1,7 +1,7 @@
 // Project uses a shared TanStack/Vite config package — do NOT add duplicate plugins here.
 // The shared config wires devtools, React, Tailwind, tsconfig paths, and other common plugins.
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from "./src/shims/vite-tanstack-config";
 
 export default defineConfig({
   tanstackStart: {
