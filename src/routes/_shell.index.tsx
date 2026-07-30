@@ -16,7 +16,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageContainer } from "@/components/layout";
-import { ItemFormDialog } from "@/components/item-form-dialog";
+import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
+import { QuickAddDialog } from "@/components/quick-add-dialog";
+
 import { StatusBadge } from "@/components/status-badge";
 import { useTheme } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
