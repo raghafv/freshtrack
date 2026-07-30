@@ -308,7 +308,9 @@ export const GROCERY_CATALOG: GroceryProduct[] = ROWS.map(
     name,
     category,
     unit,
+    form: formForUnit(unit),
     storage,
+
     shelf,
     rank: index,
     aliases: aliases ?? [],
