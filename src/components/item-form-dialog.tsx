@@ -19,7 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAddPantryItem, useUpdatePantryItem, uploadPantryImage } from "@/lib/data";
+import { useUpdatePantryItem, uploadPantryImage } from "@/lib/data";
+import { useSmartAdd } from "@/lib/smart-add";
+import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
+import { friendlyMessage } from "@/lib/errors";
+import { emojiFor } from "@/lib/emoji";
 import { useAuth } from "@/lib/auth";
 import {
   CATEGORIES,
@@ -64,7 +68,7 @@ export function ItemFormDialog({
   onSaved,
 }: Props) {
   const { user } = useAuth();
-  const addItem = useAddPantryItem();
+  const smartAdd = useSmartAdd();
   const updateItem = useUpdatePantryItem();
 
   const [name, setName] = useState("");
@@ -153,7 +157,7 @@ export function ItemFormDialog({
       setImageUrl(url);
       toast.success("Photo attached");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      toast.error(friendlyMessage(e, "Photo upload failed"));
     } finally {
       setUploading(false);
     }
@@ -188,23 +192,29 @@ export function ItemFormDialog({
         await updateItem.mutateAsync({ id: item.id, patch: payload });
         toast.success("Item updated");
       } else {
-        await addItem.mutateAsync(payload);
-        toast.success(`${payload.name} added to pantry`);
+        const result = await smartAdd.submit(payload);
+        if (!result) return; // waiting on the merge question
+        toast.success(result.message);
       }
       onOpenChange(false);
       onSaved?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save item");
+      toast.error(friendlyMessage(e, "Could not save item"));
     }
   }
 
-  const busy = addItem.isPending || updateItem.isPending;
+  const busy = smartAdd.isPending || updateItem.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{item ? "Edit item" : "Add to pantry"}</DialogTitle>
+          <DialogTitle>
+            <span aria-hidden className="mr-1">
+              {emojiFor(name, category)}
+            </span>
+            {item ? "Edit item" : "Add to pantry"}
+          </DialogTitle>
           <DialogDescription>
             Expiry is calculated automatically from category and storage — adjust it any time.
           </DialogDescription>
@@ -391,6 +401,28 @@ export function ItemFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <DuplicateMergeDialog
+        pending={smartAdd.pending}
+        busy={smartAdd.isPending}
+        onCancel={smartAdd.cancel}
+        onMerge={async () => {
+          const r = await smartAdd.confirmMerge();
+          if (r) {
+            toast.success(r.message);
+            onOpenChange(false);
+            onSaved?.();
+          }
+        }}
+        onKeepSeparate={async () => {
+          const r = await smartAdd.keepSeparate();
+          if (r) {
+            toast.success(r.message);
+            onOpenChange(false);
+            onSaved?.();
+          }
+        }}
+      />
     </Dialog>
   );
 }

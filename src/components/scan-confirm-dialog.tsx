@@ -13,7 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MeasureInput } from "@/components/measure-input";
 import { cn } from "@/lib/utils";
-import { useAddPantryItem } from "@/lib/data";
+import { useSmartAdd } from "@/lib/smart-add";
+import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
+import { friendlyMessage } from "@/lib/errors";
+import { emojiFor } from "@/lib/emoji";
 import { STORAGE_TYPES, expiryText, toISODate } from "@/lib/freshtrack";
 import {
   candidateExpiry,
@@ -31,7 +34,7 @@ interface Props {
 
 /** Final confirmation before a scanned item is saved: amount, date, storage. */
 export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
-  const addItem = useAddPantryItem();
+  const smartAdd = useSmartAdd();
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("pcs");
   const [storage, setStorage] = useState("Pantry");
@@ -59,7 +62,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
       return;
     }
     try {
-      await addItem.mutateAsync({
+      const result = await smartAdd.submit({
         name: candidate.name,
         brand: candidate.brand,
         category: candidate.category,
@@ -72,11 +75,17 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
         source: candidate.source,
         price: null,
       });
-      toast.success(`${candidate.name} added · ${expiryText(expiry).toLowerCase()}`);
-      onSaved?.(candidate);
-      onOpenChange(false);
+      if (result) {
+        toast.success(
+          result.outcome === "merged"
+            ? result.message
+            : `${candidate.name} added · ${expiryText(expiry).toLowerCase()}`,
+        );
+        onSaved?.(candidate);
+        onOpenChange(false);
+      }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save item");
+      toast.error(friendlyMessage(e, "Could not save item"));
     }
   }
 
@@ -85,6 +94,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
       <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden rounded-3xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
+            <span aria-hidden>{emojiFor(candidate.name, candidate.category)}</span>
             {candidate.name}
             {conf && (
               <span
@@ -182,8 +192,8 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
         </div>
 
         <div className="mt-2 flex justify-end">
-          <Button className="press rounded-xl" onClick={save} disabled={addItem.isPending}>
-            {addItem.isPending ? (
+          <Button className="press rounded-xl" onClick={save} disabled={smartAdd.isPending}>
+            {smartAdd.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Check className="h-4 w-4" />
@@ -192,6 +202,28 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
           </Button>
         </div>
       </DialogContent>
+
+      <DuplicateMergeDialog
+        pending={smartAdd.pending}
+        busy={smartAdd.isPending}
+        onCancel={smartAdd.cancel}
+        onMerge={async () => {
+          const r = await smartAdd.confirmMerge();
+          if (r) {
+            toast.success(r.message);
+            onSaved?.(candidate);
+            onOpenChange(false);
+          }
+        }}
+        onKeepSeparate={async () => {
+          const r = await smartAdd.keepSeparate();
+          if (r) {
+            toast.success(r.message);
+            onSaved?.(candidate);
+            onOpenChange(false);
+          }
+        }}
+      />
     </Dialog>
   );
 }
