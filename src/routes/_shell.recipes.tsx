@@ -6,6 +6,7 @@ import { ChefHat, Clock, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
+import { AiTabs } from "@/components/ai-tabs";
 import { usePantryItems, useSettings } from "@/lib/data";
 import { expiryText, getStatus } from "@/lib/freshtrack";
 import { suggestRecipes, type PantryRecipe } from "@/lib/ai.functions";
@@ -48,6 +49,7 @@ function RecipesPage() {
 
   return (
     <PageContainer>
+      <AiTabs active="recipes" />
       <PageHeader
         title="Recipes"
         subtitle="Cook what's about to expire — generated from your live pantry."
