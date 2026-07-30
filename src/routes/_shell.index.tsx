@@ -5,7 +5,6 @@ import {
   BarChart3,
   ChefHat,
   Lightbulb,
-  Package,
   Plus,
   ScanLine,
   ShoppingCart,
@@ -371,5 +370,3 @@ function Quick({
     </div>
   );
 }
-
-export { Package };
