@@ -132,7 +132,7 @@ function PantryPage() {
             className="press rounded-2xl"
             onClick={() => {
               setEditing(null);
-              setFormOpen(true);
+              setQuickOpen(true);
             }}
           >
             <Plus className="h-4 w-4" /> Add
