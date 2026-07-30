@@ -6,6 +6,7 @@ import {
   Refrigerator,
   ScanLine,
   ShoppingCart,
+  Sparkles,
   User,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -16,6 +17,7 @@ const NAV = [
   { to: "/pantry", label: "Pantry", icon: Refrigerator },
   { to: "/scanner", label: "Scan", icon: ScanLine },
   { to: "/recipes", label: "Recipes", icon: ChefHat },
+  { to: "/assistant", label: "Ask", icon: Sparkles },
   { to: "/shopping", label: "List", icon: ShoppingCart },
   { to: "/notifications", label: "Alerts", icon: Bell },
   { to: "/profile", label: "Profile", icon: User },
@@ -41,7 +43,7 @@ export function BottomNav({ unread = 0 }: { unread?: number }) {
               >
                 <span
                   className={cn(
-                    "flex h-8 w-12 items-center justify-center rounded-full transition-all duration-300",
+                    "flex h-8 w-full max-w-12 items-center justify-center rounded-full transition-all duration-300",
                     active ? "bg-primary-soft" : "bg-transparent",
                   )}
                 >

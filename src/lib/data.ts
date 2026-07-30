@@ -370,4 +370,45 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["scans"] });
 }
 
+/* -------------------------------- assistant -------------------------------- */
+
+export interface AssistantMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
+export function useAssistantMessages() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["assistant", user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<AssistantMessage[]> => {
+      const { data, error } = await supabase
+        .from("assistant_messages")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as AssistantMessage[];
+    },
+  });
+}
+
+export function useClearAssistant() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("assistant_messages")
+        .delete()
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assistant", user?.id] }),
+  });
+}
+
 export { logActivity, notify };

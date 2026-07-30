@@ -32,7 +32,12 @@ import {
   toDataUrl,
   type ScanCandidate,
 } from "@/lib/scan";
-import { detectGroceries, parseReceipt, type ReceiptLine } from "@/lib/vision.functions";
+import {
+  detectGroceries,
+  extractLabelDates,
+  parseReceipt,
+  type ReceiptLine,
+} from "@/lib/vision.functions";
 
 export const Route = createFileRoute("/_shell/scanner")({
   head: () => ({
@@ -130,7 +135,7 @@ function ScannerPage() {
 
   /* --------------------------------- barcode --------------------------------- */
 
-  async function lookupBarcode(code: string) {
+  async function lookupBarcode(code: string, frame?: Blob) {
     setBusy("Looking up barcode…");
     try {
       const res = await fetch(
@@ -146,6 +151,21 @@ function ScannerPage() {
       }
       const name = json.product.product_name;
       const known = findProduct(name);
+
+      // Read any MFG / EXPIRY printed near the barcode from the same frame.
+      let labelExpiry: string | null = null;
+      let labelManufactured: string | null = null;
+      if (frame) {
+        setBusy("Reading label dates…");
+        try {
+          const dates = await extractLabelDates({ data: { image: await toDataUrl(frame) } });
+          labelExpiry = dates.expiry;
+          labelManufactured = dates.manufactured;
+        } catch {
+          /* dates are optional — fall back to estimated shelf life */
+        }
+      }
+
       setPendingMethod("barcode");
       setConfirming(
         buildCandidate({
@@ -156,9 +176,13 @@ function ScannerPage() {
           image_url: json.product.image_url ?? null,
           packageSize: json.product.quantity ?? null,
           source: "barcode",
+          labelExpiry,
+          labelManufactured,
         }),
       );
-      toast.success(`Found: ${name}`);
+      toast.success(
+        labelExpiry ? `Found: ${name} · expiry ${labelExpiry}` : `Found: ${name} · expiry estimated`,
+      );
     } catch {
       openManual("Barcode lookup failed — search manually.");
     } finally {
@@ -349,12 +373,16 @@ function ScannerPage() {
         <TabsContent value="barcode" className="mt-4">
           <ScanCamera
             mode="barcode"
-            busy={busy === "Looking up barcode…"}
-            busyLabel="Looking up barcode…"
+            busy={busy === "Looking up barcode…" || busy === "Reading label dates…"}
+            busyLabel={busy ?? "Looking up barcode…"}
             hint="Hold the barcode inside the frame — FreshTrack reads it automatically and fetches the product name, brand and pack size."
             onBarcode={lookupBarcode}
             onCapture={decodeBarcodeImage}
           />
+          <p className="mt-3 rounded-2xl bg-primary-soft px-4 py-2.5 text-xs font-medium text-primary">
+            When scanning a barcode also make sure to include the MFG / expiry date printed on the
+            pack — if that isn&apos;t possible the AI will automatically estimate the expiry!
+          </p>
           <Button
             variant="secondary"
             className="press mt-3 w-full rounded-2xl"

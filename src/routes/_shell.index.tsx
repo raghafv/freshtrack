@@ -117,8 +117,10 @@ function Dashboard() {
               {stats.total === 0
                 ? "Add your first item to start tracking"
                 : stats.expired > 0
-                  ? `${stats.expired} item${stats.expired > 1 ? "s" : ""} need${stats.expired > 1 ? "" : "s"} attention`
-                  : "Your pantry is in great shape"}
+                  ? `${stats.expired} item${stats.expired > 1 ? "s" : ""} expired · ${stats.soon} to use soon`
+                  : stats.soon > 0
+                    ? `${stats.soon} item${stats.soon > 1 ? "s" : ""} to use in the next ${soonDays} days`
+                    : `All ${stats.total} items are comfortably fresh`}
             </p>
           </div>
           <Leaf className="h-14 w-14 opacity-40" />
@@ -137,13 +139,19 @@ function Dashboard() {
       </section>
 
       <section className="mb-5 grid grid-cols-3 gap-3">
-        <MiniStat label="Added today" value={String(stats.addedToday)} />
+        <MiniStat label="Expiring this week" value={String(stats.expiringThisWeek)} />
         <MiniStat
-          label="Est. savings"
-          value={formatCurrency(stats.savings)}
+          label="Value at risk"
+          value={formatCurrency(stats.atRiskValue)}
           icon={CircleDollarSign}
         />
-        <MiniStat label="Waste prevented" value={`${stats.wastePrevented} kg`} />
+        <MiniStat label="Avg days left" value={`${stats.avgDaysLeft}d`} />
+      </section>
+
+      <section className="mb-5 grid grid-cols-3 gap-3">
+        <MiniStat label="Added today" value={String(stats.addedToday)} />
+        <MiniStat label="Pantry value" value={formatCurrency(stats.savings)} />
+        <MiniStat label="Wasted value" value={formatCurrency(stats.wastedValue)} />
       </section>
 
       <section className="mb-5 grid grid-cols-2 gap-3">
@@ -158,6 +166,14 @@ function Dashboard() {
           onClick={() => setAddOpen(true)}
         >
           <Plus className="h-5 w-5" /> Add manually
+        </Button>
+      </section>
+
+      <section className="mb-5">
+        <Button asChild variant="secondary" className="press h-14 w-full rounded-2xl text-base">
+          <Link to="/assistant">
+            <Sparkles className="h-5 w-5 text-primary" /> Ask FreshTrack about your pantry
+          </Link>
         </Button>
       </section>
 

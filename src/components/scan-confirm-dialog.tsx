@@ -42,7 +42,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
     setQuantity(String(candidate.quantity || 1));
     setUnit(candidate.unit);
     setStorage(candidate.storage);
-    setPurchaseDate(toISODate(new Date()));
+    setPurchaseDate(candidate.labelManufactured ?? toISODate(new Date()));
   }, [candidate]);
 
   if (!candidate) return null;
@@ -105,7 +105,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
               .filter(Boolean)
               .join(" · ") || candidate.category}
             {" · "}
-            expiry calculated automatically.
+            {candidate.labelExpiry ? "expiry read from the label." : "expiry calculated automatically."}
           </DialogDescription>
         </DialogHeader>
 
@@ -165,7 +165,9 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="rounded-2xl border border-border/60 bg-card/60 px-4 py-3">
-            <p className="text-xs text-muted-foreground">Expires on</p>
+            <p className="text-xs text-muted-foreground">
+              {candidate.labelExpiry ? "Expiry printed on label" : "Expires on"}
+            </p>
             <p className="text-base font-semibold">
               {expiry} <span className="text-muted-foreground">· {expiryText(expiry)}</span>
             </p>
