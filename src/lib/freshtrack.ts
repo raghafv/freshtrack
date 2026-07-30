@@ -1,5 +1,7 @@
 export const CATEGORIES = [
   "Dairy",
+  "Fruits",
+  "Vegetables",
   "Produce",
   "Meat & Seafood",
   "Bakery",
@@ -8,8 +10,10 @@ export const CATEGORIES = [
   "Grains & Pasta",
   "Snacks",
   "Condiments",
+  "Spices",
   "Other",
 ] as const;
+
 
 export const STORAGE_TYPES = ["Fridge", "Freezer", "Pantry"] as const;
 export const UNITS = ["kg", "g", "L", "mL", "pcs"] as const;
