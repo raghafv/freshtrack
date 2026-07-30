@@ -195,7 +195,8 @@ function expandTerm(term: string): string[] {
 const LOW_STOCK: Record<string, number> = { pcs: 2, L: 0.5, mL: 300, kg: 0.3, g: 200 };
 
 function matchesTerm(item: PantryItem, term: string): boolean {
-  const haystack = `${item.name} ${item.brand ?? ""} ${item.category} ${item.storage}`.toLowerCase();
+  const haystack =
+    `${item.name} ${item.brand ?? ""} ${item.category} ${item.storage}`.toLowerCase();
   return expandTerm(term).some((t) => haystack.includes(t));
 }
 

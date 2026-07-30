@@ -1,15 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  Barcode,
-  Camera,
-  Check,
-  Cpu,
-  Loader2,
-  Receipt,
-  Search,
-  Sparkles,
-} from "lucide-react";
+import { Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,7 +15,13 @@ import { emojiFor } from "@/lib/emoji";
 import { friendlyMessage } from "@/lib/errors";
 import { learnProduct, lookupLearned } from "@/lib/custom-products";
 import { useAuth } from "@/lib/auth";
-import { useAddPantryItem, useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
+import {
+  useAddPantryItem,
+  useRecordScan,
+  useScanHistory,
+  useSettings,
+  uploadPantryImage,
+} from "@/lib/data";
 import { expiryText } from "@/lib/freshtrack";
 import { findProduct, shelfDaysFrom } from "@/lib/grocery-catalog";
 import type { StorageType } from "@/lib/freshtrack";
@@ -239,7 +236,9 @@ function ScannerPage() {
         }),
       );
       toast.success(
-        labelExpiry ? `Found: ${name} · expiry ${labelExpiry}` : `Found: ${name} · expiry estimated`,
+        labelExpiry
+          ? `Found: ${name} · expiry ${labelExpiry}`
+          : `Found: ${name} · expiry estimated`,
       );
     } catch (e) {
       setLearnBarcode(code);
@@ -251,8 +250,9 @@ function ScannerPage() {
 
   /** Fallback when the live reader isn't available: decode a captured photo. */
   async function decodeBarcodeImage(blob: Blob) {
-    const Ctor = (window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike })
-      .BarcodeDetector;
+    const Ctor = (
+      window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike }
+    ).BarcodeDetector;
     if (!Ctor) {
       openManual("This browser can't read barcodes — search manually.");
       return;
@@ -373,7 +373,12 @@ function ScannerPage() {
             <section className="mt-4 animate-fade-up">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-base font-semibold">Detected items</h2>
-                <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => setDetections([])}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setDetections([])}
+                >
                   Clear
                 </Button>
               </div>
@@ -487,9 +492,7 @@ function ScannerPage() {
                     <Checkbox
                       id={`rl-${i}`}
                       checked={!!receiptPicked[i]}
-                      onCheckedChange={(v) =>
-                        setReceiptPicked((p) => ({ ...p, [i]: v === true }))
-                      }
+                      onCheckedChange={(v) => setReceiptPicked((p) => ({ ...p, [i]: v === true }))}
                     />
                     <label htmlFor={`rl-${i}`} className="min-w-0 flex-1 cursor-pointer">
                       <p className="truncate text-sm font-medium">{line.name}</p>

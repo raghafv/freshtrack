@@ -39,7 +39,6 @@ export interface ScanCandidate {
   note?: string | null;
 }
 
-
 let counter = 0;
 function nextKey(prefix: string) {
   counter += 1;
@@ -103,7 +102,12 @@ export function buildCandidate(input: {
       freshness: input.freshness ?? null,
       packaged: input.packaged ?? false,
       note: input.note ?? null,
-      unit: input.unit && input.unit !== "pcs" ? input.unit : match.form === "count" ? "pcs" : match.unit,
+      unit:
+        input.unit && input.unit !== "pcs"
+          ? input.unit
+          : match.form === "count"
+            ? "pcs"
+            : match.unit,
     });
   }
 
@@ -242,7 +246,6 @@ export function candidateExpiry(
 ): string {
   return predictShelfLife(candidate, storage, purchaseDate).expiry;
 }
-
 
 export function candidateUnusualStorage(candidate: ScanCandidate, storage: string): boolean {
   return !recommendedFrom(candidate.shelf).includes(storage as StorageType);

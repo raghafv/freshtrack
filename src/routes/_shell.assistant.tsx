@@ -187,7 +187,11 @@ function AssistantPage() {
           disabled={ask.isPending || input.trim().length === 0}
           aria-label="Send"
         >
-          {ask.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {ask.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
         </Button>
       </form>
     </PageContainer>
@@ -201,9 +205,7 @@ function Bubble({ message }: { message: AssistantMessage }) {
       <div
         className={cn(
           "animate-fade-up max-w-[88%] rounded-3xl px-4 py-3 text-sm",
-          mine
-            ? "bg-primary text-primary-foreground rounded-br-lg"
-            : "surface-card rounded-bl-lg",
+          mine ? "bg-primary text-primary-foreground rounded-br-lg" : "surface-card rounded-bl-lg",
         )}
       >
         {mine ? (

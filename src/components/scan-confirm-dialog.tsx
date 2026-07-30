@@ -116,7 +116,9 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
               .filter(Boolean)
               .join(" · ") || candidate.category}
             {" · "}
-            {candidate.labelExpiry ? "expiry read from the label." : "expiry calculated automatically."}
+            {candidate.labelExpiry
+              ? "expiry read from the label."
+              : "expiry calculated automatically."}
           </DialogDescription>
         </DialogHeader>
 

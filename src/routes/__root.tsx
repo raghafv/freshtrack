@@ -95,10 +95,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:title", content: "FreshTrack — Smart Pantry & Expiry Tracker" },
       { name: "twitter:title", content: "FreshTrack — Smart Pantry & Expiry Tracker" },
-      { property: "og:description", content: "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste." },
-      { name: "twitter:description", content: "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/placeholder-id-preview.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/placeholder-id-preview.png" },
+      {
+        property: "og:description",
+        content:
+          "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste.",
+      },
+      {
+        property: "og:image",
+        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/placeholder-id-preview.png",
+      },
+      {
+        name: "twitter:image",
+        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/placeholder-id-preview.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

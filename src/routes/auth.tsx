@@ -117,7 +117,11 @@ function AuthPage() {
             className="press w-full rounded-2xl"
             size="lg"
           >
-            {googleBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+            {googleBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Mail className="h-4 w-4" />
+            )}
             Continue with Google
           </Button>
 

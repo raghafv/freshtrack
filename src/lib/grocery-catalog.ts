@@ -42,7 +42,6 @@ export interface GroceryProduct {
   aliases: string[];
 }
 
-
 /**
  * Compact tuple form: [name, category, unit, defaultStorage, shelfLife, aliases?]
  * Order in this list defines popularity ranking.
@@ -99,29 +98,92 @@ const ROWS: Row[] = [
   ["Spinach", "Vegetables", "g", "Fridge", { Fridge: 5, Pantry: 1, Freezer: 240 }, ["palak"]],
   ["Carrots", "Vegetables", "g", "Fridge", { Fridge: 21, Pantry: 5, Freezer: 300 }, ["gajar"]],
   ["Cauliflower", "Vegetables", "pcs", "Fridge", { Fridge: 8, Pantry: 3, Freezer: 240 }, ["gobi"]],
-  ["Cabbage", "Vegetables", "pcs", "Fridge", { Fridge: 21, Pantry: 5, Freezer: 240 }, ["patta gobi"]],
-  ["Capsicum", "Vegetables", "g", "Fridge", { Fridge: 12, Pantry: 4, Freezer: 240 }, ["bell pepper", "shimla mirch"]],
+  [
+    "Cabbage",
+    "Vegetables",
+    "pcs",
+    "Fridge",
+    { Fridge: 21, Pantry: 5, Freezer: 240 },
+    ["patta gobi"],
+  ],
+  [
+    "Capsicum",
+    "Vegetables",
+    "g",
+    "Fridge",
+    { Fridge: 12, Pantry: 4, Freezer: 240 },
+    ["bell pepper", "shimla mirch"],
+  ],
   ["Green Peas", "Vegetables", "g", "Fridge", { Fridge: 7, Pantry: 2, Freezer: 300 }, ["matar"]],
   ["Cucumber", "Vegetables", "pcs", "Fridge", { Fridge: 8, Pantry: 3, Freezer: 60 }, ["kheera"]],
-  ["Brinjal", "Vegetables", "g", "Fridge", { Fridge: 7, Pantry: 3, Freezer: 180 }, ["baingan", "eggplant"]],
-  ["Lady Finger", "Vegetables", "g", "Fridge", { Fridge: 5, Pantry: 2, Freezer: 240 }, ["bhindi", "okra"]],
-  ["Bottle Gourd", "Vegetables", "pcs", "Fridge", { Fridge: 10, Pantry: 4, Freezer: 180 }, ["lauki"]],
+  [
+    "Brinjal",
+    "Vegetables",
+    "g",
+    "Fridge",
+    { Fridge: 7, Pantry: 3, Freezer: 180 },
+    ["baingan", "eggplant"],
+  ],
+  [
+    "Lady Finger",
+    "Vegetables",
+    "g",
+    "Fridge",
+    { Fridge: 5, Pantry: 2, Freezer: 240 },
+    ["bhindi", "okra"],
+  ],
+  [
+    "Bottle Gourd",
+    "Vegetables",
+    "pcs",
+    "Fridge",
+    { Fridge: 10, Pantry: 4, Freezer: 180 },
+    ["lauki"],
+  ],
   ["Ridge Gourd", "Vegetables", "pcs", "Fridge", { Fridge: 7, Pantry: 3, Freezer: 150 }, ["turai"]],
   ["Bitter Gourd", "Vegetables", "g", "Fridge", { Fridge: 7, Pantry: 3, Freezer: 150 }, ["karela"]],
   ["Pumpkin", "Vegetables", "g", "Pantry", { Pantry: 30, Fridge: 14, Freezer: 240 }, ["kaddu"]],
   ["Beetroot", "Vegetables", "g", "Fridge", { Fridge: 21, Pantry: 7, Freezer: 240 }, ["chukandar"]],
   ["Radish", "Vegetables", "g", "Fridge", { Fridge: 10, Pantry: 3, Freezer: 180 }, ["mooli"]],
-  ["Coriander Leaves", "Vegetables", "g", "Fridge", { Fridge: 6, Pantry: 1, Freezer: 120 }, ["dhaniya", "cilantro"]],
+  [
+    "Coriander Leaves",
+    "Vegetables",
+    "g",
+    "Fridge",
+    { Fridge: 6, Pantry: 1, Freezer: 120 },
+    ["dhaniya", "cilantro"],
+  ],
   ["Mint Leaves", "Vegetables", "g", "Fridge", { Fridge: 6, Pantry: 1, Freezer: 120 }, ["pudina"]],
-  ["Curry Leaves", "Vegetables", "g", "Fridge", { Fridge: 10, Pantry: 2, Freezer: 180 }, ["kadi patta"]],
-  ["Green Chillies", "Vegetables", "g", "Fridge", { Fridge: 12, Pantry: 4, Freezer: 240 }, ["hari mirch"]],
+  [
+    "Curry Leaves",
+    "Vegetables",
+    "g",
+    "Fridge",
+    { Fridge: 10, Pantry: 2, Freezer: 180 },
+    ["kadi patta"],
+  ],
+  [
+    "Green Chillies",
+    "Vegetables",
+    "g",
+    "Fridge",
+    { Fridge: 12, Pantry: 4, Freezer: 240 },
+    ["hari mirch"],
+  ],
   ["Ginger", "Vegetables", "g", "Fridge", { Fridge: 21, Pantry: 10, Freezer: 180 }, ["adrak"]],
   ["Garlic", "Vegetables", "g", "Pantry", { Pantry: 60, Fridge: 90, Freezer: 240 }, ["lehsun"]],
   ["Mushrooms", "Vegetables", "g", "Fridge", { Fridge: 6, Pantry: 1, Freezer: 240 }, ["khumb"]],
   ["Sweet Corn", "Vegetables", "g", "Fridge", { Fridge: 5, Pantry: 2, Freezer: 300 }, ["bhutta"]],
   ["French Beans", "Vegetables", "g", "Fridge", { Fridge: 7, Pantry: 2, Freezer: 240 }],
   ["Broccoli", "Vegetables", "pcs", "Fridge", { Fridge: 7, Pantry: 2, Freezer: 300 }],
-  ["Sweet Potato", "Vegetables", "g", "Pantry", { Pantry: 30, Fridge: 45, Freezer: 240 }, ["shakarkandi"]],
+  [
+    "Sweet Potato",
+    "Vegetables",
+    "g",
+    "Pantry",
+    { Pantry: 30, Fridge: 45, Freezer: 240 },
+    ["shakarkandi"],
+  ],
   ["Spring Onion", "Vegetables", "g", "Fridge", { Fridge: 8, Pantry: 2, Freezer: 180 }],
   ["Lettuce", "Vegetables", "g", "Fridge", { Fridge: 7, Pantry: 1, Freezer: 60 }],
   ["Drumstick", "Vegetables", "pcs", "Fridge", { Fridge: 7, Pantry: 3, Freezer: 150 }, ["sahjan"]],
@@ -129,9 +191,30 @@ const ROWS: Row[] = [
   /* ----------------------------- Meat & Seafood ----------------------------- */
   ["Chicken", "Meat & Seafood", "g", "Fridge", { Fridge: 2, Freezer: 180, Pantry: 1 }, ["murgi"]],
   ["Chicken Breast", "Meat & Seafood", "g", "Fridge", { Fridge: 2, Freezer: 180, Pantry: 1 }],
-  ["Chicken Mince", "Meat & Seafood", "g", "Fridge", { Fridge: 1, Freezer: 120, Pantry: 1 }, ["keema"]],
-  ["Mutton", "Meat & Seafood", "g", "Fridge", { Fridge: 3, Freezer: 180, Pantry: 1 }, ["goat meat"]],
-  ["Fish Fillet", "Meat & Seafood", "g", "Fridge", { Fridge: 2, Freezer: 150, Pantry: 1 }, ["machli"]],
+  [
+    "Chicken Mince",
+    "Meat & Seafood",
+    "g",
+    "Fridge",
+    { Fridge: 1, Freezer: 120, Pantry: 1 },
+    ["keema"],
+  ],
+  [
+    "Mutton",
+    "Meat & Seafood",
+    "g",
+    "Fridge",
+    { Fridge: 3, Freezer: 180, Pantry: 1 },
+    ["goat meat"],
+  ],
+  [
+    "Fish Fillet",
+    "Meat & Seafood",
+    "g",
+    "Fridge",
+    { Fridge: 2, Freezer: 150, Pantry: 1 },
+    ["machli"],
+  ],
   ["Prawns", "Meat & Seafood", "g", "Fridge", { Fridge: 2, Freezer: 150, Pantry: 1 }, ["jhinga"]],
   ["Rohu Fish", "Meat & Seafood", "g", "Fridge", { Fridge: 2, Freezer: 120, Pantry: 1 }],
   ["Pomfret", "Meat & Seafood", "g", "Fridge", { Fridge: 2, Freezer: 150, Pantry: 1 }],
@@ -184,7 +267,14 @@ const ROWS: Row[] = [
   ["Energy Drink", "Beverages", "mL", "Pantry", { Pantry: 240, Fridge: 270 }],
   ["Coconut Water", "Beverages", "mL", "Fridge", { Fridge: 5, Pantry: 2, Freezer: 90 }],
   ["Buttermilk Packet", "Beverages", "mL", "Fridge", { Fridge: 5, Pantry: 1, Freezer: 30 }],
-  ["Health Drink Powder", "Beverages", "g", "Pantry", { Pantry: 300, Fridge: 365 }, ["horlicks", "bournvita"]],
+  [
+    "Health Drink Powder",
+    "Beverages",
+    "g",
+    "Pantry",
+    { Pantry: 300, Fridge: 365 },
+    ["horlicks", "bournvita"],
+  ],
   ["Soy Milk", "Beverages", "mL", "Fridge", { Fridge: 7, Pantry: 90, Freezer: 90 }],
   ["Almond Milk", "Beverages", "mL", "Fridge", { Fridge: 7, Pantry: 90, Freezer: 90 }],
 
@@ -207,9 +297,23 @@ const ROWS: Row[] = [
   ["Dry Fruit Mix", "Snacks", "g", "Pantry", { Pantry: 150, Fridge: 300, Freezer: 450 }],
 
   /* ---------------------------- Grains & Pasta ------------------------------ */
-  ["Rice", "Grains & Pasta", "kg", "Pantry", { Pantry: 365, Fridge: 400, Freezer: 540 }, ["chawal", "basmati"]],
+  [
+    "Rice",
+    "Grains & Pasta",
+    "kg",
+    "Pantry",
+    { Pantry: 365, Fridge: 400, Freezer: 540 },
+    ["chawal", "basmati"],
+  ],
   ["Brown Rice", "Grains & Pasta", "kg", "Pantry", { Pantry: 180, Fridge: 300, Freezer: 400 }],
-  ["Wheat Flour", "Grains & Pasta", "kg", "Pantry", { Pantry: 180, Fridge: 240, Freezer: 365 }, ["atta"]],
+  [
+    "Wheat Flour",
+    "Grains & Pasta",
+    "kg",
+    "Pantry",
+    { Pantry: 180, Fridge: 240, Freezer: 365 },
+    ["atta"],
+  ],
   ["Maida", "Grains & Pasta", "kg", "Pantry", { Pantry: 180, Fridge: 240 }, ["refined flour"]],
   ["Semolina", "Grains & Pasta", "g", "Pantry", { Pantry: 150, Fridge: 240 }, ["sooji", "rava"]],
   ["Poha", "Grains & Pasta", "g", "Pantry", { Pantry: 120, Fridge: 180 }, ["flattened rice"]],
@@ -223,7 +327,14 @@ const ROWS: Row[] = [
   ["Masoor Dal", "Grains & Pasta", "kg", "Pantry", { Pantry: 365, Fridge: 400 }],
   ["Urad Dal", "Grains & Pasta", "kg", "Pantry", { Pantry: 365, Fridge: 400 }],
   ["Rajma", "Grains & Pasta", "kg", "Pantry", { Pantry: 365, Fridge: 400 }, ["kidney beans"]],
-  ["Chickpeas", "Grains & Pasta", "kg", "Pantry", { Pantry: 365, Fridge: 400 }, ["chana", "kabuli"]],
+  [
+    "Chickpeas",
+    "Grains & Pasta",
+    "kg",
+    "Pantry",
+    { Pantry: 365, Fridge: 400 },
+    ["chana", "kabuli"],
+  ],
   ["Besan", "Grains & Pasta", "g", "Pantry", { Pantry: 150, Fridge: 240 }, ["gram flour"]],
   ["Quinoa", "Grains & Pasta", "g", "Pantry", { Pantry: 365, Fridge: 400 }],
   ["Millet", "Grains & Pasta", "kg", "Pantry", { Pantry: 240, Fridge: 300 }, ["bajra", "ragi"]],
@@ -319,9 +430,7 @@ export const GROCERY_CATALOG: GroceryProduct[] = ROWS.map(
 
 export const CATALOG_BY_ID = new Map(GROCERY_CATALOG.map((p) => [p.id, p]));
 
-export const CATALOG_CATEGORIES = Array.from(
-  new Set(GROCERY_CATALOG.map((p) => p.category)),
-);
+export const CATALOG_CATEGORIES = Array.from(new Set(GROCERY_CATALOG.map((p) => p.category)));
 
 export function findProduct(nameOrId: string): GroceryProduct | undefined {
   const key = slug(nameOrId);
@@ -390,7 +499,6 @@ export function recommendedFrom(shelf: ShelfLife): StorageType[] {
     return days != null && days >= 2;
   });
 }
-
 
 export function expiryForProduct(
   product: GroceryProduct,

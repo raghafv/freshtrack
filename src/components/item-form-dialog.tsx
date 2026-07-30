@@ -312,8 +312,6 @@ export function ItemFormDialog({
             </p>
           )}
 
-
-
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="ft-purchase">Purchase date</Label>

@@ -22,13 +22,7 @@ import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { useTheme } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
-import {
-  useActivity,
-  usePantryItems,
-  useProfile,
-  useScanHistory,
-  useSettings,
-} from "@/lib/data";
+import { useActivity, usePantryItems, useProfile, useScanHistory, useSettings } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
 import { explainHealth } from "@/lib/analytics";
 import { emojiFor } from "@/lib/emoji";
@@ -85,9 +79,7 @@ function Dashboard() {
   const soonDays = settings?.expiry_reminder_days ?? 3;
   const stats = computeStats(items, soonDays);
   const health = explainHealth(items, soonDays);
-  const attention = items
-    .filter((i) => getStatus(i, soonDays) !== "fresh")
-    .slice(0, 4);
+  const attention = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 4);
   const lastScan = scans[0];
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
 
@@ -96,7 +88,11 @@ function Dashboard() {
       <header className="mb-6 flex items-start justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+            {new Date().toLocaleDateString(undefined, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
           </p>
           <h1 className="mt-1 text-2xl font-bold">Hi {firstName} 👋</h1>
         </div>

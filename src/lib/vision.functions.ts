@@ -91,7 +91,7 @@ export const detectGroceries = createServerFn({ method: "POST" })
         'unit: one of "g", "kg", "mL", "L", "pcs".',
         "freshness: 0-1 judged from what you can SEE — bruising, wilting, mould, browning, condensation, ripeness. 1 = just harvested/packed, 0.5 = half-way through its life, 0 = spoiled.",
         "packaged: true if it is a sealed factory pack, false for loose fresh produce.",
-        "note: max 12 words explaining the freshness call (e.g. \"skin slightly spotted, ripe\").",
+        'note: max 12 words explaining the freshness call (e.g. "skin slightly spotted, ripe").',
         "If nothing edible is visible, return an empty items array.",
       ].join("\n"),
     );
@@ -114,9 +114,7 @@ export const detectGroceries = createServerFn({ method: "POST" })
               ? String(it.storage)
               : "Pantry",
             shelfLifeDays: Number.isFinite(shelf) && shelf > 0 ? Math.round(shelf) : 7,
-            unit: ["g", "kg", "mL", "L", "pcs"].includes(String(it.unit))
-              ? String(it.unit)
-              : "pcs",
+            unit: ["g", "kg", "mL", "L", "pcs"].includes(String(it.unit)) ? String(it.unit) : "pcs",
             freshness: (() => {
               const f = Number(it.freshness);
               return Number.isFinite(f) ? Math.min(1, Math.max(0, f)) : 0.8;

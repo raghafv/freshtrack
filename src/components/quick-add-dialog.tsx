@@ -41,7 +41,6 @@ import {
 import type { ItemFormPrefill } from "@/components/item-form-dialog";
 import { MeasureInput } from "@/components/measure-input";
 
-
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -98,7 +97,6 @@ export function QuickAddDialog({
     setStorage(product.storage);
   }
 
-
   const results = useMemo(() => (query ? searchCatalog(query) : []), [query]);
   const favorites = useMemo(() => resolveMany(store.favorites), [store.favorites]);
   const recents = useMemo(() => resolveMany(store.recents), [store.recents]);
@@ -106,9 +104,7 @@ export function QuickAddDialog({
   const popular = useMemo(() => popularProducts(12), []);
   const categoryItems = useMemo(
     () =>
-      activeCategory === "all"
-        ? []
-        : GROCERY_CATALOG.filter((p) => p.category === activeCategory),
+      activeCategory === "all" ? [] : GROCERY_CATALOG.filter((p) => p.category === activeCategory),
     [activeCategory],
   );
 
@@ -164,10 +160,10 @@ export function QuickAddDialog({
             {emojiFor(product.name, product.category)}
           </span>
           <span className="flex flex-col">
-          <span className="text-sm font-semibold leading-tight">{product.name}</span>
-          <span className="text-[11px] text-muted-foreground">
-            {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
-          </span>
+            <span className="text-sm font-semibold leading-tight">{product.name}</span>
+            <span className="text-[11px] text-muted-foreground">
+              {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
+            </span>
           </span>
         </button>
         <Button
@@ -233,7 +229,6 @@ export function QuickAddDialog({
                 onValueChange={setQuantity}
                 onUnitChange={setUnit}
               />
-
 
               <div className="grid gap-2">
                 <Label>Storage</Label>
@@ -307,7 +302,11 @@ export function QuickAddDialog({
               >
                 More details
               </Button>
-              <Button className="press rounded-xl" onClick={handleSave} disabled={smartAdd.isPending}>
+              <Button
+                className="press rounded-xl"
+                onClick={handleSave}
+                disabled={smartAdd.isPending}
+              >
                 {smartAdd.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (

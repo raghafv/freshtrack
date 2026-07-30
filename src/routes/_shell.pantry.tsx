@@ -116,7 +116,9 @@ function PantryPage() {
   }
 
   async function handleDelete(ids: string[]) {
-    const targets = items.filter((i) => ids.includes(i.id)).map((i) => ({ id: i.id, name: i.name }));
+    const targets = items
+      .filter((i) => ids.includes(i.id))
+      .map((i) => ({ id: i.id, name: i.name }));
     try {
       await deleteItems.mutateAsync(targets);
       toast.success(`${targets.length} item${targets.length > 1 ? "s" : ""} deleted`);
@@ -409,30 +411,30 @@ function PantryPage() {
                       </button>
                     </div>
                     <div className="flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Edit ${item.name}`}
-                      className="h-8 w-8 rounded-xl"
-                      onClick={() => {
-                        setEditing(item);
-                        setFormOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Delete ${item.name}`}
-                      className="h-8 w-8 rounded-xl text-destructive"
-                      onClick={() => {
-                        setSelected([item.id]);
-                        setConfirmOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Edit ${item.name}`}
+                        className="h-8 w-8 rounded-xl"
+                        onClick={() => {
+                          setEditing(item);
+                          setFormOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Delete ${item.name}`}
+                        className="h-8 w-8 rounded-xl text-destructive"
+                        onClick={() => {
+                          setSelected([item.id]);
+                          setConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 )}

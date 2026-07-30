@@ -185,7 +185,6 @@ export function useDeletePantryItems() {
   });
 }
 
-
 /* --------------------------------- shopping -------------------------------- */
 
 export function useShoppingItems() {
@@ -210,8 +209,15 @@ export function useShoppingMutations() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["shopping", user?.id] });
 
   const add = useMutation({
-    mutationFn: async (item: { name: string; category: string; quantity: number; unit: string }) => {
-      const { error } = await supabase.from("shopping_items").insert({ ...item, user_id: user!.id });
+    mutationFn: async (item: {
+      name: string;
+      category: string;
+      quantity: number;
+      unit: string;
+    }) => {
+      const { error } = await supabase
+        .from("shopping_items")
+        .insert({ ...item, user_id: user!.id });
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -281,7 +287,10 @@ export function useNotificationMutations() {
 
   const clearAll = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -475,10 +484,7 @@ export function useClearAssistant() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("assistant_messages")
-        .delete()
-        .eq("user_id", user!.id);
+      const { error } = await supabase.from("assistant_messages").delete().eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["assistant", user?.id] }),

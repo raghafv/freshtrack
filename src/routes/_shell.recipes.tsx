@@ -22,7 +22,8 @@ export const Route = createFileRoute("/_shell/recipes")({
       { property: "og:title", content: "FreshTrack Recipes" },
       {
         property: "og:description",
-        content: "Recipes generated from your real pantry, starting with ingredients closest to expiry.",
+        content:
+          "Recipes generated from your real pantry, starting with ingredients closest to expiry.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,9 +37,7 @@ function RecipesPage() {
   const { data: settings } = useSettings();
   const soonDays = settings?.expiry_reminder_days ?? 3;
 
-  const priority = items
-    .filter((i) => getStatus(i, soonDays) !== "fresh")
-    .slice(0, 10);
+  const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
 
   const gen = useMutation({
     mutationFn: () => suggestRecipes({}),

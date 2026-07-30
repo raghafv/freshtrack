@@ -113,7 +113,9 @@ function ProfilePage() {
             </div>
           ) : (
             <>
-              <p className="truncate text-lg font-bold">{profile?.full_name ?? "FreshTrack user"}</p>
+              <p className="truncate text-lg font-bold">
+                {profile?.full_name ?? "FreshTrack user"}
+              </p>
               <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
             </>
           )}

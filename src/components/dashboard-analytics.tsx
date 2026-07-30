@@ -80,10 +80,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
   const waste = useMemo(() => monthlyWaste(items), [items]);
   const worstCategory = useMemo(() => mostWastedCategory(items), [items]);
   const spending = useMemo(() => spendingInsights(items), [items]);
-  const purchases = useMemo(
-    () => purchaseHistory(activity, items).slice(0, 5),
-    [activity, items],
-  );
+  const purchases = useMemo(() => purchaseHistory(activity, items).slice(0, 5), [activity, items]);
   const runOut = useMemo(() => predictRunOut(activity, items, 4), [activity, items]);
 
   if (items.length === 0) return null;
@@ -243,8 +240,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
                   {p.name}
                 </span>
                 <span className="shrink-0 text-xs text-muted-foreground">
-                  {p.count}× ·{" "}
-                  {p.intervalDays ? `every ~${p.intervalDays}d` : "first purchase"}
+                  {p.count}× · {p.intervalDays ? `every ~${p.intervalDays}d` : "first purchase"}
                 </span>
               </li>
             ))}

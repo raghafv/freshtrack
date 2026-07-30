@@ -155,8 +155,8 @@ function ShoppingPage() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          FreshTrack looks at what you own, what expired and what&apos;s already on this list — so it
-          never suggests a duplicate purchase.
+          FreshTrack looks at what you own, what expired and what&apos;s already on this list — so
+          it never suggests a duplicate purchase.
         </p>
         {suggestions && suggestions.length > 0 && (
           <ul className="mt-3 space-y-2">
@@ -262,9 +262,7 @@ function ShoppingPage() {
                     <Checkbox
                       checked={item.checked}
                       aria-label={`Mark ${item.name} as bought`}
-                      onCheckedChange={(v) =>
-                        toggle.mutate({ id: item.id, checked: v === true })
-                      }
+                      onCheckedChange={(v) => toggle.mutate({ id: item.id, checked: v === true })}
                     />
                     <div className="min-w-0 flex-1">
                       <p

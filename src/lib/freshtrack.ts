@@ -14,7 +14,6 @@ export const CATEGORIES = [
   "Other",
 ] as const;
 
-
 export const STORAGE_TYPES = ["Fridge", "Freezer", "Pantry"] as const;
 export const UNITS = ["kg", "g", "L", "mL", "pcs"] as const;
 
@@ -114,16 +113,11 @@ export function formatCurrency(value: number, maximumFractionDigits = 0): string
   }).format(value);
 }
 
-
 export function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export function estimateExpiry(
-  category: string,
-  storage: string,
-  purchaseDate: string,
-): string {
+export function estimateExpiry(category: string, storage: string, purchaseDate: string): string {
   const table = SHELF_LIFE[category] ?? SHELF_LIFE.Other;
   const days = table[(storage as StorageType) ?? "Pantry"] ?? 14;
   const base = new Date(`${purchaseDate}T00:00:00`);

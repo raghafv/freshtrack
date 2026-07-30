@@ -54,7 +54,8 @@ export function findDuplicate(
   const matches = items
     .filter((i) => productKey(i.name) === key && unitsCompatible(i.unit, candidate.unit))
     .sort((a, b) => {
-      const storageScore = Number(b.storage === candidate.storage) - Number(a.storage === candidate.storage);
+      const storageScore =
+        Number(b.storage === candidate.storage) - Number(a.storage === candidate.storage);
       return storageScore || a.expiry_date.localeCompare(b.expiry_date);
     });
 

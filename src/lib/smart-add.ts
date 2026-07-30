@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { usePantryItems, useAddPantryItem, useMergePantryItem, type NewPantryItem } from "@/lib/data";
+import {
+  usePantryItems,
+  useAddPantryItem,
+  useMergePantryItem,
+  type NewPantryItem,
+} from "@/lib/data";
 import { findDuplicate, shouldAutoMerge, type DuplicateMatch } from "@/lib/duplicates";
 
 export interface PendingDuplicate {

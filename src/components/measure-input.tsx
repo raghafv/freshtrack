@@ -45,7 +45,11 @@ export function MeasureInput({
       <Label htmlFor={id}>
         {label}
         <span className="ml-1 text-xs font-normal text-muted-foreground">
-          {form === "liquid" ? "volume or pieces" : form === "solid" ? "weight or pieces" : "pieces or weight"}
+          {form === "liquid"
+            ? "volume or pieces"
+            : form === "solid"
+              ? "weight or pieces"
+              : "pieces or weight"}
         </span>
       </Label>
       <div className="flex items-center gap-2">

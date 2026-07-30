@@ -1,4 +1,10 @@
-import { daysUntil, getStatus, toISODate, type ActivityEntry, type PantryItem } from "@/lib/freshtrack";
+import {
+  daysUntil,
+  getStatus,
+  toISODate,
+  type ActivityEntry,
+  type PantryItem,
+} from "@/lib/freshtrack";
 
 const AVG_ITEM_VALUE = 120;
 
@@ -126,7 +132,9 @@ export function monthlyWaste(items: PantryItem[], months = 6): MonthPoint[] {
   return buckets.map((b) => ({ ...b, wasted: Math.round(b.wasted) }));
 }
 
-export function mostWastedCategory(items: PantryItem[]): { category: string; value: number } | null {
+export function mostWastedCategory(
+  items: PantryItem[],
+): { category: string; value: number } | null {
   const map = new Map<string, number>();
   for (const i of items) {
     if (daysUntil(i.expiry_date) >= 0) continue;
@@ -275,7 +283,8 @@ export function spendingInsights(items: PantryItem[]): SpendingInsights {
     .reduce((sum, i) => sum + itemValue(i), 0);
 
   const byCategory = new Map<string, number>();
-  for (const i of items) byCategory.set(i.category, (byCategory.get(i.category) ?? 0) + itemValue(i));
+  for (const i of items)
+    byCategory.set(i.category, (byCategory.get(i.category) ?? 0) + itemValue(i));
   const top = [...byCategory.entries()].sort((a, b) => b[1] - a[1])[0];
 
   const ageDays = items.length
@@ -284,7 +293,9 @@ export function spendingInsights(items: PantryItem[]): SpendingInsights {
           sum +
           Math.max(
             0,
-            Math.round((Date.now() - new Date(`${i.purchase_date}T00:00:00`).getTime()) / 86_400_000),
+            Math.round(
+              (Date.now() - new Date(`${i.purchase_date}T00:00:00`).getTime()) / 86_400_000,
+            ),
           ),
         0,
       ) / items.length
@@ -416,10 +427,11 @@ export function generateInsights(
       id: "duplicate",
       kind: "duplicate",
       title: `${dupes.length} product${dupes.length > 1 ? "s are" : " is"} listed more than once`,
-      detail: dupes
-        .slice(0, 3)
-        .map((l) => `${l[0].name} ×${l.length}`)
-        .join(", ") + " — merge them to see true stock.",
+      detail:
+        dupes
+          .slice(0, 3)
+          .map((l) => `${l[0].name} ×${l.length}`)
+          .join(", ") + " — merge them to see true stock.",
       tone: "info",
     });
   }
@@ -461,7 +473,10 @@ export function generateInsights(
     insights.push({
       id: "shopping",
       kind: "shopping",
-      title: `Restock ${runOut.map((p) => p.name).slice(0, 3).join(", ")} soon`,
+      title: `Restock ${runOut
+        .map((p) => p.name)
+        .slice(0, 3)
+        .join(", ")} soon`,
       detail: `Based on how often you buy them, you'll run out around ${runOut[0].runsOutOn}.`,
       tone: "info",
     });
