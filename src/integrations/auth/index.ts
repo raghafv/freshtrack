@@ -1,7 +1,7 @@
 // Lightweight auth bridge for FreshTrack.
 // Keeps the same runtime behavior as the previous bridge.
 
-import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
+import { createLovableAuth } from "../../shims/cloud-auth-js";
 import { supabase } from "../supabase/client";
 const authBridge = createLovableAuth();
 
