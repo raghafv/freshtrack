@@ -61,10 +61,11 @@ type SupabaseLike = {
 };
 
 async function loadPantryContext(supabase: SupabaseLike) {
-  const [pantry, shopping, settings] = await Promise.all([
+  const [pantry, shopping, settings, activity] = await Promise.all([
     supabase.from("pantry_items").select("*").order("expiry_date", { ascending: true }),
     supabase.from("shopping_items").select("*"),
     supabase.from("user_settings").select("*").maybeSingle(),
+    supabase.from("activity_log").select("action, item_name, created_at").order("created_at", { ascending: false }).limit(120),
   ]);
 
   const items = ((pantry.data ?? []) as PantryRow[]).map((i) => ({
@@ -76,6 +77,7 @@ async function loadPantryContext(supabase: SupabaseLike) {
     storage: i.storage,
     expiry_date: i.expiry_date,
     days_left: daysUntil(i.expiry_date),
+    price: i.price,
   }));
 
   const shoppingNames = ((shopping.data ?? []) as { name: string; checked: boolean }[])
@@ -84,7 +86,27 @@ async function loadPantryContext(supabase: SupabaseLike) {
 
   const soonDays = (settings.data as { expiry_reminder_days?: number } | null)?.expiry_reminder_days ?? 3;
 
-  return { items, shoppingNames, soonDays };
+  const events = (activity.data ?? []) as { action: string; item_name: string | null }[];
+  const counts = new Map<string, number>();
+  for (const e of events) {
+    if (e.action !== "add" || !e.item_name) continue;
+    counts.set(e.item_name, (counts.get(e.item_name) ?? 0) + 1);
+  }
+  const repeatBuys = [...counts.entries()]
+    .filter(([, n]) => n > 1)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([name, n]) => ({ name, times: n }));
+
+  const value = items.reduce((sum, i) => sum + (i.price ?? 0), 0);
+  const atRisk = items
+    .filter((i) => i.days_left >= 0 && i.days_left <= soonDays)
+    .reduce((sum, i) => sum + (i.price ?? 0), 0);
+  const wasted = items
+    .filter((i) => i.days_left < 0)
+    .reduce((sum, i) => sum + (i.price ?? 0), 0);
+
+  return { items, shoppingNames, soonDays, repeatBuys, value, atRisk, wasted };
 }
 
 function pantrySystemPrompt(ctx: Awaited<ReturnType<typeof loadPantryContext>>) {
@@ -94,10 +116,15 @@ function pantrySystemPrompt(ctx: Awaited<ReturnType<typeof loadPantryContext>>) 
     "You answer questions ONLY from the live pantry data given below. Never invent items that are not in the pantry.",
     "Recipes must use only ingredients present in the pantry (basic salt, water, oil and common spices may be assumed), and should prioritise ingredients with the smallest days_left.",
     "When the user asks to generate or add to a shopping list, suggest items they do NOT already have in the pantry and that are not already on the shopping list — never duplicate a purchase.",
-    "Be concise and practical. Use short markdown (bold, bullet lists) and give real numbers from the data.",
+    "Be concise and practical. Use short markdown (bold, bullet lists, small tables) and give real numbers from the data.",
+    "You can handle all of these well: what expires this week, what to cook today, what to freeze (name the items whose shelf life the freezer actually extends), what to buy, a shopping list under a ₹ budget (stay under it and show the running total), multi-day meal plans (a table with day, meal, items used), and concrete food-waste reduction advice.",
+    "For budget lists, use realistic Indian retail prices and never exceed the stated budget.",
+    "For meal plans, spread items so the shortest days_left are eaten first and say which items would otherwise be wasted.",
     "",
     `PANTRY (${ctx.items.length} items): ${JSON.stringify(ctx.items)}`,
     `SHOPPING LIST (unchecked): ${JSON.stringify(ctx.shoppingNames)}`,
+    `VALUE: total ₹${ctx.value.toFixed(0)}, at risk in the next ${ctx.soonDays} days ₹${ctx.atRisk.toFixed(0)}, already expired ₹${ctx.wasted.toFixed(0)}.`,
+    `REPEAT PURCHASES (name, times bought): ${JSON.stringify(ctx.repeatBuys)}`,
     "",
     'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[{"name":"","quantity":1,"unit":"pcs","category":""}]}.',
     "shoppingAdds must be an empty array unless the user explicitly asked to add things to the shopping list.",
@@ -180,6 +207,8 @@ export interface PantryRecipe {
   uses: string[];
   priority: string[];
   steps: string[];
+  substitutions: { missing: string; use: string }[];
+  savesWaste: string | null;
   note: string | null;
 }
 
@@ -199,8 +228,9 @@ export const suggestRecipes = createServerFn({ method: "POST" })
           "Suggest 4 realistic home recipes I can cook right now.",
           "Every ingredient must already be in my pantry (salt, water, oil and common spices excepted).",
           "Prioritise the ingredients with the smallest days_left.",
-          'Reply with JSON only: {"recipes":[{"title":"","minutes":20,"uses":[""],"priority":[""],"steps":["",""],"note":null}]}.',
-          "uses: pantry item names used. priority: the expiring items this recipe rescues. steps: 3-6 short steps.",
+          "If a classic version of the dish needs something I do not have, keep the dish and swap in a pantry item instead — list that as a substitution.",
+          'Reply with JSON only: {"recipes":[{"title":"","minutes":20,"uses":[""],"priority":[""],"steps":["",""],"substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
+          "uses: pantry item names used. priority: the expiring items this recipe rescues. steps: 3-6 short steps. substitutions: [] when nothing is missing. savesWaste: what this rescues, e.g. \"uses 250 g spinach expiring in 1 day\".",
         ].join("\n"),
       },
     ]);
@@ -218,6 +248,18 @@ export const suggestRecipes = createServerFn({ method: "POST" })
           uses: Array.isArray(r.uses) ? r.uses.map(String).slice(0, 12) : [],
           priority: Array.isArray(r.priority) ? r.priority.map(String).slice(0, 6) : [],
           steps: Array.isArray(r.steps) ? r.steps.map(String).slice(0, 8) : [],
+          substitutions: Array.isArray(r.substitutions)
+            ? r.substitutions
+                .map((sub) => {
+                  const o = sub as Record<string, unknown>;
+                  const missing = String(o.missing ?? "").trim();
+                  const use = String(o.use ?? "").trim();
+                  return missing && use ? { missing, use } : null;
+                })
+                .filter((v): v is { missing: string; use: string } => v !== null)
+                .slice(0, 6)
+            : [],
+          savesWaste: r.savesWaste ? String(r.savesWaste) : null,
           note: r.note ? String(r.note) : null,
         } satisfies PantryRecipe;
       })
