@@ -15,7 +15,7 @@ interface Props {
   hint: string;
   captureLabel?: string;
   onCapture?: (blob: Blob) => void;
-  onBarcode?: (code: string) => void;
+  onBarcode?: (code: string, frame?: Blob) => void;
   onPickFile?: (file: File) => void;
 }
 
@@ -86,8 +86,9 @@ export function ScanCamera({
         const value = codes[0]?.rawValue?.replace(/\D/g, "");
         if (value && value.length >= 6) {
           firedRef.current = true;
+          const frame = await grabFrame();
           stop();
-          onBarcode?.(value);
+          onBarcode?.(value, frame ?? undefined);
         }
       } catch {
         /* keep scanning */
@@ -98,6 +99,18 @@ export function ScanCamera({
       window.clearInterval(timer);
     };
   }, [mode, on, onBarcode]);
+
+  async function grabFrame(): Promise<Blob | null> {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 720;
+    canvas.height = video.videoHeight || 960;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+  }
 
   async function capture() {
     const video = videoRef.current;
