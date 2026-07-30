@@ -248,9 +248,24 @@ function Dashboard() {
         )}
       </section>
 
-      <ItemFormDialog
+      <QuickAddDialog
         open={addOpen}
         onOpenChange={setAddOpen}
+        defaultStorage={settings?.default_storage}
+        defaultUnit={settings?.default_unit}
+        onDetails={(p) => {
+          setPrefill(p);
+          setFormOpen(true);
+        }}
+      />
+
+      <ItemFormDialog
+        open={formOpen}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) setPrefill(undefined);
+        }}
+        prefill={prefill}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
       />
