@@ -33,7 +33,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
-import { ItemFormDialog } from "@/components/item-form-dialog";
+import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
+import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
 import {
   CATEGORIES,
@@ -80,6 +81,8 @@ function PantryPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [editing, setEditing] = useState<PantryItem | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
@@ -129,7 +132,7 @@ function PantryPage() {
             className="press rounded-2xl"
             onClick={() => {
               setEditing(null);
-              setFormOpen(true);
+              setQuickOpen(true);
             }}
           >
             <Plus className="h-4 w-4" /> Add
@@ -259,7 +262,7 @@ function PantryPage() {
               className="press mt-2 rounded-2xl"
               onClick={() => {
                 setEditing(null);
-                setFormOpen(true);
+                setQuickOpen(true);
               }}
             >
               <Plus className="h-4 w-4" /> Add first item
@@ -378,13 +381,29 @@ function PantryPage() {
         </ul>
       )}
 
+      <QuickAddDialog
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        defaultStorage={settings?.default_storage}
+        defaultUnit={settings?.default_unit}
+        onDetails={(p) => {
+          setEditing(null);
+          setPrefill(p);
+          setFormOpen(true);
+        }}
+      />
+
       <ItemFormDialog
         open={formOpen}
         onOpenChange={(o) => {
           setFormOpen(o);
-          if (!o) setEditing(null);
+          if (!o) {
+            setEditing(null);
+            setPrefill(undefined);
+          }
         }}
         item={editing}
+        prefill={prefill}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
       />

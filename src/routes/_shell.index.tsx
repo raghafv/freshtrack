@@ -16,7 +16,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageContainer } from "@/components/layout";
-import { ItemFormDialog } from "@/components/item-form-dialog";
+import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
+import { QuickAddDialog } from "@/components/quick-add-dialog";
+
 import { StatusBadge } from "@/components/status-badge";
 import { useTheme } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
@@ -27,7 +29,7 @@ import {
   useScanHistory,
   useSettings,
 } from "@/lib/data";
-import { computeStats, expiryText, getStatus } from "@/lib/freshtrack";
+import { computeStats, expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
@@ -73,6 +75,8 @@ function Dashboard() {
   const { data: settings } = useSettings();
   const { resolved, toggle } = useTheme();
   const [addOpen, setAddOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
   const stats = computeStats(items, soonDays);
@@ -134,7 +138,11 @@ function Dashboard() {
 
       <section className="mb-5 grid grid-cols-3 gap-3">
         <MiniStat label="Added today" value={String(stats.addedToday)} />
-        <MiniStat label="Est. savings" value={`$${stats.savings.toFixed(0)}`} icon={CircleDollarSign} />
+        <MiniStat
+          label="Est. savings"
+          value={formatCurrency(stats.savings)}
+          icon={CircleDollarSign}
+        />
         <MiniStat label="Waste prevented" value={`${stats.wastePrevented} kg`} />
       </section>
 
@@ -244,9 +252,24 @@ function Dashboard() {
         )}
       </section>
 
-      <ItemFormDialog
+      <QuickAddDialog
         open={addOpen}
         onOpenChange={setAddOpen}
+        defaultStorage={settings?.default_storage}
+        defaultUnit={settings?.default_unit}
+        onDetails={(p) => {
+          setPrefill(p);
+          setFormOpen(true);
+        }}
+      />
+
+      <ItemFormDialog
+        open={formOpen}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) setPrefill(undefined);
+        }}
+        prefill={prefill}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
       />

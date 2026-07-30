@@ -31,6 +31,7 @@ import {
   toISODate,
   type PantryItem,
 } from "@/lib/freshtrack";
+import { expiryForProduct, findProduct, isUnusualStorage } from "@/lib/grocery-catalog";
 
 export interface ItemFormPrefill {
   name?: string;
@@ -111,14 +112,30 @@ export function ItemFormDialog({
     }
   }, [open, item, prefill, defaultStorage, defaultUnit]);
 
+  const product = findProduct(name);
+  const unusualStorage = product ? isUnusualStorage(product, storage) : false;
+
   // Auto-calculate expiry until the user overrides it manually.
   useEffect(() => {
     if (!open || expiryTouched) return;
-    setExpiryDate(estimateExpiry(category, storage, purchaseDate));
-  }, [open, expiryTouched, category, storage, purchaseDate]);
+    const known = findProduct(name);
+    setExpiryDate(
+      known
+        ? expiryForProduct(known, storage, purchaseDate)
+        : estimateExpiry(category, storage, purchaseDate),
+    );
+  }, [open, expiryTouched, name, category, storage, purchaseDate]);
 
   function onNameBlur() {
-    if (!item && name && category === "Other") {
+    if (item || !name) return;
+    const known = findProduct(name);
+    if (known) {
+      setCategory(known.category);
+      setUnit(known.unit);
+      if (category === "Other") setStorage(known.storage);
+      return;
+    }
+    if (category === "Other") {
       const guessed = guessCategory(name);
       if (guessed !== "Other") {
         setCategory(guessed);
@@ -278,6 +295,15 @@ export function ItemFormDialog({
             </div>
           </div>
 
+          {unusualStorage && product && (
+            <p className="rounded-2xl bg-warning/15 px-4 py-3 text-xs font-medium text-warning">
+              {storage} isn&apos;t the usual place for {product.name.toLowerCase()}. Expiry is
+              estimated conservatively — you can still save it.
+            </p>
+          )}
+
+
+
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="ft-purchase">Purchase date</Label>
@@ -304,15 +330,16 @@ export function ItemFormDialog({
 
           <div className="grid grid-cols-2 items-end gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="ft-price">Value (optional)</Label>
+              <Label htmlFor="ft-price">Value ₹ (optional)</Label>
               <Input
                 id="ft-price"
                 type="number"
+                inputMode="decimal"
                 min="0"
-                step="0.01"
+                step="1"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
+                placeholder="₹ 0"
               />
             </div>
             <div className="grid gap-2">

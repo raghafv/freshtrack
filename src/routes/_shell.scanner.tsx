@@ -10,6 +10,7 @@ import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dia
 import { useAuth } from "@/lib/auth";
 import { useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
 import { guessCategory } from "@/lib/freshtrack";
+import { findProduct } from "@/lib/grocery-catalog";
 
 export const Route = createFileRoute("/_shell/scanner")({
   head: () => ({
@@ -131,11 +132,14 @@ function ScannerPage() {
         return;
       }
       const name = json.product.product_name;
+      const known = findProduct(name);
       setPendingMethod("barcode");
       setPrefill({
-        name,
+        name: known?.name ?? name,
         brand: json.product.brands?.split(",")[0]?.trim(),
-        category: guessCategory(name),
+        category: known?.category ?? guessCategory(name),
+        unit: known?.unit,
+        storage: known?.storage,
         image_url: json.product.image_url ?? null,
         source: "barcode",
       });
