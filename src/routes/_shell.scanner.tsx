@@ -1,265 +1,425 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Barcode, Camera, Cpu, Loader2, ScanLine, X } from "lucide-react";
+import { useState } from "react";
+import {
+  Barcode,
+  Camera,
+  Check,
+  Cpu,
+  Loader2,
+  Receipt,
+  Search,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
+import { QuickAddDialog } from "@/components/quick-add-dialog";
+import { ScanCamera } from "@/components/scan-camera";
+import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
-import { useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
-import { guessCategory } from "@/lib/freshtrack";
+import { useAddPantryItem, useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
+import { expiryText } from "@/lib/freshtrack";
 import { findProduct } from "@/lib/grocery-catalog";
+import {
+  buildCandidate,
+  candidateExpiry,
+  candidateShelfDays,
+  confidenceLabel,
+  toDataUrl,
+  type ScanCandidate,
+} from "@/lib/scan";
+import { detectGroceries, parseReceipt, type ReceiptLine } from "@/lib/vision.functions";
 
 export const Route = createFileRoute("/_shell/scanner")({
   head: () => ({
     meta: [
-      { title: "Scanner — Add Groceries with Your Camera | FreshTrack" },
+      { title: "Scanner — AI Camera, Barcode & Receipt Scan | FreshTrack" },
       {
         name: "description",
         content:
-          "Capture groceries with your phone camera or look them up by barcode, then add them to your FreshTrack pantry instantly.",
+          "Scan groceries with AI photo recognition, live barcode reading or receipt OCR, then confirm quantity, date and storage in seconds.",
       },
       { property: "og:title", content: "FreshTrack Scanner" },
       {
         property: "og:description",
-        content: "Camera capture, barcode lookup and smart-device intake for your pantry.",
+        content: "AI photo recognition, live barcode scanning and receipt OCR for your pantry.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ScannerPage,
 });
+
+type BarcodeDetectorLike = {
+  detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>;
+};
 
 function ScannerPage() {
   const { user } = useAuth();
   const { data: settings } = useSettings();
   const { data: scans = [] } = useScanHistory();
   const recordScan = useRecordScan();
+  const addItem = useAddPantryItem();
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [cameraOn, setCameraOn] = useState(false);
-  const [capturing, setCapturing] = useState(false);
-  const [barcode, setBarcode] = useState("");
-  const [lookingUp, setLookingUp] = useState(false);
-  const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [detections, setDetections] = useState<ScanCandidate[]>([]);
+  const [receiptLines, setReceiptLines] = useState<ReceiptLine[] | null>(null);
+  const [receiptPicked, setReceiptPicked] = useState<Record<number, boolean>>({});
+  const [importing, setImporting] = useState(false);
+
+  const [confirming, setConfirming] = useState<ScanCandidate | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [pendingMethod, setPendingMethod] = useState("camera");
 
-  useEffect(() => {
-    return () => stopCamera();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function stopCamera() {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    setCameraOn(false);
+  function openManual(reason?: string) {
+    if (reason) toast.info(reason);
+    setManualOpen(true);
   }
 
-  async function startCamera() {
+  /* ------------------------------- AI photo scan ------------------------------ */
+
+  async function runPhotoScan(blob: Blob) {
+    setBusy("Detecting groceries…");
+    setDetections([]);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setCameraOn(true);
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play();
+      const dataUrl = await toDataUrl(blob);
+      const { items } = await detectGroceries({ data: { image: dataUrl } });
+      if (items.length === 0) {
+        openManual("Couldn't recognise anything — search the catalog instead.");
+        return;
+      }
+      let imageUrl: string | null = null;
+      if (user) {
+        try {
+          imageUrl = await uploadPantryImage(user.id, blob, "jpg");
+        } catch {
+          /* photo storage is best-effort */
         }
-      });
-    } catch {
-      toast.error("Camera unavailable. Grant permission or add the item manually.");
-    }
-  }
-
-  async function capture() {
-    const video = videoRef.current;
-    if (!video || !user) return;
-    setCapturing(true);
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth || 720;
-      canvas.height = video.videoHeight || 960;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Capture failed");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.85),
+      }
+      setDetections(
+        items.map((it) =>
+          buildCandidate({
+            name: it.name,
+            brand: it.brand,
+            category: it.category,
+            unit: it.unit,
+            storage: it.storage,
+            shelfLifeDays: it.shelfLifeDays,
+            confidence: it.confidence,
+            image_url: imageUrl,
+            source: "camera",
+          }),
+        ),
       );
-      if (!blob) throw new Error("Capture failed");
-      const url = await uploadPantryImage(user.id, blob, "jpg");
-      stopCamera();
       setPendingMethod("camera");
-      setPrefill({ image_url: url, source: "camera" });
-      setFormOpen(true);
+      toast.success(`${items.length} item${items.length === 1 ? "" : "s"} detected`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not capture photo");
+      toast.error(e instanceof Error ? e.message : "Scan failed");
+      openManual();
     } finally {
-      setCapturing(false);
+      setBusy(null);
     }
   }
 
-  async function lookupBarcode() {
-    const code = barcode.replace(/\D/g, "");
-    if (code.length < 6) {
-      toast.error("Enter a valid barcode number");
-      return;
-    }
-    setLookingUp(true);
+  /* --------------------------------- barcode --------------------------------- */
+
+  async function lookupBarcode(code: string) {
+    setBusy("Looking up barcode…");
     try {
       const res = await fetch(
-        `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_url,categories_tags,quantity`,
+        `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_url,quantity`,
       );
       const json = (await res.json()) as {
         status?: number;
-        product?: {
-          product_name?: string;
-          brands?: string;
-          image_url?: string;
-          quantity?: string;
-        };
+        product?: { product_name?: string; brands?: string; image_url?: string; quantity?: string };
       };
       if (json.status !== 1 || !json.product?.product_name) {
-        toast.info("Product not found — fill in the details manually.");
-        setPendingMethod("barcode");
-        setPrefill({ source: "barcode" });
-        setFormOpen(true);
+        openManual("Barcode not in the database — search manually.");
         return;
       }
       const name = json.product.product_name;
       const known = findProduct(name);
       setPendingMethod("barcode");
-      setPrefill({
-        name: known?.name ?? name,
-        brand: json.product.brands?.split(",")[0]?.trim(),
-        category: known?.category ?? guessCategory(name),
-        unit: known?.unit,
-        storage: known?.storage,
-        image_url: json.product.image_url ?? null,
-        source: "barcode",
-      });
-      setFormOpen(true);
+      setConfirming(
+        buildCandidate({
+          name: known?.name ?? name,
+          brand: json.product.brands?.split(",")[0]?.trim() ?? null,
+          unit: known?.unit,
+          storage: known?.storage,
+          image_url: json.product.image_url ?? null,
+          packageSize: json.product.quantity ?? null,
+          source: "barcode",
+        }),
+      );
       toast.success(`Found: ${name}`);
     } catch {
-      toast.error("Barcode lookup failed. Check your connection.");
+      openManual("Barcode lookup failed — search manually.");
     } finally {
-      setLookingUp(false);
+      setBusy(null);
     }
   }
 
-  function deviceIntake() {
-    setPendingMethod("device");
-    setPrefill({ source: "device", storage: "Fridge" });
-    setFormOpen(true);
-    toast.info("Simulating fridge device intake — confirm the item details.");
+  /** Fallback when the live reader isn't available: decode a captured photo. */
+  async function decodeBarcodeImage(blob: Blob) {
+    const Ctor = (window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike })
+      .BarcodeDetector;
+    if (!Ctor) {
+      openManual("This browser can't read barcodes — search manually.");
+      return;
+    }
+    try {
+      const bitmap = await createImageBitmap(blob);
+      const codes = await new Ctor().detect(bitmap);
+      const value = codes[0]?.rawValue?.replace(/\D/g, "");
+      if (value && value.length >= 6) {
+        await lookupBarcode(value);
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+    openManual("No barcode found in that photo — search manually.");
   }
+
+  /* --------------------------------- receipt --------------------------------- */
+
+  async function runReceiptScan(blob: Blob) {
+    setBusy("Reading receipt…");
+    setReceiptLines(null);
+    try {
+      const dataUrl = await toDataUrl(blob);
+      const { items } = await parseReceipt({ data: { image: dataUrl } });
+      if (items.length === 0) {
+        openManual("No products found on that receipt — add items manually.");
+        return;
+      }
+      setReceiptLines(items);
+      setReceiptPicked(Object.fromEntries(items.map((_, i) => [i, true])));
+      toast.success(`${items.length} line item${items.length === 1 ? "" : "s"} found`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Receipt scan failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function importReceipt() {
+    if (!receiptLines) return;
+    const chosen = receiptLines.filter((_, i) => receiptPicked[i]);
+    if (chosen.length === 0) {
+      toast.error("Select at least one item");
+      return;
+    }
+    setImporting(true);
+    try {
+      for (const line of chosen) {
+        const candidate = buildCandidate({
+          name: line.name,
+          unit: line.unit,
+          quantity: line.quantity,
+          source: "receipt",
+        });
+        const purchase = new Date().toISOString().slice(0, 10);
+        await addItem.mutateAsync({
+          name: candidate.name,
+          brand: null,
+          category: candidate.category,
+          quantity: line.quantity,
+          unit: candidate.unit,
+          purchase_date: purchase,
+          expiry_date: candidateExpiry(candidate, candidate.storage, purchase),
+          storage: candidate.storage,
+          image_url: null,
+          source: "receipt",
+          price: line.price,
+        });
+      }
+      await recordScan.mutateAsync({ method: "receipt", items_added: chosen.length });
+      toast.success(`${chosen.length} item${chosen.length === 1 ? "" : "s"} added to pantry`);
+      setReceiptLines(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  /* ----------------------------------- ui ------------------------------------ */
 
   return (
     <PageContainer>
       <PageHeader
         title="Scanner"
-        subtitle="Your phone camera works exactly like the FreshTrack fridge device."
+        subtitle="Point, scan, confirm — AI recognition, barcodes and receipts in one place."
       />
 
       <Tabs defaultValue="camera">
-        <TabsList className="grid w-full grid-cols-3 rounded-2xl">
-          <TabsTrigger value="camera" className="rounded-xl">
-            <Camera className="mr-1 h-4 w-4" /> Camera
+        <TabsList className="grid w-full grid-cols-4 rounded-2xl">
+          <TabsTrigger value="camera" className="rounded-xl text-xs sm:text-sm">
+            <Camera className="mr-1 h-4 w-4" /> Scan
           </TabsTrigger>
-          <TabsTrigger value="barcode" className="rounded-xl">
+          <TabsTrigger value="barcode" className="rounded-xl text-xs sm:text-sm">
             <Barcode className="mr-1 h-4 w-4" /> Barcode
           </TabsTrigger>
-          <TabsTrigger value="device" className="rounded-xl">
+          <TabsTrigger value="receipt" className="rounded-xl text-xs sm:text-sm">
+            <Receipt className="mr-1 h-4 w-4" /> Receipt
+          </TabsTrigger>
+          <TabsTrigger value="device" className="rounded-xl text-xs sm:text-sm">
             <Cpu className="mr-1 h-4 w-4" /> Device
           </TabsTrigger>
         </TabsList>
 
+        {/* -------------------------------- AI scan ------------------------------- */}
         <TabsContent value="camera" className="mt-4">
-          <div className="surface-card overflow-hidden p-4">
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-muted">
-              <video
-                ref={videoRef}
-                playsInline
-                muted
-                className={`h-full w-full object-cover ${cameraOn ? "" : "hidden"}`}
-              />
-              {!cameraOn && (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                  <ScanLine className="h-10 w-10 text-primary" />
-                  <p className="max-w-xs px-6 text-sm text-muted-foreground">
-                    Point your camera at the item, capture it, and confirm the details.
-                  </p>
-                </div>
-              )}
-              {cameraOn && (
-                <div className="pointer-events-none absolute inset-6 rounded-2xl border-2 border-primary/70" />
-              )}
-            </div>
+          <ScanCamera
+            mode="photo"
+            busy={busy === "Detecting groceries…"}
+            busyLabel="Detecting groceries…"
+            hint="Point the camera at your groceries and capture — FreshTrack recognises the items, suggests storage and estimates shelf life."
+            onCapture={runPhotoScan}
+          />
 
-            <div className="mt-4 flex gap-2">
-              {cameraOn ? (
-                <>
-                  <Button
-                    className="press h-12 flex-1 rounded-2xl"
-                    onClick={capture}
-                    disabled={capturing}
-                  >
-                    {capturing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Camera className="h-4 w-4" />
-                    )}
-                    Capture item
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="h-12 rounded-2xl"
-                    onClick={stopCamera}
-                    aria-label="Stop camera"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <Button className="press h-12 w-full rounded-2xl" onClick={startCamera}>
-                  <Camera className="h-4 w-4" /> Open camera
+          {detections.length > 0 && (
+            <section className="mt-4 animate-fade-up">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Detected items</h2>
+                <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => setDetections([])}>
+                  Clear
                 </Button>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="barcode" className="mt-4">
-          <div className="surface-card p-5">
-            <p className="mb-3 text-sm text-muted-foreground">
-              Enter the barcode number printed on the pack. FreshTrack looks it up in the Open Food
-              Facts database and fills in the details for you.
-            </p>
-            <div className="flex gap-2">
-              <Input
-                value={barcode}
-                inputMode="numeric"
-                maxLength={20}
-                placeholder="e.g. 5449000000996"
-                className="h-12 rounded-2xl"
-                onChange={(e) => setBarcode(e.target.value)}
-              />
+              </div>
+              <ul className="space-y-2">
+                {detections.map((c) => {
+                  const conf = c.confidence != null ? confidenceLabel(c.confidence) : null;
+                  const expiry = candidateExpiry(
+                    c,
+                    c.storage,
+                    new Date().toISOString().slice(0, 10),
+                  );
+                  return (
+                    <li key={c.key}>
+                      <button
+                        type="button"
+                        onClick={() => setConfirming(c)}
+                        className="press surface-card flex w-full items-center justify-between gap-3 p-3 text-left"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {c.category} · {c.storage} · {candidateShelfDays(c, c.storage)}d ·{" "}
+                            {expiryText(expiry).toLowerCase()}
+                          </p>
+                        </div>
+                        {conf && (
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              conf.tone === "high" && "bg-success/15 text-success",
+                              conf.tone === "medium" && "bg-warning/15 text-warning",
+                              conf.tone === "low" && "bg-destructive/15 text-destructive",
+                            )}
+                          >
+                            <Sparkles className="mr-1 inline h-3 w-3" />
+                            {conf.label}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
               <Button
-                className="press h-12 rounded-2xl"
-                onClick={lookupBarcode}
-                disabled={lookingUp}
+                variant="secondary"
+                className="press mt-3 w-full rounded-2xl"
+                onClick={() => openManual()}
               >
-                {lookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Look up"}
+                <Search className="h-4 w-4" /> Something missing? Search manually
               </Button>
-            </div>
-          </div>
+            </section>
+          )}
         </TabsContent>
 
+        {/* -------------------------------- barcode ------------------------------- */}
+        <TabsContent value="barcode" className="mt-4">
+          <ScanCamera
+            mode="barcode"
+            busy={busy === "Looking up barcode…"}
+            busyLabel="Looking up barcode…"
+            hint="Hold the barcode inside the frame — FreshTrack reads it automatically and fetches the product name, brand and pack size."
+            onBarcode={lookupBarcode}
+            onCapture={decodeBarcodeImage}
+          />
+          <Button
+            variant="secondary"
+            className="press mt-3 w-full rounded-2xl"
+            onClick={() => openManual()}
+          >
+            <Search className="h-4 w-4" /> Search manually instead
+          </Button>
+        </TabsContent>
+
+        {/* -------------------------------- receipt ------------------------------- */}
+        <TabsContent value="receipt" className="mt-4">
+          <ScanCamera
+            mode="photo"
+            busy={busy === "Reading receipt…"}
+            busyLabel="Reading receipt…"
+            captureLabel="Capture receipt"
+            hint="Photograph your grocery bill — FreshTrack reads the line items so you can import them in one tap."
+            onCapture={runReceiptScan}
+          />
+
+          {receiptLines && (
+            <section className="mt-4 animate-fade-up">
+              <h2 className="mb-2 text-base font-semibold">
+                Detected products ({receiptLines.length})
+              </h2>
+              <ul className="space-y-2">
+                {receiptLines.map((line, i) => (
+                  <li
+                    key={`${line.name}-${i}`}
+                    className="surface-card flex items-center gap-3 p-3"
+                  >
+                    <Checkbox
+                      id={`rl-${i}`}
+                      checked={!!receiptPicked[i]}
+                      onCheckedChange={(v) =>
+                        setReceiptPicked((p) => ({ ...p, [i]: v === true }))
+                      }
+                    />
+                    <label htmlFor={`rl-${i}`} className="min-w-0 flex-1 cursor-pointer">
+                      <p className="truncate text-sm font-medium">{line.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {line.quantity} {line.unit}
+                        {line.price != null ? ` · ₹${line.price}` : ""}
+                      </p>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                className="press mt-3 h-12 w-full rounded-2xl"
+                onClick={importReceipt}
+                disabled={importing}
+              >
+                {importing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                Import selected items
+              </Button>
+            </section>
+          )}
+        </TabsContent>
+
+        {/* --------------------------------- device ------------------------------- */}
         <TabsContent value="device" className="mt-4">
           <div className="surface-card p-5">
             <div className="mb-3 flex items-center gap-3">
@@ -275,7 +435,16 @@ function ScannerPage() {
               The magnetic AI camera writes into this exact same pantry. Simulate a device intake to
               see how items will arrive from the fridge.
             </p>
-            <Button variant="secondary" className="press h-12 w-full rounded-2xl" onClick={deviceIntake}>
+            <Button
+              variant="secondary"
+              className="press h-12 w-full rounded-2xl"
+              onClick={() => {
+                setPendingMethod("device");
+                setPrefill({ source: "device", storage: "Fridge" });
+                setFormOpen(true);
+                toast.info("Simulating fridge device intake — confirm the item details.");
+              }}
+            >
               Simulate device intake
             </Button>
           </div>
@@ -286,7 +455,7 @@ function ScannerPage() {
         <h2 className="mb-3 text-base font-semibold">Scan history</h2>
         {scans.length === 0 ? (
           <p className="surface-card p-4 text-sm text-muted-foreground">
-            No scans yet. Every capture, barcode lookup and device intake is logged here.
+            No scans yet. Every capture, barcode lookup and receipt import is logged here.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -306,6 +475,26 @@ function ScannerPage() {
           </ul>
         )}
       </section>
+
+      <ScanConfirmDialog
+        candidate={confirming}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        onSaved={(c) => {
+          setDetections((d) => d.filter((x) => x.key !== c.key));
+          void recordScan.mutateAsync({ method: c.source || pendingMethod, items_added: 1 });
+        }}
+      />
+
+      <QuickAddDialog
+        open={manualOpen}
+        onOpenChange={setManualOpen}
+        defaultStorage={settings?.default_storage}
+        defaultUnit={settings?.default_unit}
+        onDetails={(p) => {
+          setPrefill(p);
+          setFormOpen(true);
+        }}
+      />
 
       <ItemFormDialog
         open={formOpen}

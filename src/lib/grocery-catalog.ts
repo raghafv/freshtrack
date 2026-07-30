@@ -7,17 +7,41 @@ export interface ShelfLife {
   Pantry?: number;
 }
 
+/** How a product is measured by default. */
+export type ProductForm = "solid" | "liquid" | "count";
+
+export function formForUnit(unit: string): ProductForm {
+  if (unit === "mL" || unit === "L") return "liquid";
+  if (unit === "g" || unit === "kg") return "solid";
+  return "count";
+}
+
+/** Measure units offered for a product form — weight/volume plus piece count. */
+export function unitOptionsFor(form: ProductForm): string[] {
+  if (form === "liquid") return ["mL", "L", "pcs"];
+  if (form === "solid") return ["g", "kg", "pcs"];
+  return ["pcs", "g", "kg"];
+}
+
+export function stepForUnit(unit: string): number {
+  if (unit === "g" || unit === "mL") return 50;
+  if (unit === "kg" || unit === "L") return 0.5;
+  return 1;
+}
+
 export interface GroceryProduct {
   id: string;
   name: string;
   category: string;
   unit: string;
+  form: ProductForm;
   storage: StorageType;
   shelf: ShelfLife;
   /** Lower rank = more popular. */
   rank: number;
   aliases: string[];
 }
+
 
 /**
  * Compact tuple form: [name, category, unit, defaultStorage, shelfLife, aliases?]
@@ -284,7 +308,9 @@ export const GROCERY_CATALOG: GroceryProduct[] = ROWS.map(
     name,
     category,
     unit,
+    form: formForUnit(unit),
     storage,
+
     shelf,
     rank: index,
     aliases: aliases ?? [],
@@ -344,13 +370,27 @@ export function isUnusualStorage(product: GroceryProduct, storage: string): bool
   return !recommendedStorages(product).includes(storage as StorageType);
 }
 
-/** Days of shelf life for the given product + storage, with a safe fallback. */
-export function shelfLifeDays(product: GroceryProduct, storage: string): number {
-  const exact = product.shelf[storage as StorageType];
+/** Days of shelf life for any shelf-life table + storage, with a safe fallback. */
+export function shelfDaysFrom(shelf: ShelfLife, storage: string): number {
+  const exact = shelf[storage as StorageType];
   if (exact != null) return exact;
-  const values = Object.values(product.shelf).filter((v): v is number => v != null);
+  const values = Object.values(shelf).filter((v): v is number => v != null);
   return values.length ? Math.min(...values) : 7;
 }
+
+/** Days of shelf life for the given product + storage, with a safe fallback. */
+export function shelfLifeDays(product: GroceryProduct, storage: string): number {
+  return shelfDaysFrom(product.shelf, storage);
+}
+
+/** Storage options that make sense for an arbitrary shelf-life table. */
+export function recommendedFrom(shelf: ShelfLife): StorageType[] {
+  return (["Fridge", "Freezer", "Pantry"] as StorageType[]).filter((s) => {
+    const days = shelf[s];
+    return days != null && days >= 2;
+  });
+}
+
 
 export function expiryForProduct(
   product: GroceryProduct,

@@ -36,6 +36,8 @@ import {
   type QuickAddState,
 } from "@/lib/quick-add-store";
 import type { ItemFormPrefill } from "@/components/item-form-dialog";
+import { MeasureInput } from "@/components/measure-input";
+
 
 interface Props {
   open: boolean;
@@ -63,6 +65,8 @@ export function QuickAddDialog({
   const [selected, setSelected] = useState<GroceryProduct | null>(null);
 
   const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState<string>(defaultUnit);
+
   const [purchaseDate, setPurchaseDate] = useState(toISODate(new Date()));
   const [storage, setStorage] = useState<string>(defaultStorage);
 
@@ -83,9 +87,11 @@ export function QuickAddDialog({
   function pick(product: GroceryProduct) {
     setSelected(product);
     setQuantity("1");
+    setUnit(product.form === "count" ? "pcs" : product.unit);
     setPurchaseDate(toISODate(new Date()));
     setStorage(product.storage);
   }
+
 
   const results = useMemo(() => (query ? searchCatalog(query) : []), [query]);
   const favorites = useMemo(() => resolveMany(store.favorites), [store.favorites]);
@@ -116,7 +122,7 @@ export function QuickAddDialog({
         brand: null,
         category: selected.category,
         quantity: qty,
-        unit: selected.unit || defaultUnit,
+        unit: unit || selected.unit || defaultUnit,
         purchase_date: purchaseDate,
         expiry_date: expiry,
         storage,
@@ -199,41 +205,16 @@ export function QuickAddDialog({
             </DialogHeader>
 
             <div className="grid gap-4 overflow-y-auto py-1">
-              <div className="grid gap-2">
-                <Label htmlFor="qa-qty">Quantity ({selected.unit})</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    aria-label="Decrease quantity"
-                    className="h-11 w-11 shrink-0 rounded-xl"
-                    onClick={() =>
-                      setQuantity((q) => String(Math.max(0.5, (Number(q) || 1) - 1)))
-                    }
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    id="qa-qty"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.5"
-                    className="h-11 text-center text-base font-semibold"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                  />
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    aria-label="Increase quantity"
-                    className="h-11 w-11 shrink-0 rounded-xl"
-                    onClick={() => setQuantity((q) => String((Number(q) || 0) + 1))}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <MeasureInput
+                id="qa-qty"
+                label="Quantity"
+                form={selected.form}
+                value={quantity}
+                unit={unit}
+                onValueChange={setQuantity}
+                onUnitChange={setUnit}
+              />
+
 
               <div className="grid gap-2">
                 <Label>Storage</Label>
@@ -299,7 +280,7 @@ export function QuickAddDialog({
                     name: selected.name,
                     category: selected.category,
                     storage,
-                    unit: selected.unit,
+                    unit,
                     quantity: Number(quantity) || 1,
                     source: "quick-add",
                   });
