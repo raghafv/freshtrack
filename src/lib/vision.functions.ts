@@ -161,3 +161,46 @@ export const parseReceipt = createServerFn({ method: "POST" })
         .slice(0, 40),
     };
   });
+
+export interface LabelDates {
+  /** ISO yyyy-mm-dd manufacturing / packed date, when printed on the label. */
+  manufactured: string | null;
+  /** ISO yyyy-mm-dd expiry / best-before date, when printed on the label. */
+  expiry: string | null;
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function cleanDate(value: unknown): string | null {
+  const s = String(value ?? "").trim();
+  if (!ISO_DATE.test(s)) return null;
+  const d = new Date(`${s}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const year = d.getFullYear();
+  if (year < 2000 || year > 2100) return null;
+  return s;
+}
+
+/** Read printed manufacturing / expiry dates from a packaged product label photo. */
+export const extractLabelDates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ImageInput.parse(input))
+  .handler(async ({ data }): Promise<LabelDates> => {
+    const parsed = await callVision(
+      data.image,
+      "You read printed dates off packaged grocery labels. Always answer with JSON only.",
+      [
+        "Look at this packaged product photo, especially near the barcode and the printed batch details.",
+        'Reply with JSON: {"manufactured":null,"expiry":null}.',
+        "Find any MFG / PKD / packed date and any EXP / EXPIRY / BEST BEFORE / USE BY date.",
+        'Return each as an ISO date string "YYYY-MM-DD". If only month and year are printed, use the last day of that month for expiry and the first day for manufacturing.',
+        'If a label says "best before N months from manufacture", compute the expiry from the manufacturing date.',
+        "Return null for any date that is not clearly printed. Never guess.",
+      ].join("\n"),
+    );
+
+    return {
+      manufactured: cleanDate(parsed.manufactured),
+      expiry: cleanDate(parsed.expiry),
+    };
+  });
