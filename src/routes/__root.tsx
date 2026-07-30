@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste.",
       },
-      { name: "theme-color", content: "#f7f3ea" },
+      { name: "theme-color", content: "#f2f4f3" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "FreshTrack" },
       { property: "og:type", content: "website" },
