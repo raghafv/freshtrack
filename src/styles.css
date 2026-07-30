@@ -245,3 +245,28 @@
 @utility safe-bottom {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px));
 }
+
+@keyframes ft-scan-beam {
+  0% {
+    transform: translateY(0);
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateY(calc(100% * 6));
+    opacity: 0.15;
+  }
+}
+
+@utility scan-beam {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklch, var(--color-primary) 55%, transparent),
+    transparent
+  );
+  animation: ft-scan-beam 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
