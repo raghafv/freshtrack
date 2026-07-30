@@ -168,6 +168,23 @@ export interface PantryStats {
   healthScore: number;
   savings: number;
   wastePrevented: number;
+  /** Items expiring within the next 7 days (not yet expired). */
+  expiringThisWeek: number;
+  /** Average days of life left across non-expired items. */
+  avgDaysLeft: number;
+  /** Rupee value sitting in items that are expired or expiring soon. */
+  atRiskValue: number;
+  /** Rupee value already lost to expired items. */
+  wastedValue: number;
+}
+
+/** Freshness of a single item on a 0-1 scale, derived purely from its expiry date. */
+export function itemFreshness(item: { expiry_date: string }, soonDays = 3): number {
+  const d = daysUntil(item.expiry_date);
+  if (d < 0) return 0;
+  if (d === 0) return 0.15;
+  if (d <= soonDays) return 0.35 + 0.3 * (d / Math.max(1, soonDays));
+  return Math.min(1, 0.7 + 0.3 * Math.min(1, (d - soonDays) / 14));
 }
 
 export function computeStats(items: PantryItem[], soonDays = 3): PantryStats {
@@ -176,18 +193,37 @@ export function computeStats(items: PantryItem[], soonDays = 3): PantryStats {
   let soon = 0;
   let expired = 0;
   let addedToday = 0;
+  let expiringThisWeek = 0;
+  let freshnessSum = 0;
+  let daysSum = 0;
+  let aliveCount = 0;
+  let atRiskValue = 0;
+  let wastedValue = 0;
 
   for (const item of items) {
     const status = getStatus(item, soonDays);
+    const days = daysUntil(item.expiry_date);
+    const value = item.price ?? AVG_ITEM_VALUE;
+
     if (status === "fresh") fresh++;
     else if (status === "soon") soon++;
     else expired++;
+
+    if (days >= 0) {
+      aliveCount++;
+      daysSum += days;
+      if (days <= 7) expiringThisWeek++;
+      if (status === "soon") atRiskValue += value;
+    } else {
+      wastedValue += value;
+    }
+
+    freshnessSum += itemFreshness(item, soonDays);
     if (item.created_at.slice(0, 10) === today) addedToday++;
   }
 
   const total = items.length;
-  const healthScore =
-    total === 0 ? 100 : Math.round(((fresh + soon * 0.5) / total) * 100);
+  const healthScore = total === 0 ? 100 : Math.round((freshnessSum / total) * 100);
 
   const savings = Number(
     items
@@ -198,7 +234,20 @@ export function computeStats(items: PantryItem[], soonDays = 3): PantryStats {
 
   const wastePrevented = Number(((fresh + soon) * 0.45).toFixed(1));
 
-  return { total, fresh, soon, expired, addedToday, healthScore, savings, wastePrevented };
+  return {
+    total,
+    fresh,
+    soon,
+    expired,
+    addedToday,
+    healthScore,
+    savings,
+    wastePrevented,
+    expiringThisWeek,
+    avgDaysLeft: aliveCount === 0 ? 0 : Math.round(daysSum / aliveCount),
+    atRiskValue: Number(atRiskValue.toFixed(2)),
+    wastedValue: Number(wastedValue.toFixed(2)),
+  };
 }
 
 export function formatQty(quantity: number, unit: string): string {
