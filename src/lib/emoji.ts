@@ -180,13 +180,13 @@ export function categoryEmoji(category: string): string {
 }
 
 const STORAGE_EMOJI: Record<string, string> = {
-  Fridge: "🧊",
-  Freezer: "❄️",
-  Pantry: "�storage",
+  Fridge: "\u{1F9CA}",
+  Freezer: "\u2744\uFE0F",
+  Pantry: "\u{1F5C4}\uFE0F",
 };
 
 export function storageEmoji(storage: string): string {
-  return storage === "Freezer" ? "❄️" : storage === "Fridge" ? "🧊" : "🗄️";
+  return STORAGE_EMOJI[storage] ?? STORAGE_EMOJI.Pantry;
 }
 
 export { STORAGE_EMOJI };
