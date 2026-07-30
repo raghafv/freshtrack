@@ -63,7 +63,7 @@ export interface DetectedGrocery {
   storage: string;
   shelfLifeDays: number;
   unit: string;
-  brand?: string | null;
+  brand: string | null;
 }
 
 /** Detect grocery products visible in a photo. */
