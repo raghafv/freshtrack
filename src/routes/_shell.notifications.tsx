@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import {
+  useActivity,
   useNotificationMutations,
   useNotifications,
   usePantryItems,
@@ -14,7 +15,9 @@ import {
   useUpdateSettings,
   notify,
 } from "@/lib/data";
-import { expiryText, getStatus } from "@/lib/freshtrack";
+import { expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
+import { generateInsights, spendingInsights } from "@/lib/analytics";
+import { emojiFor } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/notifications")({
@@ -47,6 +50,7 @@ function NotificationsPage() {
   const { data: notifications = [], isLoading, refetch } = useNotifications();
   const { data: items = [] } = usePantryItems();
   const { data: settings } = useSettings();
+  const { data: activity = [] } = useActivity(200);
   const updateSettings = useUpdateSettings();
   const { markAllRead, markRead, clearAll } = useNotificationMutations();
   const generated = useRef(false);
@@ -54,32 +58,73 @@ function NotificationsPage() {
   const soonDays = settings?.expiry_reminder_days ?? 3;
   const enabled = settings?.notifications_enabled ?? true;
 
-  // Generate today's expiry reminders once per day, per device.
+  // Generate today's reminders, insight alerts and the weekly summary once per day.
   useEffect(() => {
     if (generated.current || !enabled || items.length === 0) return;
     const today = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem("freshtrack-reminders") === today) return;
     generated.current = true;
 
-    const due = items.filter((i) => getStatus(i, soonDays) !== "fresh");
-    if (due.length === 0) {
-      localStorage.setItem("freshtrack-reminders", today);
-      return;
-    }
-
     void (async () => {
+      // 1. Expiry reminders for anything not fresh.
+      const due = items.filter((i) => getStatus(i, soonDays) !== "fresh");
       for (const item of due.slice(0, 20)) {
         const expired = getStatus(item, soonDays) === "expired";
         await notify(
-          expired ? `${item.name} has expired` : `Use ${item.name} soon`,
+          expired
+            ? `${emojiFor(item.name, item.category)} ${item.name} has expired`
+            : `${emojiFor(item.name, item.category)} Use ${item.name} soon`,
           `${item.storage} · ${expiryText(item.expiry_date)}`,
           expired ? "danger" : "warning",
         );
       }
+
+      // 2. Live insights: low stock, duplicates, freezing, shopping advice.
+      const insights = generateInsights(items, activity, soonDays).filter(
+        (i) => i.kind !== "expiring",
+      );
+      for (const insight of insights.slice(0, 6)) {
+        await notify(
+          insight.title,
+          insight.detail,
+          insight.tone === "bad" ? "danger" : insight.tone === "warn" ? "warning" : "info",
+        );
+      }
+
+      // 3. Pantry value change since the last check.
+      const spend = spendingInsights(items);
+      const previous = Number(localStorage.getItem("freshtrack-pantry-value") ?? "");
+      if (Number.isFinite(previous) && previous > 0) {
+        const delta = spend.totalValue - previous;
+        if (Math.abs(delta) >= Math.max(200, previous * 0.15)) {
+          await notify(
+            delta > 0 ? "📈 Your pantry value went up" : "📉 Your pantry value dropped",
+            `Now ${formatCurrency(spend.totalValue)} (${delta > 0 ? "+" : "−"}${formatCurrency(Math.abs(delta))} since the last check).`,
+            "info",
+          );
+        }
+      }
+      localStorage.setItem("freshtrack-pantry-value", String(spend.totalValue));
+
+      // 4. Weekly pantry summary, once per calendar week.
+      const week = `${new Date().getFullYear()}-W${Math.ceil(
+        ((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 86_400_000 + 1) / 7,
+      )}`;
+      if (localStorage.getItem("freshtrack-weekly") !== week) {
+        const expired = items.filter((i) => getStatus(i, soonDays) === "expired").length;
+        const soon = items.filter((i) => getStatus(i, soonDays) === "soon").length;
+        await notify(
+          "🗓️ Your weekly pantry summary",
+          `${items.length} items worth ${formatCurrency(spend.totalValue)} · ${soon} to use soon · ${expired} expired · average pantry age ${spend.avgPantryAgeDays} days.`,
+          expired > 0 ? "warning" : "success",
+        );
+        localStorage.setItem("freshtrack-weekly", week);
+      }
+
       localStorage.setItem("freshtrack-reminders", today);
       void refetch();
     })();
-  }, [items, enabled, soonDays, refetch]);
+  }, [items, activity, enabled, soonDays, refetch]);
 
   const unread = notifications.filter((n) => !n.read).length;
 
