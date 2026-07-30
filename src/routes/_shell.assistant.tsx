@@ -35,11 +35,13 @@ export const Route = createFileRoute("/_shell/assistant")({
 });
 
 const SUGGESTIONS = [
-  "Do I have milk?",
-  "Which items expire this week?",
-  "What should I finish today?",
-  "Suggest recipes using expiring ingredients",
-  "Generate my shopping list",
+  "What expires this week?",
+  "What should I cook today?",
+  "What should I freeze?",
+  "What should I buy?",
+  "Build a shopping list under ₹500",
+  "Plan my meals for the next 3 days",
+  "How do I cut my food waste?",
 ];
 
 function AssistantPage() {

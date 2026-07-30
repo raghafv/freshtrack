@@ -87,6 +87,9 @@ function RecipesPage() {
                   key={i.id}
                   className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary"
                 >
+                  <span aria-hidden className="mr-1">
+                    {emojiFor(i.name, i.category)}
+                  </span>
                   {i.name} · {expiryText(i.expiry_date).toLowerCase()}
                 </span>
               ))}
@@ -171,9 +174,28 @@ function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
               key={u}
               className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
             >
+              <span aria-hidden className="mr-1">
+                {emojiFor(u)}
+              </span>
               {u}
             </span>
           ))}
+        </div>
+      )}
+
+      {recipe.substitutions.length > 0 && (
+        <div className="mb-3 rounded-2xl bg-muted/60 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Substitutions
+          </p>
+          <ul className="mt-1 space-y-0.5">
+            {recipe.substitutions.map((sub) => (
+              <li key={sub.missing} className="text-xs text-muted-foreground">
+                No <span className="font-medium text-foreground">{sub.missing}</span> — use{" "}
+                <span className="font-medium text-foreground">{sub.use}</span> instead
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -187,6 +209,12 @@ function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
           </li>
         ))}
       </ol>
+
+      {recipe.savesWaste && (
+        <p className="mt-3 rounded-xl bg-success/10 px-3 py-2 text-xs font-medium text-success">
+          Saves waste: {recipe.savesWaste}
+        </p>
+      )}
 
       {recipe.note && <p className="mt-3 text-xs text-muted-foreground">{recipe.note}</p>}
     </li>
