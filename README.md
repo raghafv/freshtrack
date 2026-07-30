@@ -10,7 +10,7 @@
 
 ## 🌐 Live Demo
 
-🔗 **Website:** https://freshtrackmvp1.lovable.app/
+🔗 **Website:** https://freshtrack.example.com/
 
 > *(This project is actively under development. Features and UI may change over time.)*
 
@@ -43,7 +43,7 @@
 - **Authentication:** Supabase Auth
 - **Database:** PostgreSQL (Supabase)
 - **Barcode API:** OpenFoodFacts
-- **Deployment:** Lovable
+- **Deployment:** TBD (configure for your hosting provider)
 - **Version Control:** GitHub
 
 ---
