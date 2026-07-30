@@ -127,7 +127,15 @@ export function ItemFormDialog({
   }, [open, expiryTouched, name, category, storage, purchaseDate]);
 
   function onNameBlur() {
-    if (!item && name && category === "Other") {
+    if (item || !name) return;
+    const known = findProduct(name);
+    if (known) {
+      setCategory(known.category);
+      setUnit(known.unit);
+      if (category === "Other") setStorage(known.storage);
+      return;
+    }
+    if (category === "Other") {
       const guessed = guessCategory(name);
       if (guessed !== "Other") {
         setCategory(guessed);
