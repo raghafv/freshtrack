@@ -95,6 +95,78 @@ export function useUpdatePantryItem() {
   });
 }
 
+/** Quick +/- stock adjustment. Removes the item when it reaches zero. */
+export function useAdjustQuantity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      item,
+      delta,
+    }: {
+      item: { id: string; name: string; quantity: number; unit: string };
+      delta: number;
+    }) => {
+      const next = Number((Number(item.quantity) + delta).toFixed(2));
+      if (next <= 0) {
+        const { error } = await supabase.from("pantry_items").delete().eq("id", item.id);
+        if (error) throw error;
+        await logActivity("deleted", item.name, "Finished — removed from pantry");
+        return { removed: true, quantity: 0 };
+      }
+      const { error } = await supabase
+        .from("pantry_items")
+        .update({ quantity: next })
+        .eq("id", item.id);
+      if (error) throw error;
+      await logActivity(
+        delta > 0 ? "restocked" : "used",
+        item.name,
+        `${delta > 0 ? "+" : ""}${delta} ${item.unit} · now ${next} ${item.unit}`,
+      );
+      return { removed: false, quantity: next };
+    },
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
+/** Merges a newly added product into an existing pantry entry, keeping history. */
+export function useMergePantryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      name: string;
+      quantity: number;
+      unit: string;
+      expiry_date: string;
+      addedQuantity: number;
+      purchase_date?: string;
+      price?: number | null;
+    }) => {
+      const patch: Record<string, unknown> = {
+        quantity: input.quantity,
+        expiry_date: input.expiry_date,
+      };
+      if (input.price != null) patch.price = input.price;
+      const { error } = await supabase.from("pantry_items").update(patch).eq("id", input.id);
+      if (error) throw error;
+      await logActivity(
+        "added",
+        input.name,
+        `Merged +${input.addedQuantity} ${input.unit}${
+          input.purchase_date ? ` bought ${input.purchase_date}` : ""
+        } · now ${input.quantity} ${input.unit}`,
+      );
+      await notify(
+        "Stock merged",
+        `${input.name} is now ${input.quantity} ${input.unit} in one entry.`,
+        "info",
+      );
+    },
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
 export function useDeletePantryItems() {
   const qc = useQueryClient();
   return useMutation({
@@ -111,6 +183,7 @@ export function useDeletePantryItems() {
     onSuccess: () => invalidateAll(qc),
   });
 }
+
 
 /* --------------------------------- shopping -------------------------------- */
 
