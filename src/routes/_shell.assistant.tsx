@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,7 +64,7 @@ function AssistantPage() {
         toast.success(`Added to shopping list: ${res.added.join(", ")}`);
       }
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "The assistant failed"),
+    onError: (e) => toast.error(friendlyMessage(e, "The assistant failed")),
     onSettled: () => {
       setPending(null);
       inputRef.current?.focus();

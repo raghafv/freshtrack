@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Check, Loader2, Plus, ShoppingCart, Sparkles, Trash2 } from "lucide-react";
@@ -65,7 +66,7 @@ function ShoppingPage() {
       setSuggestions(res.suggestions);
       if (res.suggestions.length === 0) toast.info("Your pantry already covers the basics.");
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not generate a list"),
+    onError: (e) => toast.error(friendlyMessage(e, "Could not generate a list")),
   });
 
   async function addSuggestion(s: ShoppingSuggestion) {
@@ -103,7 +104,7 @@ function ShoppingPage() {
       setQuantity("1");
       toast.success("Added to list");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not add item");
+      toast.error(friendlyMessage(e, "Could not add item"));
     }
   }
 

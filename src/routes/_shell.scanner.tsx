@@ -163,7 +163,7 @@ function ScannerPage() {
       setPendingMethod("camera");
       toast.success(`${items.length} item${items.length === 1 ? "" : "s"} detected`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Scan failed");
+      toast.error(friendlyMessage(e, "Scan failed"));
       openManual();
     } finally {
       setBusy(null);
@@ -287,7 +287,7 @@ function ScannerPage() {
       setReceiptPicked(Object.fromEntries(items.map((_, i) => [i, true])));
       toast.success(`${items.length} line item${items.length === 1 ? "" : "s"} found`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Receipt scan failed");
+      toast.error(friendlyMessage(e, "Receipt scan failed"));
     } finally {
       setBusy(null);
     }
@@ -328,7 +328,7 @@ function ScannerPage() {
       toast.success(`${chosen.length} item${chosen.length === 1 ? "" : "s"} added to pantry`);
       setReceiptLines(null);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Import failed");
+      toast.error(friendlyMessage(e, "Import failed"));
     } finally {
       setImporting(false);
     }

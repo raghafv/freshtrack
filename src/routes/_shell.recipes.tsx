@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { emojiFor } from "@/lib/emoji";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ function RecipesPage() {
 
   const gen = useMutation({
     mutationFn: () => suggestRecipes({}),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not generate recipes"),
+    onError: (e) => toast.error(friendlyMessage(e, "Could not generate recipes")),
   });
 
   const recipes = gen.data?.recipes ?? [];
