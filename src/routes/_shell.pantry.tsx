@@ -81,6 +81,8 @@ function PantryPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [editing, setEditing] = useState<PantryItem | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
