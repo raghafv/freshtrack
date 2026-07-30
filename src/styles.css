@@ -5,10 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * FreshTrack design system — "Cream & Green".
- * Light: warm cream paper surfaces, ink typography, emerald accent.
- * Dark: true-black + charcoal glass, white typography, emerald accent.
- * Apple-style: SF Pro / Inter typography, big radii, soft shadows, whitespace.
+ * FreshTrack design system — "Stone & Bordeaux".
+ * Light: white-smoke #F2F4F3 canvas, ink #0A0908 type, stone-brown #5E503F accent.
+ * Dark: near-black #0A0908 base, cream type, taupe #A9927D accent.
+ * Montserrat typography, large radii, very soft elevation, minimal borders.
  * All colors are semantic tokens. Never hardcode colors in components.
  */
 
@@ -20,11 +20,10 @@
   --radius-2xl: calc(var(--radius) + 10px);
   --radius-3xl: calc(var(--radius) + 18px);
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", ui-sans-serif,
-    system-ui, "Segoe UI", sans-serif;
-  --font-display:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", ui-sans-serif, system-ui,
+    "Montserrat", -apple-system, BlinkMacSystemFont, "Inter", ui-sans-serif, system-ui, "Segoe UI",
     sans-serif;
+  --font-display:
+    "Montserrat", -apple-system, BlinkMacSystemFont, "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
