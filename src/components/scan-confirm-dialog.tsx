@@ -59,7 +59,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
     setPurchaseDate(candidate.labelManufactured ?? toISODate(new Date()));
     setName(candidate.name);
     setCategory(candidate.category);
-    setPrice(candidate.price != null ? String(candidate.price) : "");
+    setPrice("");
     setExpiryOverride(null);
   }, [candidate]);
 
