@@ -97,7 +97,7 @@ function AuthPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10">
-      <div className="gradient-hero pointer-events-none absolute -top-40 h-96 w-[140%] rounded-full opacity-25 blur-3xl" />
+      <div className="gradient-hero pointer-events-none absolute -top-40 h-96 w-[140%] rounded-full opacity-10 blur-3xl" />
 
       <div className="relative w-full max-w-md animate-fade-up">
         <div className="mb-8 text-center">
