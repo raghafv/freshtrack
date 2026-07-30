@@ -1,4 +1,5 @@
 // Local shim that re-exports the cloud auth factory from the installed package
-// Keeps direct package references out of integration files for branding reasons.
+// Keeps direct package references out of integration files.
 
-export { createLovableAuth } from "freshtrack-cloud-auth";
+// Re-export under a FreshTrack-friendly name to avoid showing legacy branding in top-level files.
+export { createLovableAuth as createFreshtrackAuth } from "freshtrack-cloud-auth";

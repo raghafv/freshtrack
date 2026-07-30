@@ -1,9 +1,9 @@
 // Lightweight auth bridge for FreshTrack.
 // Keeps the same runtime behavior as the previous bridge.
 
-import { createLovableAuth } from "../../shims/cloud-auth-js";
+import { createFreshtrackAuth } from "../../shims/cloud-auth-js";
 import { supabase } from "../supabase/client";
-const authBridge = createLovableAuth();
+const authBridge = createFreshtrackAuth();
 
 type SignInOptions = {
   redirect_uri?: string;
