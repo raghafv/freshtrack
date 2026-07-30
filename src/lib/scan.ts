@@ -27,7 +27,12 @@ export interface ScanCandidate {
   matched: boolean;
   quantity: number;
   source: string;
+  /** Expiry printed on the label (ISO date), overrides shelf-life estimation. */
+  labelExpiry?: string | null;
+  /** Manufacturing / packed date printed on the label (ISO date). */
+  labelManufactured?: string | null;
 }
+
 
 let counter = 0;
 function nextKey(prefix: string) {
@@ -123,10 +128,12 @@ export function candidateExpiry(
   storage: string,
   purchaseDate: string,
 ): string {
+  if (candidate.labelExpiry) return candidate.labelExpiry;
   const base = new Date(`${purchaseDate}T00:00:00`);
   base.setDate(base.getDate() + candidateShelfDays(candidate, storage));
   return toISODate(base);
 }
+
 
 export function candidateUnusualStorage(candidate: ScanCandidate, storage: string): boolean {
   return !recommendedFrom(candidate.shelf).includes(storage as StorageType);
