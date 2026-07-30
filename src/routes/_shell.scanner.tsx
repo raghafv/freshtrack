@@ -131,11 +131,14 @@ function ScannerPage() {
         return;
       }
       const name = json.product.product_name;
+      const known = findProduct(name);
       setPendingMethod("barcode");
       setPrefill({
-        name,
+        name: known?.name ?? name,
         brand: json.product.brands?.split(",")[0]?.trim(),
-        category: guessCategory(name),
+        category: known?.category ?? guessCategory(name),
+        unit: known?.unit,
+        storage: known?.storage,
         image_url: json.product.image_url ?? null,
         source: "barcode",
       });
