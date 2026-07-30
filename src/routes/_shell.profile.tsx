@@ -2,6 +2,7 @@ import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  BarChart3,
   ChevronRight,
   LogOut,
   Moon,
@@ -162,6 +163,19 @@ function ProfilePage() {
           }}
         />
       </section>
+
+      <Link
+        to="/analytics"
+        className="surface-card press mb-3 flex items-center justify-between p-4"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <BarChart3 className="h-5 w-5" />
+          </span>
+          <span className="text-sm font-semibold">Analytics</span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       <Link
         to="/settings"

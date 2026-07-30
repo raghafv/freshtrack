@@ -1,29 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  Bell,
-  ChefHat,
-  LayoutDashboard,
-  Refrigerator,
-  ScanLine,
-  ShoppingCart,
-  Sparkles,
-  User,
-} from "lucide-react";
+import { Bell, Home, Refrigerator, ScanLine, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/", label: "Home", icon: LayoutDashboard },
+  { to: "/", label: "Home", icon: Home },
   { to: "/pantry", label: "Pantry", icon: Refrigerator },
   { to: "/scanner", label: "Scan", icon: ScanLine },
-  { to: "/recipes", label: "Recipes", icon: ChefHat },
-  { to: "/assistant", label: "Ask", icon: Sparkles },
-  { to: "/shopping", label: "List", icon: ShoppingCart },
-  { to: "/notifications", label: "Alerts", icon: Bell },
-  { to: "/profile", label: "Profile", icon: User },
+  { to: "/assistant", label: "AI", icon: Sparkles },
 ] as const;
 
-export function BottomNav({ unread = 0 }: { unread?: number }) {
+export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -48,12 +35,8 @@ export function BottomNav({ unread = 0 }: { unread?: number }) {
                   )}
                 >
                   <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
-                  {to === "/notifications" && unread > 0 && (
-                    <span className="absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
                 </span>
+
                 {label}
               </Link>
             </li>

@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PageContainer, PageHeader } from "@/components/layout";
+import { AiTabs } from "@/components/ai-tabs";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useAssistantMessages, useClearAssistant, type AssistantMessage } from "@/lib/data";
@@ -89,6 +90,7 @@ function AssistantPage() {
 
   return (
     <PageContainer>
+      <AiTabs active="assistant" />
       <PageHeader
         title="Ask FreshTrack"
         subtitle="Real answers from the groceries you actually own."

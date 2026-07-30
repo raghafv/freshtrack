@@ -2,46 +2,54 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Activity,
   ArrowRight,
-  CircleDollarSign,
-  Cpu,
-  Leaf,
-  Package,
+  BarChart3,
+  ChefHat,
+  Lightbulb,
   Plus,
   ScanLine,
+  ShoppingCart,
   Sparkles,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { PageContainer } from "@/components/layout";
+import { AppBar } from "@/components/app-bar";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
-
 import { StatusBadge } from "@/components/status-badge";
-import { useTheme } from "@/lib/theme";
-import { Moon, Sun } from "lucide-react";
-import { useActivity, usePantryItems, useProfile, useScanHistory, useSettings } from "@/lib/data";
-import { computeStats, expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
-import { explainHealth } from "@/lib/analytics";
+import {
+  useActivity,
+  usePantryItems,
+  useProfile,
+  useSettings,
+  useShoppingItems,
+  useShoppingMutations,
+} from "@/lib/data";
+import { computeStats, expiryText, formatCurrency, formatQty, getStatus } from "@/lib/freshtrack";
+import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
 import { emojiFor } from "@/lib/emoji";
-import { DashboardAnalytics } from "@/components/dashboard-analytics";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
     meta: [
-      { title: "FreshTrack Dashboard — Pantry Health at a Glance" },
+      { title: "FreshTrack Home — What Needs Your Attention Today" },
       {
         name: "description",
         content:
-          "See your pantry health score, items expiring soon, savings and recent activity in the FreshTrack dashboard.",
+          "Your pantry at a glance: health score, what is expiring, what to buy and what to cook — all from your live FreshTrack pantry.",
       },
-      { property: "og:title", content: "FreshTrack Dashboard" },
+      { property: "og:title", content: "FreshTrack Home" },
       {
         property: "og:description",
-        content: "Pantry health score, expiring items, savings and activity in one view.",
+        content: "Health score, alerts, shopping list and AI suggestions in one calm view.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Dashboard,
@@ -64,14 +72,30 @@ const ACTION_ICON: Record<string, typeof Plus> = {
   scan: ScanLine,
 };
 
+const SUGGESTION_KINDS: Insight["kind"][] = [
+  "consume-first",
+  "freeze",
+  "shopping",
+  "storage",
+  "overbuying",
+  "duplicate",
+];
+
+function healthLabel(score: number) {
+  if (score >= 85) return "Excellent";
+  if (score >= 70) return "Good";
+  if (score >= 50) return "Needs attention";
+  return "At risk";
+}
+
 function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
-  const { data: activity = [] } = useActivity(8);
+  const { data: activity = [] } = useActivity(6);
   const { data: fullActivity = [] } = useActivity(200);
-  const { data: scans = [] } = useScanHistory();
+  const { data: shopping = [] } = useShoppingItems();
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
-  const { resolved, toggle } = useTheme();
+  const { toggle } = useShoppingMutations();
   const [addOpen, setAddOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
@@ -79,124 +103,68 @@ function Dashboard() {
   const soonDays = settings?.expiry_reminder_days ?? 3;
   const stats = computeStats(items, soonDays);
   const health = explainHealth(items, soonDays);
-  const attention = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 4);
-  const lastScan = scans[0];
+  const insights = useMemo(
+    () => generateInsights(items, fullActivity, soonDays),
+    [items, fullActivity, soonDays],
+  );
+  const alerts = items
+    .filter((i) => getStatus(i, soonDays) !== "fresh")
+    .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date))
+    .slice(0, 4);
+  const lowStock = insights.filter((i) => i.kind === "low-stock").slice(0, 2);
+  const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 4);
+  const openShopping = shopping.filter((i) => !i.checked).slice(0, 4);
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
 
   return (
     <PageContainer>
-      <header className="mb-6 flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Hi {firstName} 👋</h1>
-        </div>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={toggle}
-          aria-label="Toggle theme"
-          className="press rounded-2xl"
-        >
-          {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-      </header>
+      <AppBar
+        greeting={`Hi ${firstName} 👋`}
+        subtitle={new Date().toLocaleDateString(undefined, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        })}
+      />
 
-      <section className="gradient-hero relative mb-5 overflow-hidden rounded-3xl p-5 text-primary-foreground shadow-lift">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-widest opacity-80">
-              Pantry health score
-            </p>
-            <p className="mt-1 text-5xl font-extrabold">{stats.healthScore}</p>
-            <p className="mt-1 max-w-[22rem] text-sm opacity-90">{health.headline}</p>
-          </div>
-          <Leaf className="h-14 w-14 opacity-40" />
+      {/* Hero — pantry health */}
+      <section className="gradient-hero mb-6 rounded-3xl p-6 text-primary-foreground shadow-lift">
+        <p className="text-xs font-medium uppercase tracking-widest opacity-75">Pantry health</p>
+        <div className="mt-2 flex items-end gap-3">
+          <p className="text-5xl font-extrabold leading-none">{stats.healthScore}%</p>
+          <p className="pb-1 text-base font-semibold opacity-90">
+            {healthLabel(stats.healthScore)}
+          </p>
         </div>
         <Progress
           value={stats.healthScore}
-          className="mt-4 h-2 bg-primary-foreground/25 [&>div]:bg-primary-foreground"
+          className="mt-4 h-1.5 bg-primary-foreground/25 [&>div]:bg-primary-foreground"
         />
-        <ul className="mt-3 space-y-1">
-          {health.reasons.map((reason) => (
-            <li key={reason.text} className="flex items-start gap-2 text-xs opacity-90">
-              <span aria-hidden className="mt-px">
-                {reason.tone === "good" ? "✅" : reason.tone === "warn" ? "⚠️" : "🚨"}
-              </span>
-              <span>{reason.text}</span>
-            </li>
-          ))}
-        </ul>
+        <p className="mt-3 text-sm opacity-90">{health.headline}</p>
       </section>
 
-      <section className="mb-5 grid grid-cols-2 gap-3">
-        <StatCard icon={Package} label="Total items" value={stats.total} tone="default" />
-        <StatCard icon={Leaf} label="Fresh" value={stats.fresh} tone="success" />
-        <StatCard icon={TriangleAlert} label="Use soon" value={stats.soon} tone="warning" />
-        <StatCard icon={Trash2} label="Expired" value={stats.expired} tone="danger" />
-      </section>
-
-      <section className="mb-5 grid grid-cols-3 gap-3">
-        <MiniStat label="Expiring this week" value={String(stats.expiringThisWeek)} />
-        <MiniStat
-          label="Value at risk"
-          value={formatCurrency(stats.atRiskValue)}
-          icon={CircleDollarSign}
-        />
-        <MiniStat label="Avg days left" value={`${stats.avgDaysLeft}d`} />
-      </section>
-
-      <section className="mb-5 grid grid-cols-3 gap-3">
-        <MiniStat label="Added today" value={String(stats.addedToday)} />
-        <MiniStat label="Pantry value" value={formatCurrency(stats.savings)} />
-        <MiniStat label="Wasted value" value={formatCurrency(stats.wastedValue)} />
-      </section>
-
-      <section className="mb-5 grid grid-cols-2 gap-3">
-        <Button asChild className="press h-14 rounded-2xl text-base">
-          <Link to="/scanner">
-            <ScanLine className="h-5 w-5" /> Scan item
-          </Link>
-        </Button>
-        <Button
-          variant="secondary"
-          className="press h-14 rounded-2xl text-base"
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus className="h-5 w-5" /> Add manually
-        </Button>
-      </section>
-
-      <section className="mb-5">
-        <Button asChild variant="secondary" className="press h-14 w-full rounded-2xl text-base">
-          <Link to="/assistant">
-            <Sparkles className="h-5 w-5 text-primary" /> Ask FreshTrack about your pantry
-          </Link>
-        </Button>
-      </section>
-
-      <section className="surface-card mb-5 p-4">
+      {/* Alerts — highest priority */}
+      <section className="surface-card mb-6 p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold">Needs attention</h2>
+          <h2 className="flex items-center gap-2 text-base font-semibold">
+            <TriangleAlert className="h-4 w-4 text-warning" /> Needs attention
+          </h2>
           <Link to="/pantry" className="text-xs font-medium text-primary">
-            View pantry <ArrowRight className="inline h-3 w-3" />
+            Pantry <ArrowRight className="inline h-3 w-3" />
           </Link>
         </div>
         {isLoading ? (
-          <p className="py-4 text-sm text-muted-foreground">Loading your pantry…</p>
-        ) : attention.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">
-            Nothing is expiring soon. {stats.total === 0 ? "Your pantry is empty." : "Nice work!"}
+          <p className="py-2 text-sm text-muted-foreground">Loading your pantry…</p>
+        ) : alerts.length === 0 && lowStock.length === 0 ? (
+          <p className="py-2 text-sm text-muted-foreground">
+            {stats.total === 0
+              ? "Your pantry is empty — scan or add your first item."
+              : "Nothing needs your attention today."}
           </p>
         ) : (
-          <ul className="divide-y divide-border">
-            {attention.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 py-2.5">
+          <ul className="space-y-3">
+            {alerts.map((item) => (
+              <li key={item.id} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
                     <span aria-hidden className="mr-1">
@@ -211,46 +179,114 @@ function Dashboard() {
                 <StatusBadge status={getStatus(item, soonDays)} />
               </li>
             ))}
+            {lowStock.map((i) => (
+              <li key={i.id} className="text-sm">
+                <p className="font-medium">{i.title}</p>
+                <p className="text-xs text-muted-foreground">{i.detail}</p>
+              </li>
+            ))}
           </ul>
         )}
       </section>
 
-      <DashboardAnalytics items={items} activity={fullActivity} soonDays={soonDays} />
-
-      <section className="mb-5 grid grid-cols-2 gap-3">
-        <div className="surface-card p-4">
-          <div className="mb-1 flex items-center gap-2 text-muted-foreground">
-            <ScanLine className="h-4 w-4" />
-            <span className="text-xs font-medium">Last scan</span>
-          </div>
-          <p className="text-sm font-semibold">
-            {lastScan ? timeAgo(lastScan.created_at) : "No scans yet"}
-          </p>
-          {lastScan && (
-            <p className="text-xs text-muted-foreground">
-              {lastScan.method} · {lastScan.items_added} item(s)
-            </p>
-          )}
+      {/* Shopping list preview */}
+      <section className="surface-card mb-6 p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-base font-semibold">
+            <ShoppingCart className="h-4 w-4 text-primary" /> Shopping list
+          </h2>
+          <Link to="/shopping" className="text-xs font-medium text-primary">
+            View all <ArrowRight className="inline h-3 w-3" />
+          </Link>
         </div>
-        <div className="surface-card p-4">
-          <div className="mb-1 flex items-center gap-2 text-muted-foreground">
-            <Cpu className="h-4 w-4" />
-            <span className="text-xs font-medium">Device status</span>
-          </div>
-          <p className="flex items-center gap-2 text-sm font-semibold">
-            <span className="h-2 w-2 rounded-full bg-warning" /> Not paired
+        {openShopping.length === 0 ? (
+          <p className="py-2 text-sm text-muted-foreground">
+            Nothing left to buy. Add items or let FreshTrack suggest a list.
           </p>
-          <p className="text-xs text-muted-foreground">Phone camera active</p>
-        </div>
+        ) : (
+          <ul className="space-y-3">
+            {openShopping.map((s) => (
+              <li key={s.id} className="flex items-center gap-3">
+                <Checkbox
+                  id={`shop-${s.id}`}
+                  checked={s.checked}
+                  onCheckedChange={(v) => toggle.mutate({ id: s.id, checked: !!v })}
+                />
+                <label htmlFor={`shop-${s.id}`} className="min-w-0 flex-1 text-sm">
+                  <span aria-hidden className="mr-1">
+                    {emojiFor(s.name, s.category)}
+                  </span>
+                  {s.name}
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    {formatQty(s.quantity, s.unit)}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
-      <section className="surface-card p-4">
+      {/* AI suggestions */}
+      {suggestions.length > 0 && (
+        <section className="surface-card mb-6 p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
+            <Lightbulb className="h-4 w-4 text-primary" /> Suggestions
+          </h2>
+          <ul className="space-y-3">
+            {suggestions.map((s) => (
+              <li key={s.id} className="text-sm">
+                <p className="font-medium">{s.title}</p>
+                <p className="text-xs leading-snug text-muted-foreground">{s.detail}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Button asChild variant="secondary" className="press h-11 rounded-2xl">
+              <Link to="/recipes">
+                <ChefHat className="h-4 w-4" /> Cook
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" className="press h-11 rounded-2xl">
+              <Link to="/assistant">
+                <Sparkles className="h-4 w-4" /> Ask AI
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* Quick actions */}
+      <section className="mb-6 grid grid-cols-2 gap-3">
+        <Button asChild className="press h-14 rounded-2xl text-base">
+          <Link to="/scanner">
+            <ScanLine className="h-5 w-5" /> Scan item
+          </Link>
+        </Button>
+        <Button
+          variant="secondary"
+          className="press h-14 rounded-2xl text-base"
+          onClick={() => setAddOpen(true)}
+        >
+          <Plus className="h-5 w-5" /> Add manually
+        </Button>
+      </section>
+
+      {/* Quick facts */}
+      <section className="mb-6 grid grid-cols-3 gap-3">
+        <Quick label="Pantry value" value={formatCurrency(stats.savings)} />
+        <Quick label="Total items" value={String(stats.total)} />
+        <Quick label="Expired" value={String(stats.expired)} tone="danger" />
+      </section>
+
+      {/* Recent activity */}
+      <section className="surface-card mb-6 p-5">
         <div className="mb-3 flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
           <h2 className="text-base font-semibold">Recent activity</h2>
         </div>
         {activity.length === 0 ? (
-          <p className="py-3 text-sm text-muted-foreground">
+          <p className="py-2 text-sm text-muted-foreground">
             Your pantry activity will appear here.
           </p>
         ) : (
@@ -278,6 +314,19 @@ function Dashboard() {
         )}
       </section>
 
+      <Link
+        to="/analytics"
+        className="surface-card press mb-2 flex items-center justify-between p-4"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <BarChart3 className="h-5 w-5" />
+          </span>
+          <span className="text-sm font-semibold">Full analytics</span>
+        </span>
+        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+
       <QuickAddDialog
         open={addOpen}
         onOpenChange={setAddOpen}
@@ -303,50 +352,12 @@ function Dashboard() {
   );
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Package;
-  label: string;
-  value: number;
-  tone: "default" | "success" | "warning" | "danger";
-}) {
-  const toneClass = {
-    default: "text-primary bg-primary-soft",
-    success: "text-success bg-success/15",
-    warning: "text-warning bg-warning/20",
-    danger: "text-destructive bg-destructive/15",
-  }[tone];
-
+function Quick({ label, value, tone }: { label: string; value: string; tone?: "danger" }) {
   return (
-    <div className="surface-card flex items-center gap-3 p-4">
-      <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${toneClass}`}>
-        <Icon className="h-5 w-5" />
-      </span>
-      <div>
-        <p className="text-xl font-bold leading-none">{value}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function MiniStat({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon?: typeof Package;
-}) {
-  return (
-    <div className="surface-card p-3 text-center">
-      {Icon && <Icon className="mx-auto mb-1 h-4 w-4 text-primary" />}
-      <p className="text-lg font-bold leading-none">{value}</p>
+    <div className="surface-card p-4 text-center">
+      <p className={cn("text-lg font-bold leading-none", tone === "danger" && "text-destructive")}>
+        {value}
+      </p>
       <p className="mt-1 text-[11px] text-muted-foreground">{label}</p>
     </div>
   );

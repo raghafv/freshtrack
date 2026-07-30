@@ -17,7 +17,14 @@ import { useSmartAdd } from "@/lib/smart-add";
 import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
 import { friendlyMessage } from "@/lib/errors";
 import { emojiFor } from "@/lib/emoji";
-import { STORAGE_TYPES, expiryText, toISODate } from "@/lib/freshtrack";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CATEGORIES, STORAGE_TYPES, expiryText, toISODate } from "@/lib/freshtrack";
 import {
   predictShelfLife,
   candidateShelfDays,
@@ -39,6 +46,10 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
   const [unit, setUnit] = useState("pcs");
   const [storage, setStorage] = useState("Pantry");
   const [purchaseDate, setPurchaseDate] = useState(toISODate(new Date()));
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("Other");
+  const [price, setPrice] = useState("");
+  const [expiryOverride, setExpiryOverride] = useState<string | null>(null);
 
   useEffect(() => {
     if (!candidate) return;
@@ -46,12 +57,16 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
     setUnit(candidate.unit);
     setStorage(candidate.storage);
     setPurchaseDate(candidate.labelManufactured ?? toISODate(new Date()));
+    setName(candidate.name);
+    setCategory(candidate.category);
+    setPrice("");
+    setExpiryOverride(null);
   }, [candidate]);
 
   if (!candidate) return null;
 
   const prediction = predictShelfLife(candidate, storage, purchaseDate);
-  const expiry = prediction.expiry;
+  const expiry = expiryOverride ?? prediction.expiry;
   const unusual = candidateUnusualStorage(candidate, storage);
   const conf = candidate.confidence != null ? confidenceLabel(candidate.confidence) : null;
 
@@ -64,9 +79,9 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
     }
     try {
       const result = await smartAdd.submit({
-        name: candidate.name,
+        name: name.trim() || candidate.name,
         brand: candidate.brand,
-        category: candidate.category,
+        category,
         quantity: qty,
         unit,
         purchase_date: purchaseDate,
@@ -74,13 +89,13 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
         storage,
         image_url: candidate.image_url,
         source: candidate.source,
-        price: null,
+        price: price.trim() === "" ? null : Number(price),
       });
       if (result) {
         toast.success(
           result.outcome === "merged"
             ? result.message
-            : `${candidate.name} added · ${expiryText(expiry).toLowerCase()}`,
+            : `${name.trim() || candidate.name} added · ${expiryText(expiry).toLowerCase()}`,
         );
         onSaved?.(candidate);
         onOpenChange(false);
@@ -143,6 +158,47 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
             />
           )}
 
+          <div className="grid gap-2">
+            <Label htmlFor="scan-name">Product name</Label>
+            <Input
+              id="scan-name"
+              className="h-11"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="scan-category">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger id="scan-category" className="h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="scan-price">Price (₹)</Label>
+              <Input
+                id="scan-price"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                className="h-11"
+                placeholder="Optional"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+          </div>
+
           <MeasureInput
             id="scan-qty"
             label="Quantity"
@@ -188,12 +244,20 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
             />
           </div>
 
-          <div className="rounded-2xl border border-border/60 bg-card/60 px-4 py-3">
+          <div className="grid gap-2">
+            <Label htmlFor="scan-expiry">
+              {candidate.labelExpiry ? "Expiry (read from label)" : "Expiry date"}
+            </Label>
+            <Input
+              id="scan-expiry"
+              type="date"
+              className="h-11"
+              value={expiry}
+              onChange={(e) => setExpiryOverride(e.target.value)}
+            />
             <p className="text-xs text-muted-foreground">
-              {candidate.labelExpiry ? "Expiry printed on label" : "Expires on"}
-            </p>
-            <p className="text-base font-semibold">
-              {expiry} <span className="text-muted-foreground">· {expiryText(expiry)}</span>
+              {expiryText(expiry)}
+              {expiryOverride ? " · edited by you" : " · estimated, tap to change"}
             </p>
           </div>
 
