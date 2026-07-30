@@ -36,6 +36,8 @@ import {
   type QuickAddState,
 } from "@/lib/quick-add-store";
 import type { ItemFormPrefill } from "@/components/item-form-dialog";
+import { MeasureInput } from "@/components/measure-input";
+
 
 interface Props {
   open: boolean;
@@ -63,6 +65,8 @@ export function QuickAddDialog({
   const [selected, setSelected] = useState<GroceryProduct | null>(null);
 
   const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState<string>(defaultUnit);
+
   const [purchaseDate, setPurchaseDate] = useState(toISODate(new Date()));
   const [storage, setStorage] = useState<string>(defaultStorage);
 
@@ -83,9 +87,11 @@ export function QuickAddDialog({
   function pick(product: GroceryProduct) {
     setSelected(product);
     setQuantity("1");
+    setUnit(product.form === "count" ? "pcs" : product.unit);
     setPurchaseDate(toISODate(new Date()));
     setStorage(product.storage);
   }
+
 
   const results = useMemo(() => (query ? searchCatalog(query) : []), [query]);
   const favorites = useMemo(() => resolveMany(store.favorites), [store.favorites]);
