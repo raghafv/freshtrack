@@ -124,14 +124,14 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
         <h2 className="mb-1 text-base font-semibold">Where your pantry sits</h2>
         <p className="mb-3 text-xs text-muted-foreground">
           {categories.length} categor{categories.length === 1 ? "y" : "ies"} ·{" "}
-          {storages.map((s) => `${storageEmoji(s.name)} ${s.name} ${s.count}`).join(" · ")}
+          {storages.map((s) => `${storageEmoji(s.name)} ${s.name} ${s.value}`).join(" · ")}
         </p>
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={categories}
-                dataKey="count"
+                dataKey="value"
                 nameKey="name"
                 innerRadius={45}
                 outerRadius={80}
@@ -162,7 +162,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
                 className="h-2.5 w-2.5 rounded-full"
                 style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
               />
-              {categoryEmoji(c.name)} {c.name} · {c.count}
+              {categoryEmoji(c.name)} {c.name} · {c.value}
             </li>
           ))}
         </ul>
