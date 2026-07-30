@@ -1,3 +1,4 @@
+import { emojiFor } from "@/lib/emoji";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ChefHat, Clock, Loader2, RefreshCw, Sparkles } from "lucide-react";
