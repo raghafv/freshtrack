@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -77,7 +78,7 @@ function ProfilePage() {
       setEditing(false);
       toast.success("Profile updated");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save");
+      toast.error(friendlyMessage(e, "Could not save"));
     }
   }
 
@@ -112,7 +113,9 @@ function ProfilePage() {
             </div>
           ) : (
             <>
-              <p className="truncate text-lg font-bold">{profile?.full_name ?? "FreshTrack user"}</p>
+              <p className="truncate text-lg font-bold">
+                {profile?.full_name ?? "FreshTrack user"}
+              </p>
               <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
             </>
           )}

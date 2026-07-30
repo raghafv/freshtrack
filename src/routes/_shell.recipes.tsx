@@ -1,3 +1,5 @@
+import { friendlyMessage } from "@/lib/errors";
+import { emojiFor } from "@/lib/emoji";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ChefHat, Clock, Loader2, RefreshCw, Sparkles } from "lucide-react";
@@ -20,7 +22,8 @@ export const Route = createFileRoute("/_shell/recipes")({
       { property: "og:title", content: "FreshTrack Recipes" },
       {
         property: "og:description",
-        content: "Recipes generated from your real pantry, starting with ingredients closest to expiry.",
+        content:
+          "Recipes generated from your real pantry, starting with ingredients closest to expiry.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -34,13 +37,11 @@ function RecipesPage() {
   const { data: settings } = useSettings();
   const soonDays = settings?.expiry_reminder_days ?? 3;
 
-  const priority = items
-    .filter((i) => getStatus(i, soonDays) !== "fresh")
-    .slice(0, 10);
+  const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
 
   const gen = useMutation({
     mutationFn: () => suggestRecipes({}),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not generate recipes"),
+    onError: (e) => toast.error(friendlyMessage(e, "Could not generate recipes")),
   });
 
   const recipes = gen.data?.recipes ?? [];
@@ -87,6 +88,9 @@ function RecipesPage() {
                   key={i.id}
                   className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary"
                 >
+                  <span aria-hidden className="mr-1">
+                    {emojiFor(i.name, i.category)}
+                  </span>
                   {i.name} · {expiryText(i.expiry_date).toLowerCase()}
                 </span>
               ))}
@@ -171,9 +175,28 @@ function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
               key={u}
               className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
             >
+              <span aria-hidden className="mr-1">
+                {emojiFor(u)}
+              </span>
               {u}
             </span>
           ))}
+        </div>
+      )}
+
+      {recipe.substitutions.length > 0 && (
+        <div className="mb-3 rounded-2xl bg-muted/60 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Substitutions
+          </p>
+          <ul className="mt-1 space-y-0.5">
+            {recipe.substitutions.map((sub) => (
+              <li key={sub.missing} className="text-xs text-muted-foreground">
+                No <span className="font-medium text-foreground">{sub.missing}</span> — use{" "}
+                <span className="font-medium text-foreground">{sub.use}</span> instead
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -187,6 +210,12 @@ function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
           </li>
         ))}
       </ol>
+
+      {recipe.savesWaste && (
+        <p className="mt-3 rounded-xl bg-success/10 px-3 py-2 text-xs font-medium text-success">
+          Saves waste: {recipe.savesWaste}
+        </p>
+      )}
 
       {recipe.note && <p className="mt-3 text-xs text-muted-foreground">{recipe.note}</p>}
     </li>

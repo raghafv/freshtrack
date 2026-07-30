@@ -12,7 +12,10 @@ type SignInOptions = {
 
 export const freshtrackAuth = {
   auth: {
-    signInWithOAuth: async (provider: "google" | "apple" | "microsoft" | "lovable", opts?: SignInOptions) => {
+    signInWithOAuth: async (
+      provider: "google" | "apple" | "microsoft" | "lovable",
+      opts?: SignInOptions,
+    ) => {
       const result = await authBridge.signInWithOAuth(provider, {
         redirect_uri: opts?.redirect_uri,
         extraParams: {

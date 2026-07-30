@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowDownUp,
   CheckSquare,
+  Minus,
   Package,
   Pencil,
   Plus,
@@ -35,7 +36,11 @@ import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
-import { useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
+import { useAdjustQuantity, useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
+import { emojiFor } from "@/lib/emoji";
+import { friendlyMessage } from "@/lib/errors";
+import { smartFilter } from "@/lib/pantry-search";
+import { stepForUnit } from "@/lib/grocery-catalog";
 import {
   CATEGORIES,
   STORAGE_TYPES,
@@ -71,6 +76,7 @@ function PantryPage() {
   const { data: items = [], isLoading } = usePantryItems();
   const { data: settings } = useSettings();
   const deleteItems = useDeletePantryItems();
+  const adjust = useAdjustQuantity();
 
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -87,36 +93,39 @@ function PantryPage() {
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
 
+  const search = useMemo(() => smartFilter(items, query, soonDays), [items, query, soonDays]);
+
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = items.filter((i) => {
-      if (q && !`${i.name} ${i.brand ?? ""}`.toLowerCase().includes(q)) return false;
+    const list = search.items.filter((i) => {
       if (category !== "all" && i.category !== category) return false;
       if (storage !== "all" && i.storage !== storage) return false;
       if (status !== "all" && getStatus(i, soonDays) !== status) return false;
       return true;
     });
+    if (query.trim() && search.interpreted) return list;
     return [...list].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "category") return a.category.localeCompare(b.category);
       if (sort === "added") return b.created_at.localeCompare(a.created_at);
       return a.expiry_date.localeCompare(b.expiry_date);
     });
-  }, [items, query, category, storage, status, sort, soonDays]);
+  }, [search, query, category, storage, status, sort, soonDays]);
 
   function toggleSelect(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   async function handleDelete(ids: string[]) {
-    const targets = items.filter((i) => ids.includes(i.id)).map((i) => ({ id: i.id, name: i.name }));
+    const targets = items
+      .filter((i) => ids.includes(i.id))
+      .map((i) => ({ id: i.id, name: i.name }));
     try {
       await deleteItems.mutateAsync(targets);
       toast.success(`${targets.length} item${targets.length > 1 ? "s" : ""} deleted`);
       setSelected([]);
       setSelectMode(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not delete");
+      toast.error(friendlyMessage(e, "Could not delete these items"));
     }
   }
 
@@ -145,11 +154,17 @@ function PantryPage() {
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search items or brands"
+          placeholder="Try 'dairy expiring this week' or 'dahi'"
           className="h-12 rounded-2xl pl-9"
-          maxLength={60}
+          maxLength={80}
         />
       </div>
+      {query.trim() && search.interpreted && (
+        <p className="-mt-1 mb-3 px-1 text-xs text-muted-foreground">
+          Searching {search.interpreted} · {visible.length} match
+          {visible.length === 1 ? "" : "es"}
+        </p>
+      )}
 
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Select value={category} onValueChange={setCategory}>
@@ -328,8 +343,11 @@ function PantryPage() {
                     className="h-14 w-14 shrink-0 rounded-2xl object-cover"
                   />
                 ) : (
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-                    <Package className="h-6 w-6" />
+                  <span
+                    aria-hidden
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-2xl"
+                  >
+                    {emojiFor(item.name, item.category)}
                   </span>
                 )}
 
@@ -348,31 +366,76 @@ function PantryPage() {
                 </div>
 
                 {!selectMode && (
-                  <div className="flex shrink-0 flex-col gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Edit ${item.name}`}
-                      className="h-8 w-8 rounded-xl"
-                      onClick={() => {
-                        setEditing(item);
-                        setFormOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Delete ${item.name}`}
-                      className="h-8 w-8 rounded-xl text-destructive"
-                      onClick={() => {
-                        setSelected([item.id]);
-                        setConfirmOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="flex shrink-0 flex-col items-center gap-1">
+                    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5">
+                      <button
+                        type="button"
+                        aria-label={`Use some ${item.name}`}
+                        className="press flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent/50"
+                        disabled={adjust.isPending}
+                        onClick={async () => {
+                          const step = stepForUnit(item.unit);
+                          try {
+                            const res = await adjust.mutateAsync({ item, delta: -step });
+                            toast.success(
+                              res.removed
+                                ? `${item.name} finished — removed`
+                                : `${item.name} · ${res.quantity} ${item.unit} left`,
+                            );
+                          } catch (e) {
+                            toast.error(friendlyMessage(e, "Could not update stock"));
+                          }
+                        }}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="min-w-8 text-center text-[11px] font-semibold tabular-nums">
+                        {formatQty(Number(item.quantity), item.unit)}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Add more ${item.name}`}
+                        className="press flex h-7 w-7 items-center justify-center rounded-full text-primary hover:bg-accent/50"
+                        disabled={adjust.isPending}
+                        onClick={async () => {
+                          const step = stepForUnit(item.unit);
+                          try {
+                            const res = await adjust.mutateAsync({ item, delta: step });
+                            toast.success(`${item.name} · ${res.quantity} ${item.unit}`);
+                          } catch (e) {
+                            toast.error(friendlyMessage(e, "Could not update stock"));
+                          }
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Edit ${item.name}`}
+                        className="h-8 w-8 rounded-xl"
+                        onClick={() => {
+                          setEditing(item);
+                          setFormOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Delete ${item.name}`}
+                        className="h-8 w-8 rounded-xl text-destructive"
+                        onClick={() => {
+                          setSelected([item.id]);
+                          setConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </li>

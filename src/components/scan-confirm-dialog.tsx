@@ -13,10 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MeasureInput } from "@/components/measure-input";
 import { cn } from "@/lib/utils";
-import { useAddPantryItem } from "@/lib/data";
+import { useSmartAdd } from "@/lib/smart-add";
+import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
+import { friendlyMessage } from "@/lib/errors";
+import { emojiFor } from "@/lib/emoji";
 import { STORAGE_TYPES, expiryText, toISODate } from "@/lib/freshtrack";
 import {
-  candidateExpiry,
+  predictShelfLife,
   candidateShelfDays,
   candidateUnusualStorage,
   confidenceLabel,
@@ -31,7 +34,7 @@ interface Props {
 
 /** Final confirmation before a scanned item is saved: amount, date, storage. */
 export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
-  const addItem = useAddPantryItem();
+  const smartAdd = useSmartAdd();
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("pcs");
   const [storage, setStorage] = useState("Pantry");
@@ -47,7 +50,8 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
 
   if (!candidate) return null;
 
-  const expiry = candidateExpiry(candidate, storage, purchaseDate);
+  const prediction = predictShelfLife(candidate, storage, purchaseDate);
+  const expiry = prediction.expiry;
   const unusual = candidateUnusualStorage(candidate, storage);
   const conf = candidate.confidence != null ? confidenceLabel(candidate.confidence) : null;
 
@@ -59,7 +63,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
       return;
     }
     try {
-      await addItem.mutateAsync({
+      const result = await smartAdd.submit({
         name: candidate.name,
         brand: candidate.brand,
         category: candidate.category,
@@ -72,11 +76,17 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
         source: candidate.source,
         price: null,
       });
-      toast.success(`${candidate.name} added · ${expiryText(expiry).toLowerCase()}`);
-      onSaved?.(candidate);
-      onOpenChange(false);
+      if (result) {
+        toast.success(
+          result.outcome === "merged"
+            ? result.message
+            : `${candidate.name} added · ${expiryText(expiry).toLowerCase()}`,
+        );
+        onSaved?.(candidate);
+        onOpenChange(false);
+      }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save item");
+      toast.error(friendlyMessage(e, "Could not save item"));
     }
   }
 
@@ -85,6 +95,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
       <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden rounded-3xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
+            <span aria-hidden>{emojiFor(candidate.name, candidate.category)}</span>
             {candidate.name}
             {conf && (
               <span
@@ -105,11 +116,24 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
               .filter(Boolean)
               .join(" · ") || candidate.category}
             {" · "}
-            {candidate.labelExpiry ? "expiry read from the label." : "expiry calculated automatically."}
+            {candidate.labelExpiry
+              ? "expiry read from the label."
+              : "expiry calculated automatically."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 overflow-y-auto py-1">
+          <div className="rounded-2xl bg-primary-soft px-4 py-3 text-primary">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold">
+                ~{prediction.days} day{prediction.days === 1 ? "" : "s"} of shelf life left
+              </p>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold">
+                {Math.round(prediction.confidence * 100)}% confident
+              </span>
+            </div>
+            <p className="mt-1 text-xs leading-snug opacity-90">{prediction.explanation}</p>
+          </div>
           {candidate.image_url && (
             <img
               src={candidate.image_url}
@@ -182,8 +206,8 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
         </div>
 
         <div className="mt-2 flex justify-end">
-          <Button className="press rounded-xl" onClick={save} disabled={addItem.isPending}>
-            {addItem.isPending ? (
+          <Button className="press rounded-xl" onClick={save} disabled={smartAdd.isPending}>
+            {smartAdd.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Check className="h-4 w-4" />
@@ -192,6 +216,28 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
           </Button>
         </div>
       </DialogContent>
+
+      <DuplicateMergeDialog
+        pending={smartAdd.pending}
+        busy={smartAdd.isPending}
+        onCancel={smartAdd.cancel}
+        onMerge={async () => {
+          const r = await smartAdd.confirmMerge();
+          if (r) {
+            toast.success(r.message);
+            onSaved?.(candidate);
+            onOpenChange(false);
+          }
+        }}
+        onKeepSeparate={async () => {
+          const r = await smartAdd.keepSeparate();
+          if (r) {
+            toast.success(r.message);
+            onSaved?.(candidate);
+            onOpenChange(false);
+          }
+        }}
+      />
     </Dialog>
   );
 }

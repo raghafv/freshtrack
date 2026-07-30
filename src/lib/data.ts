@@ -95,6 +95,79 @@ export function useUpdatePantryItem() {
   });
 }
 
+/** Quick +/- stock adjustment. Removes the item when it reaches zero. */
+export function useAdjustQuantity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      item,
+      delta,
+    }: {
+      item: { id: string; name: string; quantity: number; unit: string };
+      delta: number;
+    }) => {
+      const next = Number((Number(item.quantity) + delta).toFixed(2));
+      if (next <= 0) {
+        const { error } = await supabase.from("pantry_items").delete().eq("id", item.id);
+        if (error) throw error;
+        await logActivity("deleted", item.name, "Finished — removed from pantry");
+        return { removed: true, quantity: 0 };
+      }
+      const { error } = await supabase
+        .from("pantry_items")
+        .update({ quantity: next })
+        .eq("id", item.id);
+      if (error) throw error;
+      await logActivity(
+        delta > 0 ? "restocked" : "used",
+        item.name,
+        `${delta > 0 ? "+" : ""}${delta} ${item.unit} · now ${next} ${item.unit}`,
+      );
+      return { removed: false, quantity: next };
+    },
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
+/** Merges a newly added product into an existing pantry entry, keeping history. */
+export function useMergePantryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      name: string;
+      quantity: number;
+      unit: string;
+      expiry_date: string;
+      addedQuantity: number;
+      purchase_date?: string;
+      price?: number | null;
+    }) => {
+      const patch: { quantity: number; expiry_date: string; price?: number } = {
+        quantity: input.quantity,
+        expiry_date: input.expiry_date,
+      };
+      if (input.price != null) patch.price = input.price;
+      const { error } = await supabase.from("pantry_items").update(patch).eq("id", input.id);
+
+      if (error) throw error;
+      await logActivity(
+        "added",
+        input.name,
+        `Merged +${input.addedQuantity} ${input.unit}${
+          input.purchase_date ? ` bought ${input.purchase_date}` : ""
+        } · now ${input.quantity} ${input.unit}`,
+      );
+      await notify(
+        "Stock merged",
+        `${input.name} is now ${input.quantity} ${input.unit} in one entry.`,
+        "info",
+      );
+    },
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
 export function useDeletePantryItems() {
   const qc = useQueryClient();
   return useMutation({
@@ -136,8 +209,15 @@ export function useShoppingMutations() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["shopping", user?.id] });
 
   const add = useMutation({
-    mutationFn: async (item: { name: string; category: string; quantity: number; unit: string }) => {
-      const { error } = await supabase.from("shopping_items").insert({ ...item, user_id: user!.id });
+    mutationFn: async (item: {
+      name: string;
+      category: string;
+      quantity: number;
+      unit: string;
+    }) => {
+      const { error } = await supabase
+        .from("shopping_items")
+        .insert({ ...item, user_id: user!.id });
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -207,7 +287,10 @@ export function useNotificationMutations() {
 
   const clearAll = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -401,10 +484,7 @@ export function useClearAssistant() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("assistant_messages")
-        .delete()
-        .eq("user_id", user!.id);
+      const { error } = await supabase.from("assistant_messages").delete().eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["assistant", user?.id] }),

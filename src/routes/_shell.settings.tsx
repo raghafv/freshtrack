@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -67,7 +68,7 @@ function SettingsPage() {
       toast.success("Account deleted");
       navigate({ to: "/auth", replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not delete account");
+      toast.error(friendlyMessage(e, "Could not delete account"));
     } finally {
       setDeleting(false);
     }

@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,11 +36,13 @@ export const Route = createFileRoute("/_shell/assistant")({
 });
 
 const SUGGESTIONS = [
-  "Do I have milk?",
-  "Which items expire this week?",
-  "What should I finish today?",
-  "Suggest recipes using expiring ingredients",
-  "Generate my shopping list",
+  "What expires this week?",
+  "What should I cook today?",
+  "What should I freeze?",
+  "What should I buy?",
+  "Build a shopping list under ₹500",
+  "Plan my meals for the next 3 days",
+  "How do I cut my food waste?",
 ];
 
 function AssistantPage() {
@@ -61,7 +64,7 @@ function AssistantPage() {
         toast.success(`Added to shopping list: ${res.added.join(", ")}`);
       }
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "The assistant failed"),
+    onError: (e) => toast.error(friendlyMessage(e, "The assistant failed")),
     onSettled: () => {
       setPending(null);
       inputRef.current?.focus();
@@ -184,7 +187,11 @@ function AssistantPage() {
           disabled={ask.isPending || input.trim().length === 0}
           aria-label="Send"
         >
-          {ask.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {ask.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
         </Button>
       </form>
     </PageContainer>
@@ -198,9 +205,7 @@ function Bubble({ message }: { message: AssistantMessage }) {
       <div
         className={cn(
           "animate-fade-up max-w-[88%] rounded-3xl px-4 py-3 text-sm",
-          mine
-            ? "bg-primary text-primary-foreground rounded-br-lg"
-            : "surface-card rounded-bl-lg",
+          mine ? "bg-primary text-primary-foreground rounded-br-lg" : "surface-card rounded-bl-lg",
         )}
       >
         {mine ? (

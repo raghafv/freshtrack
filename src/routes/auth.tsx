@@ -1,3 +1,4 @@
+import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Leaf, Loader2, Mail } from "lucide-react";
@@ -88,7 +89,7 @@ function AuthPage() {
       }
       navigate({ to: "/", replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Authentication failed");
+      toast.error(friendlyMessage(e, "Authentication failed"));
     } finally {
       setBusy(false);
     }
@@ -116,7 +117,11 @@ function AuthPage() {
             className="press w-full rounded-2xl"
             size="lg"
           >
-            {googleBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+            {googleBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Mail className="h-4 w-4" />
+            )}
             Continue with Google
           </Button>
 

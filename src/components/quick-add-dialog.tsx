@@ -12,7 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useAddPantryItem } from "@/lib/data";
+import { categoryEmoji, emojiFor } from "@/lib/emoji";
+import { friendlyMessage } from "@/lib/errors";
+import { useSmartAdd } from "@/lib/smart-add";
+import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
 import { useAuth } from "@/lib/auth";
 import { STORAGE_TYPES, expiryText, toISODate } from "@/lib/freshtrack";
 import {
@@ -38,7 +41,6 @@ import {
 import type { ItemFormPrefill } from "@/components/item-form-dialog";
 import { MeasureInput } from "@/components/measure-input";
 
-
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,6 +48,8 @@ interface Props {
   defaultUnit?: string;
   /** Escape hatch: open the full manual form with these values prefilled. */
   onDetails: (prefill?: ItemFormPrefill) => void;
+  /** Called after a catalog product is stored, so callers can remember it. */
+  onAdded?: (product: GroceryProduct, storage: string) => void;
 }
 
 export function QuickAddDialog({
@@ -54,9 +58,10 @@ export function QuickAddDialog({
   defaultStorage = "Fridge",
   defaultUnit = "pcs",
   onDetails,
+  onAdded,
 }: Props) {
   const { user } = useAuth();
-  const addItem = useAddPantryItem();
+  const smartAdd = useSmartAdd();
   const searchRef = useRef<HTMLInputElement>(null);
 
   const [store, setStore] = useState<QuickAddState>({ favorites: [], recents: [], counts: {} });
@@ -92,7 +97,6 @@ export function QuickAddDialog({
     setStorage(product.storage);
   }
 
-
   const results = useMemo(() => (query ? searchCatalog(query) : []), [query]);
   const favorites = useMemo(() => resolveMany(store.favorites), [store.favorites]);
   const recents = useMemo(() => resolveMany(store.recents), [store.recents]);
@@ -100,9 +104,7 @@ export function QuickAddDialog({
   const popular = useMemo(() => popularProducts(12), []);
   const categoryItems = useMemo(
     () =>
-      activeCategory === "all"
-        ? []
-        : GROCERY_CATALOG.filter((p) => p.category === activeCategory),
+      activeCategory === "all" ? [] : GROCERY_CATALOG.filter((p) => p.category === activeCategory),
     [activeCategory],
   );
 
@@ -117,7 +119,7 @@ export function QuickAddDialog({
       return;
     }
     try {
-      await addItem.mutateAsync({
+      const result = await smartAdd.submit({
         name: selected.name,
         brand: null,
         category: selected.category,
@@ -131,10 +133,17 @@ export function QuickAddDialog({
         price: null,
       });
       persist(recordAdd(store, selected.id));
-      toast.success(`${selected.name} added · ${expiryText(expiry).toLowerCase()}`);
-      onOpenChange(false);
+      if (result) {
+        onAdded?.(selected, storage);
+        toast.success(
+          result.outcome === "merged"
+            ? result.message
+            : `${selected.name} added · ${expiryText(expiry).toLowerCase()}`,
+        );
+        onOpenChange(false);
+      }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save item");
+      toast.error(friendlyMessage(e, "Could not save item"));
     }
   }
 
@@ -145,11 +154,16 @@ export function QuickAddDialog({
         <button
           type="button"
           onClick={() => pick(product)}
-          className="flex min-h-12 flex-1 flex-col items-start justify-center px-3 py-2 text-left"
+          className="flex min-h-12 flex-1 items-center gap-2 px-3 py-2 text-left"
         >
-          <span className="text-sm font-semibold leading-tight">{product.name}</span>
-          <span className="text-[11px] text-muted-foreground">
-            {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
+          <span aria-hidden className="text-lg leading-none">
+            {emojiFor(product.name, product.category)}
+          </span>
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold leading-tight">{product.name}</span>
+            <span className="text-[11px] text-muted-foreground">
+              {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
+            </span>
           </span>
         </button>
         <Button
@@ -197,6 +211,7 @@ export function QuickAddDialog({
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
+                <span aria-hidden>{emojiFor(selected.name, selected.category)}</span>
                 {selected.name}
               </DialogTitle>
               <DialogDescription>
@@ -214,7 +229,6 @@ export function QuickAddDialog({
                 onValueChange={setQuantity}
                 onUnitChange={setUnit}
               />
-
 
               <div className="grid gap-2">
                 <Label>Storage</Label>
@@ -288,8 +302,12 @@ export function QuickAddDialog({
               >
                 More details
               </Button>
-              <Button className="press rounded-xl" onClick={handleSave} disabled={addItem.isPending}>
-                {addItem.isPending ? (
+              <Button
+                className="press rounded-xl"
+                onClick={handleSave}
+                disabled={smartAdd.isPending}
+              >
+                {smartAdd.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Check className="h-4 w-4" />
@@ -331,7 +349,7 @@ export function QuickAddDialog({
                       : "border-border/60 bg-card/60 hover:bg-accent/40",
                   )}
                 >
-                  {c === "all" ? "All" : c}
+                  {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
                 </button>
               ))}
             </div>
@@ -371,6 +389,26 @@ export function QuickAddDialog({
           </>
         )}
       </DialogContent>
+
+      <DuplicateMergeDialog
+        pending={smartAdd.pending}
+        busy={smartAdd.isPending}
+        onCancel={smartAdd.cancel}
+        onMerge={async () => {
+          const r = await smartAdd.confirmMerge();
+          if (r) {
+            toast.success(r.message);
+            onOpenChange(false);
+          }
+        }}
+        onKeepSeparate={async () => {
+          const r = await smartAdd.keepSeparate();
+          if (r) {
+            toast.success(r.message);
+            onOpenChange(false);
+          }
+        }}
+      />
     </Dialog>
   );
 }

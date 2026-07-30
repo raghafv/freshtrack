@@ -68,8 +68,9 @@ export function ScanCamera({
   // Barcode reading loop.
   useEffect(() => {
     if (mode !== "barcode" || !on) return;
-    const Ctor = (window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike })
-      .BarcodeDetector;
+    const Ctor = (
+      window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike }
+    ).BarcodeDetector;
     if (!Ctor) {
       setSupportsBarcode(false);
       return;
@@ -164,18 +165,15 @@ export function ScanCamera({
 
       {mode === "barcode" && on && !supportsBarcode && (
         <p className="mt-3 rounded-2xl bg-warning/15 px-4 py-2.5 text-xs font-medium text-warning">
-          This browser can&apos;t read barcodes live. Capture the barcode photo or use manual search.
+          This browser can&apos;t read barcodes live. Capture the barcode photo or use manual
+          search.
         </p>
       )}
 
       <div className="mt-4 flex gap-2">
         {on ? (
           <>
-            <Button
-              className="press h-12 flex-1 rounded-2xl"
-              onClick={capture}
-              disabled={busy}
-            >
+            <Button className="press h-12 flex-1 rounded-2xl" onClick={capture} disabled={busy}>
               <Camera className="h-4 w-4" />
               {mode === "barcode" ? "Capture barcode" : captureLabel}
             </Button>

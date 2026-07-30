@@ -31,8 +31,13 @@ export interface ScanCandidate {
   labelExpiry?: string | null;
   /** Manufacturing / packed date printed on the label (ISO date). */
   labelManufactured?: string | null;
+  /** Visual freshness 0-1 judged by the AI from the photo. */
+  freshness?: number | null;
+  /** True when the item looks factory sealed. */
+  packaged?: boolean;
+  /** Short AI note about what it saw ("skin slightly spotted"). */
+  note?: string | null;
 }
-
 
 let counter = 0;
 function nextKey(prefix: string) {
@@ -78,6 +83,9 @@ export function buildCandidate(input: {
   source?: string;
   labelExpiry?: string | null;
   labelManufactured?: string | null;
+  freshness?: number | null;
+  packaged?: boolean;
+  note?: string | null;
 }): ScanCandidate {
   const match = findProduct(input.name);
   if (match) {
@@ -91,7 +99,15 @@ export function buildCandidate(input: {
       source: input.source ?? "scan",
       labelExpiry: input.labelExpiry ?? null,
       labelManufactured: input.labelManufactured ?? null,
-      unit: input.unit && input.unit !== "pcs" ? input.unit : match.form === "count" ? "pcs" : match.unit,
+      freshness: input.freshness ?? null,
+      packaged: input.packaged ?? false,
+      note: input.note ?? null,
+      unit:
+        input.unit && input.unit !== "pcs"
+          ? input.unit
+          : match.form === "count"
+            ? "pcs"
+            : match.unit,
     });
   }
 
@@ -122,6 +138,100 @@ export function buildCandidate(input: {
     source: input.source ?? "scan",
     labelExpiry: input.labelExpiry ?? null,
     labelManufactured: input.labelManufactured ?? null,
+    freshness: input.freshness ?? null,
+    packaged: input.packaged ?? false,
+    note: input.note ?? null,
+  };
+}
+
+/** A realistic remaining-shelf-life estimate with the reasoning behind it. */
+export interface ShelfLifePrediction {
+  /** Remaining days from the purchase date. */
+  days: number;
+  expiry: string;
+  /** 0-1 confidence in this specific date. */
+  confidence: number;
+  source: "label" | "manufactured" | "estimated";
+  explanation: string;
+}
+
+function daysBetween(fromISO: string, toISO: string): number {
+  const a = new Date(`${fromISO}T00:00:00`).getTime();
+  const b = new Date(`${toISO}T00:00:00`).getTime();
+  return Math.round((b - a) / 86_400_000);
+}
+
+function addDays(fromISO: string, days: number): string {
+  const d = new Date(`${fromISO}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
+}
+
+/**
+ * Predicts how long an item really has left, combining the printed dates, the
+ * chosen storage, catalog shelf life and the freshness the AI could see.
+ */
+export function predictShelfLife(
+  candidate: ScanCandidate,
+  storage: string,
+  purchaseDate: string,
+): ShelfLifePrediction {
+  const base = candidateShelfDays(candidate, storage);
+
+  if (candidate.labelExpiry) {
+    const days = daysBetween(purchaseDate, candidate.labelExpiry);
+    return {
+      days,
+      expiry: candidate.labelExpiry,
+      confidence: 0.97,
+      source: "label",
+      explanation:
+        days >= 0
+          ? `Using the expiry date printed on the pack — ${days} day${days === 1 ? "" : "s"} left in the ${storage.toLowerCase()}.`
+          : "The printed expiry date has already passed, so this is marked expired.",
+    };
+  }
+
+  if (candidate.labelManufactured) {
+    const age = Math.max(0, daysBetween(candidate.labelManufactured, purchaseDate));
+    const days = Math.max(0, base - age);
+    return {
+      days,
+      expiry: addDays(purchaseDate, days),
+      confidence: 0.82,
+      source: "manufactured",
+      explanation: `No expiry printed, so counting from the packed date: a sealed ${candidate.name.toLowerCase()} keeps about ${base} days in the ${storage.toLowerCase()} and it is already ${age} day${age === 1 ? "" : "s"} old.`,
+    };
+  }
+
+  const freshness = candidate.freshness ?? (candidate.packaged ? 0.95 : 0.8);
+  // Fresh produce loses most of its life to how it already looks; sealed packs
+  // barely do, because the clock starts at packing.
+  const sensitivity = candidate.packaged ? 0.25 : 0.7;
+  const factor = 1 - sensitivity * (1 - freshness);
+  const days = Math.max(0, Math.round(base * factor));
+  const detection = candidate.confidence ?? 0.7;
+  const confidence = Math.min(
+    0.9,
+    Math.max(0.3, 0.45 + 0.3 * detection + (candidate.matched ? 0.15 : 0)),
+  );
+
+  const parts = [
+    `${candidate.name} normally keeps ~${base} days in the ${storage.toLowerCase()}`,
+    freshness >= 0.85
+      ? "and it looks freshly bought"
+      : freshness >= 0.6
+        ? "and it looks partly through its life"
+        : "but it already looks well past its best",
+  ];
+  if (candidate.note) parts.push(`(${candidate.note})`);
+
+  return {
+    days,
+    expiry: addDays(purchaseDate, days),
+    confidence,
+    source: "estimated",
+    explanation: `${parts.join(" ")}, so I estimate ${days} day${days === 1 ? "" : "s"} left.`,
   };
 }
 
@@ -134,12 +244,8 @@ export function candidateExpiry(
   storage: string,
   purchaseDate: string,
 ): string {
-  if (candidate.labelExpiry) return candidate.labelExpiry;
-  const base = new Date(`${purchaseDate}T00:00:00`);
-  base.setDate(base.getDate() + candidateShelfDays(candidate, storage));
-  return toISODate(base);
+  return predictShelfLife(candidate, storage, purchaseDate).expiry;
 }
-
 
 export function candidateUnusualStorage(candidate: ScanCandidate, storage: string): boolean {
   return !recommendedFrom(candidate.shelf).includes(storage as StorageType);

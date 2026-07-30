@@ -1,15 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  Barcode,
-  Camera,
-  Check,
-  Cpu,
-  Loader2,
-  Receipt,
-  Search,
-  Sparkles,
-} from "lucide-react";
+import { Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,13 +11,24 @@ import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
 import { cn } from "@/lib/utils";
+import { emojiFor } from "@/lib/emoji";
+import { friendlyMessage } from "@/lib/errors";
+import { learnProduct, lookupLearned } from "@/lib/custom-products";
 import { useAuth } from "@/lib/auth";
-import { useAddPantryItem, useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
+import {
+  useAddPantryItem,
+  useRecordScan,
+  useScanHistory,
+  useSettings,
+  uploadPantryImage,
+} from "@/lib/data";
 import { expiryText } from "@/lib/freshtrack";
-import { findProduct } from "@/lib/grocery-catalog";
+import { findProduct, shelfDaysFrom } from "@/lib/grocery-catalog";
+import type { StorageType } from "@/lib/freshtrack";
 import {
   buildCandidate,
   candidateExpiry,
+  predictShelfLife,
   candidateShelfDays,
   confidenceLabel,
   toDataUrl,
@@ -82,6 +84,35 @@ function ScannerPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [pendingMethod, setPendingMethod] = useState("camera");
+  /** Barcode waiting to be taught, set when a lookup came back empty. */
+  const [learnBarcode, setLearnBarcode] = useState<string | null>(null);
+
+  /** Remembers an unknown barcode so the next scan recognises it instantly. */
+  function rememberBarcode(input: {
+    name: string;
+    brand?: string | null;
+    category: string;
+    unit: string;
+    storage: string;
+    shelfLifeDays: number;
+  }) {
+    if (!learnBarcode) return;
+    learnProduct(
+      {
+        barcode: learnBarcode,
+        name: input.name,
+        brand: input.brand ?? null,
+        category: input.category,
+        unit: input.unit,
+        storage: input.storage as StorageType,
+        shelfLifeDays: input.shelfLifeDays,
+        savedAt: new Date().toISOString(),
+      },
+      user?.id,
+    );
+    toast.success(`Saved — I'll recognise this barcode next time`);
+    setLearnBarcode(null);
+  }
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
@@ -118,6 +149,9 @@ function ScannerPage() {
             storage: it.storage,
             shelfLifeDays: it.shelfLifeDays,
             confidence: it.confidence,
+            freshness: it.freshness,
+            packaged: it.packaged,
+            note: it.note,
             image_url: imageUrl,
             source: "camera",
           }),
@@ -126,7 +160,7 @@ function ScannerPage() {
       setPendingMethod("camera");
       toast.success(`${items.length} item${items.length === 1 ? "" : "s"} detected`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Scan failed");
+      toast.error(friendlyMessage(e, "Scan failed"));
       openManual();
     } finally {
       setBusy(null);
@@ -138,6 +172,26 @@ function ScannerPage() {
   async function lookupBarcode(code: string, frame?: Blob) {
     setBusy("Looking up barcode…");
     try {
+      const learned = lookupLearned(code, user?.id);
+      if (learned) {
+        setPendingMethod("barcode");
+        setLearnBarcode(null);
+        setConfirming(
+          buildCandidate({
+            name: learned.name,
+            brand: learned.brand,
+            category: learned.category,
+            unit: learned.unit,
+            storage: learned.storage,
+            shelfLifeDays: learned.shelfLifeDays,
+            packaged: true,
+            source: "barcode",
+          }),
+        );
+        toast.success(`${learned.name} — recognised from your saved products`);
+        return;
+      }
+
       const res = await fetch(
         `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_url,quantity`,
       );
@@ -146,7 +200,8 @@ function ScannerPage() {
         product?: { product_name?: string; brands?: string; image_url?: string; quantity?: string };
       };
       if (json.status !== 1 || !json.product?.product_name) {
-        openManual("Barcode not in the database — search manually.");
+        setLearnBarcode(code);
+        openManual("New barcode — add the product once and FreshTrack will remember it.");
         return;
       }
       const name = json.product.product_name;
@@ -181,10 +236,13 @@ function ScannerPage() {
         }),
       );
       toast.success(
-        labelExpiry ? `Found: ${name} · expiry ${labelExpiry}` : `Found: ${name} · expiry estimated`,
+        labelExpiry
+          ? `Found: ${name} · expiry ${labelExpiry}`
+          : `Found: ${name} · expiry estimated`,
       );
-    } catch {
-      openManual("Barcode lookup failed — search manually.");
+    } catch (e) {
+      setLearnBarcode(code);
+      openManual(friendlyMessage(e, "Barcode lookup failed — add the product manually."));
     } finally {
       setBusy(null);
     }
@@ -192,8 +250,9 @@ function ScannerPage() {
 
   /** Fallback when the live reader isn't available: decode a captured photo. */
   async function decodeBarcodeImage(blob: Blob) {
-    const Ctor = (window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike })
-      .BarcodeDetector;
+    const Ctor = (
+      window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike }
+    ).BarcodeDetector;
     if (!Ctor) {
       openManual("This browser can't read barcodes — search manually.");
       return;
@@ -228,7 +287,7 @@ function ScannerPage() {
       setReceiptPicked(Object.fromEntries(items.map((_, i) => [i, true])));
       toast.success(`${items.length} line item${items.length === 1 ? "" : "s"} found`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Receipt scan failed");
+      toast.error(friendlyMessage(e, "Receipt scan failed"));
     } finally {
       setBusy(null);
     }
@@ -269,7 +328,7 @@ function ScannerPage() {
       toast.success(`${chosen.length} item${chosen.length === 1 ? "" : "s"} added to pantry`);
       setReceiptLines(null);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Import failed");
+      toast.error(friendlyMessage(e, "Import failed"));
     } finally {
       setImporting(false);
     }
@@ -314,14 +373,19 @@ function ScannerPage() {
             <section className="mt-4 animate-fade-up">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-base font-semibold">Detected items</h2>
-                <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => setDetections([])}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setDetections([])}
+                >
                   Clear
                 </Button>
               </div>
               <ul className="space-y-2">
                 {detections.map((c) => {
                   const conf = c.confidence != null ? confidenceLabel(c.confidence) : null;
-                  const expiry = candidateExpiry(
+                  const prediction = predictShelfLife(
                     c,
                     c.storage,
                     new Date().toISOString().slice(0, 10),
@@ -331,13 +395,24 @@ function ScannerPage() {
                       <button
                         type="button"
                         onClick={() => setConfirming(c)}
-                        className="press surface-card flex w-full items-center justify-between gap-3 p-3 text-left"
+                        className="press surface-card flex w-full items-start justify-between gap-3 p-3 text-left"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">{c.name}</p>
+                          <p className="truncate text-sm font-semibold">
+                            <span aria-hidden className="mr-1">
+                              {emojiFor(c.name, c.category)}
+                            </span>
+                            {c.name}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            {c.category} · {c.storage} · {candidateShelfDays(c, c.storage)}d ·{" "}
-                            {expiryText(expiry).toLowerCase()}
+                            {c.category} · {c.storage} ·{" "}
+                            <span className="font-medium text-foreground">
+                              ~{prediction.days}d left
+                            </span>{" "}
+                            · {expiryText(prediction.expiry).toLowerCase()}
+                          </p>
+                          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                            {prediction.explanation}
                           </p>
                         </div>
                         {conf && (
@@ -417,9 +492,7 @@ function ScannerPage() {
                     <Checkbox
                       id={`rl-${i}`}
                       checked={!!receiptPicked[i]}
-                      onCheckedChange={(v) =>
-                        setReceiptPicked((p) => ({ ...p, [i]: v === true }))
-                      }
+                      onCheckedChange={(v) => setReceiptPicked((p) => ({ ...p, [i]: v === true }))}
                     />
                     <label htmlFor={`rl-${i}`} className="min-w-0 flex-1 cursor-pointer">
                       <p className="truncate text-sm font-medium">{line.name}</p>
@@ -508,6 +581,14 @@ function ScannerPage() {
         candidate={confirming}
         onOpenChange={(open) => !open && setConfirming(null)}
         onSaved={(c) => {
+          rememberBarcode({
+            name: c.name,
+            brand: c.brand,
+            category: c.category,
+            unit: c.unit,
+            storage: c.storage,
+            shelfLifeDays: candidateShelfDays(c, c.storage),
+          });
           setDetections((d) => d.filter((x) => x.key !== c.key));
           void recordScan.mutateAsync({ method: c.source || pendingMethod, items_added: 1 });
         }}
@@ -518,6 +599,15 @@ function ScannerPage() {
         onOpenChange={setManualOpen}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
+        onAdded={(product, storage) =>
+          rememberBarcode({
+            name: product.name,
+            category: product.category,
+            unit: product.form === "count" ? "pcs" : product.unit,
+            storage,
+            shelfLifeDays: shelfDaysFrom(product.shelf, storage),
+          })
+        }
         onDetails={(p) => {
           setPrefill(p);
           setFormOpen(true);
