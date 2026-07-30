@@ -29,7 +29,7 @@ import {
   useScanHistory,
   useSettings,
 } from "@/lib/data";
-import { computeStats, expiryText, getStatus } from "@/lib/freshtrack";
+import { computeStats, expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
