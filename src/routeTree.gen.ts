@@ -9,20 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ShellRouteImport } from './routes/_shell'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellIndexRouteImport } from './routes/_shell.index'
-import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
-import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
-import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
-import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
-import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
-import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
+import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
+import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
+import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
+import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
+import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
+import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
 
-const ShellRoute = ShellRouteImport.update({
-  id: '/_shell',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -30,9 +31,8 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const ShellRoute = ShellRouteImport.update({
+  id: '/_shell',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShellIndexRoute = ShellIndexRouteImport.update({
@@ -40,29 +40,9 @@ const ShellIndexRoute = ShellIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ShellRoute,
 } as any)
-const ShellNotificationsRoute = ShellNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellPantryRoute = ShellPantryRouteImport.update({
-  id: '/pantry',
-  path: '/pantry',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellProfileRoute = ShellProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellRecipesRoute = ShellRecipesRouteImport.update({
-  id: '/recipes',
-  path: '/recipes',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellScannerRoute = ShellScannerRouteImport.update({
-  id: '/scanner',
-  path: '/scanner',
+const ShellShoppingRoute = ShellShoppingRouteImport.update({
+  id: '/shopping',
+  path: '/shopping',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellSettingsRoute = ShellSettingsRouteImport.update({
@@ -70,9 +50,29 @@ const ShellSettingsRoute = ShellSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ShellRoute,
 } as any)
-const ShellShoppingRoute = ShellShoppingRouteImport.update({
-  id: '/shopping',
-  path: '/shopping',
+const ShellScannerRoute = ShellScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellRecipesRoute = ShellRecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellProfileRoute = ShellProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellPantryRoute = ShellPantryRouteImport.update({
+  id: '/pantry',
+  path: '/pantry',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellNotificationsRoute = ShellNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => ShellRoute,
 } as any)
 
@@ -162,11 +162,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_shell': {
-      id: '/_shell'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof ShellRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -176,11 +176,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/_shell': {
+      id: '/_shell'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ShellRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_shell/': {
@@ -190,39 +190,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellIndexRouteImport
       parentRoute: typeof ShellRoute
     }
-    '/_shell/notifications': {
-      id: '/_shell/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof ShellNotificationsRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/pantry': {
-      id: '/_shell/pantry'
-      path: '/pantry'
-      fullPath: '/pantry'
-      preLoaderRoute: typeof ShellPantryRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/profile': {
-      id: '/_shell/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ShellProfileRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/recipes': {
-      id: '/_shell/recipes'
-      path: '/recipes'
-      fullPath: '/recipes'
-      preLoaderRoute: typeof ShellRecipesRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/scanner': {
-      id: '/_shell/scanner'
-      path: '/scanner'
-      fullPath: '/scanner'
-      preLoaderRoute: typeof ShellScannerRouteImport
+    '/_shell/shopping': {
+      id: '/_shell/shopping'
+      path: '/shopping'
+      fullPath: '/shopping'
+      preLoaderRoute: typeof ShellShoppingRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/settings': {
@@ -232,11 +204,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellSettingsRouteImport
       parentRoute: typeof ShellRoute
     }
-    '/_shell/shopping': {
-      id: '/_shell/shopping'
-      path: '/shopping'
-      fullPath: '/shopping'
-      preLoaderRoute: typeof ShellShoppingRouteImport
+    '/_shell/scanner': {
+      id: '/_shell/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ShellScannerRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/recipes': {
+      id: '/_shell/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof ShellRecipesRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/profile': {
+      id: '/_shell/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ShellProfileRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/pantry': {
+      id: '/_shell/pantry'
+      path: '/pantry'
+      fullPath: '/pantry'
+      preLoaderRoute: typeof ShellPantryRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/notifications': {
+      id: '/_shell/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof ShellNotificationsRouteImport
       parentRoute: typeof ShellRoute
     }
   }
