@@ -21,6 +21,8 @@ import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
 import { cn } from "@/lib/utils";
 import { emojiFor } from "@/lib/emoji";
+import { friendlyMessage } from "@/lib/errors";
+import { learnProduct, lookupLearned } from "@/lib/custom-products";
 import { useAuth } from "@/lib/auth";
 import { useAddPantryItem, useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
 import { expiryText } from "@/lib/freshtrack";
@@ -84,6 +86,35 @@ function ScannerPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [pendingMethod, setPendingMethod] = useState("camera");
+  /** Barcode waiting to be taught, set when a lookup came back empty. */
+  const [learnBarcode, setLearnBarcode] = useState<string | null>(null);
+
+  /** Remembers an unknown barcode so the next scan recognises it instantly. */
+  function rememberBarcode(input: {
+    name: string;
+    brand?: string | null;
+    category: string;
+    unit: string;
+    storage: string;
+    shelfLifeDays: number;
+  }) {
+    if (!learnBarcode) return;
+    learnProduct(
+      {
+        barcode: learnBarcode,
+        name: input.name,
+        brand: input.brand ?? null,
+        category: input.category,
+        unit: input.unit,
+        storage: input.storage as StorageType,
+        shelfLifeDays: input.shelfLifeDays,
+        savedAt: new Date().toISOString(),
+      },
+      user?.id,
+    );
+    toast.success(`Saved — I'll recognise this barcode next time`);
+    setLearnBarcode(null);
+  }
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
@@ -143,6 +174,26 @@ function ScannerPage() {
   async function lookupBarcode(code: string, frame?: Blob) {
     setBusy("Looking up barcode…");
     try {
+      const learned = lookupLearned(code, user?.id);
+      if (learned) {
+        setPendingMethod("barcode");
+        setLearnBarcode(null);
+        setConfirming(
+          buildCandidate({
+            name: learned.name,
+            brand: learned.brand,
+            category: learned.category,
+            unit: learned.unit,
+            storage: learned.storage,
+            shelfLifeDays: learned.shelfLifeDays,
+            packaged: true,
+            source: "barcode",
+          }),
+        );
+        toast.success(`${learned.name} — recognised from your saved products`);
+        return;
+      }
+
       const res = await fetch(
         `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_url,quantity`,
       );
@@ -151,7 +202,8 @@ function ScannerPage() {
         product?: { product_name?: string; brands?: string; image_url?: string; quantity?: string };
       };
       if (json.status !== 1 || !json.product?.product_name) {
-        openManual("Barcode not in the database — search manually.");
+        setLearnBarcode(code);
+        openManual("New barcode — add the product once and FreshTrack will remember it.");
         return;
       }
       const name = json.product.product_name;
@@ -188,8 +240,9 @@ function ScannerPage() {
       toast.success(
         labelExpiry ? `Found: ${name} · expiry ${labelExpiry}` : `Found: ${name} · expiry estimated`,
       );
-    } catch {
-      openManual("Barcode lookup failed — search manually.");
+    } catch (e) {
+      setLearnBarcode(code);
+      openManual(friendlyMessage(e, "Barcode lookup failed — add the product manually."));
     } finally {
       setBusy(null);
     }
@@ -524,6 +577,14 @@ function ScannerPage() {
         candidate={confirming}
         onOpenChange={(open) => !open && setConfirming(null)}
         onSaved={(c) => {
+          rememberBarcode({
+            name: c.name,
+            brand: c.brand,
+            category: c.category,
+            unit: c.unit,
+            storage: c.storage,
+            shelfLifeDays: candidateShelfDays(c, c.storage),
+          });
           setDetections((d) => d.filter((x) => x.key !== c.key));
           void recordScan.mutateAsync({ method: c.source || pendingMethod, items_added: 1 });
         }}
@@ -534,6 +595,15 @@ function ScannerPage() {
         onOpenChange={setManualOpen}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
+        onAdded={(product, storage) =>
+          rememberBarcode({
+            name: product.name,
+            category: product.category,
+            unit: product.form === "count" ? "pcs" : product.unit,
+            storage,
+            shelfLifeDays: shelfDaysFrom(product.shelf, storage),
+          })
+        }
         onDetails={(p) => {
           setPrefill(p);
           setFormOpen(true);
