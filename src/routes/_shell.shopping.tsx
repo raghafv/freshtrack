@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Check, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Check, Loader2, Plus, ShoppingCart, Sparkles, Trash2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +17,7 @@ import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import { useShoppingItems, useShoppingMutations } from "@/lib/data";
 import { CATEGORIES, UNITS, formatQty, guessCategory, type ShoppingItem } from "@/lib/freshtrack";
 import { cn } from "@/lib/utils";
+import { suggestShoppingList, type ShoppingSuggestion } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/_shell/shopping")({
   head: () => ({
@@ -54,6 +56,27 @@ function ShoppingPage() {
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [items]);
+
+  const [suggestions, setSuggestions] = useState<ShoppingSuggestion[] | null>(null);
+
+  const generate = useMutation({
+    mutationFn: () => suggestShoppingList({}),
+    onSuccess: (res) => {
+      setSuggestions(res.suggestions);
+      if (res.suggestions.length === 0) toast.info("Your pantry already covers the basics.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not generate a list"),
+  });
+
+  async function addSuggestion(s: ShoppingSuggestion) {
+    await add.mutateAsync({
+      name: s.name,
+      category: s.category,
+      quantity: s.quantity,
+      unit: s.unit,
+    });
+    setSuggestions((prev) => prev?.filter((x) => x.name !== s.name) ?? null);
+  }
 
   const remaining = items.filter((i) => !i.checked).length;
   const checkedIds = items.filter((i) => i.checked).map((i) => i.id);
@@ -108,6 +131,58 @@ function ShoppingPage() {
           ) : undefined
         }
       />
+
+      <div className="surface-card mb-5 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold">Generate from my pantry</p>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="press rounded-xl"
+            onClick={() => generate.mutate()}
+            disabled={generate.isPending}
+          >
+            {generate.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {generate.isPending ? "Thinking…" : "Suggest"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          FreshTrack looks at what you own, what expired and what&apos;s already on this list — so it
+          never suggests a duplicate purchase.
+        </p>
+        {suggestions && suggestions.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {suggestions.map((s) => (
+              <li
+                key={s.name}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {s.name} · {formatQty(s.quantity, s.unit)}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{s.reason}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="press shrink-0 rounded-xl text-primary"
+                  onClick={() => void addSuggestion(s)}
+                >
+                  <Plus className="h-4 w-4" /> Add
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="surface-card mb-5 p-4">
         <div className="mb-2 grid gap-2">
