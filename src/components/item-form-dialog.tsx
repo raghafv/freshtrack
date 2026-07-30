@@ -322,15 +322,16 @@ export function ItemFormDialog({
 
           <div className="grid grid-cols-2 items-end gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="ft-price">Value (optional)</Label>
+              <Label htmlFor="ft-price">Value ₹ (optional)</Label>
               <Input
                 id="ft-price"
                 type="number"
+                inputMode="decimal"
                 min="0"
-                step="0.01"
+                step="1"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
+                placeholder="₹ 0"
               />
             </div>
             <div className="grid gap-2">
