@@ -287,6 +287,15 @@ export function ItemFormDialog({
             </div>
           </div>
 
+          {unusualStorage && product && (
+            <p className="rounded-2xl bg-warning/15 px-4 py-3 text-xs font-medium text-warning">
+              {storage} isn&apos;t the usual place for {product.name.toLowerCase()}. Expiry is
+              estimated conservatively — you can still save it.
+            </p>
+          )}
+
+
+
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="ft-purchase">Purchase date</Label>
