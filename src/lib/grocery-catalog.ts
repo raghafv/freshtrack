@@ -370,13 +370,27 @@ export function isUnusualStorage(product: GroceryProduct, storage: string): bool
   return !recommendedStorages(product).includes(storage as StorageType);
 }
 
-/** Days of shelf life for the given product + storage, with a safe fallback. */
-export function shelfLifeDays(product: GroceryProduct, storage: string): number {
-  const exact = product.shelf[storage as StorageType];
+/** Days of shelf life for any shelf-life table + storage, with a safe fallback. */
+export function shelfDaysFrom(shelf: ShelfLife, storage: string): number {
+  const exact = shelf[storage as StorageType];
   if (exact != null) return exact;
-  const values = Object.values(product.shelf).filter((v): v is number => v != null);
+  const values = Object.values(shelf).filter((v): v is number => v != null);
   return values.length ? Math.min(...values) : 7;
 }
+
+/** Days of shelf life for the given product + storage, with a safe fallback. */
+export function shelfLifeDays(product: GroceryProduct, storage: string): number {
+  return shelfDaysFrom(product.shelf, storage);
+}
+
+/** Storage options that make sense for an arbitrary shelf-life table. */
+export function recommendedFrom(shelf: ShelfLife): StorageType[] {
+  return (["Fridge", "Freezer", "Pantry"] as StorageType[]).filter((s) => {
+    const days = shelf[s];
+    return days != null && days >= 2;
+  });
+}
+
 
 export function expiryForProduct(
   product: GroceryProduct,
