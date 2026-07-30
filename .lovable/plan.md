@@ -1,3 +1,9 @@
+# FreshTrack: Removed Lovable plan
+
+The previous Lovable-specific plan has been removed and replaced by FreshTrack-maintained plans.
+
+If you maintain project-specific plans, keep them outside of tooling-specific folders. This file no longer contains implementation guidance.
+
 ## Goal
 Make adding groceries a sub-5-second flow using a built-in offline product catalog, without redesigning the existing UI. Switch all money display to Indian Rupees.
 

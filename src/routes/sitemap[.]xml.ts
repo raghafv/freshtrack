@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-// TODO: replace with your project URL once a project name or custom domain is set.
+// Update BASE_URL to your production site URL (e.g., https://app.freshtrack.example) before publishing.
 const BASE_URL = "";
 
 interface SitemapEntry {
