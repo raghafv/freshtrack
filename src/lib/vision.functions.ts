@@ -64,6 +64,12 @@ export interface DetectedGrocery {
   shelfLifeDays: number;
   unit: string;
   brand: string | null;
+  /** Visual freshness 0-1: 1 = just bought, 0 = clearly spoiled. */
+  freshness: number;
+  /** Short reason for the freshness judgement, shown to the user. */
+  note: string | null;
+  /** True when the product looks factory-sealed (shelf life starts from packing). */
+  packaged: boolean;
 }
 
 /** Detect grocery products visible in a photo. */
@@ -76,13 +82,16 @@ export const detectGroceries = createServerFn({ method: "POST" })
       "You identify grocery products in photos for a pantry app used in India. Always answer with JSON only.",
       [
         "Identify every distinct grocery product in this photo.",
-        'Reply with JSON: {"items":[{"name":"","brand":null,"confidence":0.0,"category":"","storage":"","shelfLifeDays":0,"unit":""}]}.',
+        'Reply with JSON: {"items":[{"name":"","brand":null,"confidence":0.0,"category":"","storage":"","shelfLifeDays":0,"unit":"","freshness":0.0,"packaged":false,"note":""}]}.',
         "name: short common product name (e.g. Milk, Tomatoes, Paneer).",
         "confidence: 0-1 how sure you are.",
         "category: one of Dairy, Fruits, Vegetables, Produce, Meat & Seafood, Bakery, Frozen, Beverages, Grains & Pasta, Snacks, Condiments, Spices, Other.",
         "storage: best of Fridge, Freezer, Pantry.",
         "shelfLifeDays: typical days it stays good in that storage.",
         'unit: one of "g", "kg", "mL", "L", "pcs".',
+        "freshness: 0-1 judged from what you can SEE — bruising, wilting, mould, browning, condensation, ripeness. 1 = just harvested/packed, 0.5 = half-way through its life, 0 = spoiled.",
+        "packaged: true if it is a sealed factory pack, false for loose fresh produce.",
+        "note: max 12 words explaining the freshness call (e.g. \"skin slightly spotted, ripe\").",
         "If nothing edible is visible, return an empty items array.",
       ].join("\n"),
     );
@@ -108,6 +117,12 @@ export const detectGroceries = createServerFn({ method: "POST" })
             unit: ["g", "kg", "mL", "L", "pcs"].includes(String(it.unit))
               ? String(it.unit)
               : "pcs",
+            freshness: (() => {
+              const f = Number(it.freshness);
+              return Number.isFinite(f) ? Math.min(1, Math.max(0, f)) : 0.8;
+            })(),
+            packaged: Boolean(it.packaged),
+            note: it.note ? String(it.note).slice(0, 120) : null,
           } satisfies DetectedGrocery;
         })
         .filter((v): v is DetectedGrocery => v !== null)
