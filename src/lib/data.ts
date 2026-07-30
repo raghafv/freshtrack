@@ -143,12 +143,13 @@ export function useMergePantryItem() {
       purchase_date?: string;
       price?: number | null;
     }) => {
-      const patch: Record<string, unknown> = {
+      const patch: { quantity: number; expiry_date: string; price?: number } = {
         quantity: input.quantity,
         expiry_date: input.expiry_date,
       };
       if (input.price != null) patch.price = input.price;
       const { error } = await supabase.from("pantry_items").update(patch).eq("id", input.id);
+
       if (error) throw error;
       await logActivity(
         "added",
