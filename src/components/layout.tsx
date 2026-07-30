@@ -36,12 +36,8 @@ export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
                   )}
                 >
                   <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
-                  {to === "/notifications" && unread > 0 && (
-                    <span className="absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
                 </span>
+
                 {label}
               </Link>
             </li>
