@@ -89,7 +89,7 @@ async function loadPantryContext(supabase: SupabaseLike) {
   const events = (activity.data ?? []) as { action: string; item_name: string | null }[];
   const counts = new Map<string, number>();
   for (const e of events) {
-    if (e.action !== "add" || !e.item_name) continue;
+    if (e.action !== "added" || !e.item_name) continue;
     counts.set(e.item_name, (counts.get(e.item_name) ?? 0) + 1);
   }
   const repeatBuys = [...counts.entries()]
