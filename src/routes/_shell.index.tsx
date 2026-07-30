@@ -30,6 +30,9 @@ import {
   useSettings,
 } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
+import { explainHealth } from "@/lib/analytics";
+import { emojiFor } from "@/lib/emoji";
+import { DashboardAnalytics } from "@/components/dashboard-analytics";
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
@@ -70,6 +73,7 @@ const ACTION_ICON: Record<string, typeof Plus> = {
 function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
   const { data: activity = [] } = useActivity(8);
+  const { data: fullActivity = [] } = useActivity(200);
   const { data: scans = [] } = useScanHistory();
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
@@ -80,6 +84,7 @@ function Dashboard() {
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
   const stats = computeStats(items, soonDays);
+  const health = explainHealth(items, soonDays);
   const attention = items
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .slice(0, 4);
@@ -113,15 +118,7 @@ function Dashboard() {
               Pantry health score
             </p>
             <p className="mt-1 text-5xl font-extrabold">{stats.healthScore}</p>
-            <p className="mt-1 text-sm opacity-90">
-              {stats.total === 0
-                ? "Add your first item to start tracking"
-                : stats.expired > 0
-                  ? `${stats.expired} item${stats.expired > 1 ? "s" : ""} expired · ${stats.soon} to use soon`
-                  : stats.soon > 0
-                    ? `${stats.soon} item${stats.soon > 1 ? "s" : ""} to use in the next ${soonDays} days`
-                    : `All ${stats.total} items are comfortably fresh`}
-            </p>
+            <p className="mt-1 max-w-[22rem] text-sm opacity-90">{health.headline}</p>
           </div>
           <Leaf className="h-14 w-14 opacity-40" />
         </div>
@@ -129,6 +126,16 @@ function Dashboard() {
           value={stats.healthScore}
           className="mt-4 h-2 bg-primary-foreground/25 [&>div]:bg-primary-foreground"
         />
+        <ul className="mt-3 space-y-1">
+          {health.reasons.map((reason) => (
+            <li key={reason.text} className="flex items-start gap-2 text-xs opacity-90">
+              <span aria-hidden className="mt-px">
+                {reason.tone === "good" ? "✅" : reason.tone === "warn" ? "⚠️" : "🚨"}
+              </span>
+              <span>{reason.text}</span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="mb-5 grid grid-cols-2 gap-3">
@@ -195,7 +202,12 @@ function Dashboard() {
             {attention.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{item.name}</p>
+                  <p className="truncate text-sm font-medium">
+                    <span aria-hidden className="mr-1">
+                      {emojiFor(item.name, item.category)}
+                    </span>
+                    {item.name}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {item.storage} · {expiryText(item.expiry_date)}
                   </p>
@@ -206,6 +218,8 @@ function Dashboard() {
           </ul>
         )}
       </section>
+
+      <DashboardAnalytics items={items} activity={fullActivity} soonDays={soonDays} />
 
       <section className="mb-5 grid grid-cols-2 gap-3">
         <div className="surface-card p-4">
