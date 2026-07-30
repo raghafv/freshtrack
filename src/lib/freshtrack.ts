@@ -89,6 +89,8 @@ export interface UserSettings {
 const SHELF_LIFE: Record<string, Record<StorageType, number>> = {
   Dairy: { Fridge: 10, Freezer: 90, Pantry: 3 },
   Produce: { Fridge: 8, Freezer: 240, Pantry: 5 },
+  Fruits: { Fridge: 12, Freezer: 240, Pantry: 5 },
+  Vegetables: { Fridge: 8, Freezer: 240, Pantry: 6 },
   "Meat & Seafood": { Fridge: 3, Freezer: 180, Pantry: 1 },
   Bakery: { Fridge: 10, Freezer: 90, Pantry: 4 },
   Frozen: { Fridge: 3, Freezer: 270, Pantry: 1 },
@@ -96,11 +98,22 @@ const SHELF_LIFE: Record<string, Record<StorageType, number>> = {
   "Grains & Pasta": { Fridge: 180, Freezer: 365, Pantry: 365 },
   Snacks: { Fridge: 90, Freezer: 180, Pantry: 120 },
   Condiments: { Fridge: 180, Freezer: 365, Pantry: 270 },
+  Spices: { Fridge: 400, Freezer: 400, Pantry: 365 },
   Other: { Fridge: 14, Freezer: 120, Pantry: 60 },
 };
 
-/** Rough per-unit value used to estimate money saved by not wasting food. */
-const AVG_ITEM_VALUE = 3.2;
+/** Rough per-unit value (INR) used to estimate money saved by not wasting food. */
+const AVG_ITEM_VALUE = 120;
+
+/** Formats a number as Indian Rupees. */
+export function formatCurrency(value: number, maximumFractionDigits = 0): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits,
+  }).format(value);
+}
+
 
 export function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10);
