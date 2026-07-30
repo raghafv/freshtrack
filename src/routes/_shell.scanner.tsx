@@ -20,6 +20,7 @@ import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
 import { cn } from "@/lib/utils";
+import { emojiFor } from "@/lib/emoji";
 import { useAuth } from "@/lib/auth";
 import { useAddPantryItem, useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
 import { expiryText } from "@/lib/freshtrack";
@@ -27,6 +28,7 @@ import { findProduct } from "@/lib/grocery-catalog";
 import {
   buildCandidate,
   candidateExpiry,
+  predictShelfLife,
   candidateShelfDays,
   confidenceLabel,
   toDataUrl,
@@ -118,6 +120,9 @@ function ScannerPage() {
             storage: it.storage,
             shelfLifeDays: it.shelfLifeDays,
             confidence: it.confidence,
+            freshness: it.freshness,
+            packaged: it.packaged,
+            note: it.note,
             image_url: imageUrl,
             source: "camera",
           }),
@@ -321,7 +326,7 @@ function ScannerPage() {
               <ul className="space-y-2">
                 {detections.map((c) => {
                   const conf = c.confidence != null ? confidenceLabel(c.confidence) : null;
-                  const expiry = candidateExpiry(
+                  const prediction = predictShelfLife(
                     c,
                     c.storage,
                     new Date().toISOString().slice(0, 10),
@@ -331,13 +336,24 @@ function ScannerPage() {
                       <button
                         type="button"
                         onClick={() => setConfirming(c)}
-                        className="press surface-card flex w-full items-center justify-between gap-3 p-3 text-left"
+                        className="press surface-card flex w-full items-start justify-between gap-3 p-3 text-left"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">{c.name}</p>
+                          <p className="truncate text-sm font-semibold">
+                            <span aria-hidden className="mr-1">
+                              {emojiFor(c.name, c.category)}
+                            </span>
+                            {c.name}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            {c.category} · {c.storage} · {candidateShelfDays(c, c.storage)}d ·{" "}
-                            {expiryText(expiry).toLowerCase()}
+                            {c.category} · {c.storage} ·{" "}
+                            <span className="font-medium text-foreground">
+                              ~{prediction.days}d left
+                            </span>{" "}
+                            · {expiryText(prediction.expiry).toLowerCase()}
+                          </p>
+                          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                            {prediction.explanation}
                           </p>
                         </div>
                         {conf && (
