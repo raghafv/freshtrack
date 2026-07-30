@@ -20,6 +20,7 @@ import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
 import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
 import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
+import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -75,11 +76,17 @@ const ShellNotificationsRoute = ShellNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellAssistantRoute = ShellAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => ShellRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
   '/pantry': typeof ShellPantryRoute
   '/profile': typeof ShellProfileRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
   '/pantry': typeof ShellPantryRoute
   '/profile': typeof ShellProfileRoute
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_shell/assistant': typeof ShellAssistantRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
   '/_shell/pantry': typeof ShellPantryRoute
   '/_shell/profile': typeof ShellProfileRoute
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/assistant'
     | '/notifications'
     | '/pantry'
     | '/profile'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/sitemap.xml'
+    | '/assistant'
     | '/notifications'
     | '/pantry'
     | '/profile'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/_shell'
     | '/auth'
     | '/sitemap.xml'
+    | '/_shell/assistant'
     | '/_shell/notifications'
     | '/_shell/pantry'
     | '/_shell/profile'
@@ -239,10 +251,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellNotificationsRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/assistant': {
+      id: '/_shell/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof ShellAssistantRouteImport
+      parentRoute: typeof ShellRoute
+    }
   }
 }
 
 interface ShellRouteChildren {
+  ShellAssistantRoute: typeof ShellAssistantRoute
   ShellNotificationsRoute: typeof ShellNotificationsRoute
   ShellPantryRoute: typeof ShellPantryRoute
   ShellProfileRoute: typeof ShellProfileRoute
@@ -254,6 +274,7 @@ interface ShellRouteChildren {
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
+  ShellAssistantRoute: ShellAssistantRoute,
   ShellNotificationsRoute: ShellNotificationsRoute,
   ShellPantryRoute: ShellPantryRoute,
   ShellProfileRoute: ShellProfileRoute,
