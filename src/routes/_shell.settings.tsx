@@ -86,7 +86,7 @@ function SettingsPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-[26px] font-bold tracking-[-0.03em]">Settings</h1>
       </div>
 
       <Section icon={Palette} title="Theme">

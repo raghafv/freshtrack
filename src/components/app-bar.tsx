@@ -15,8 +15,8 @@ export function AppBar({ greeting, subtitle }: { greeting: string; subtitle?: st
   return (
     <header className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
       <div className="min-w-0">
-        {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
-        <h1 className="mt-1 truncate text-2xl font-bold">{greeting}</h1>
+        {subtitle && <p className="truncate text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{subtitle}</p>}
+        <h1 className="mt-0.5 truncate text-[26px] font-bold tracking-[-0.03em]">{greeting}</h1>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Link
