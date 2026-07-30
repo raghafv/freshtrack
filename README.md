@@ -1,8 +1,18 @@
+![React](https://img.shields.io/badge/React-19-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Vite](https://img.shields.io/badge/Vite-7-purple)
+![Supabase](https://img.shields.io/badge/Supabase-Backend-green)
+![License](https://img.shields.io/badge/License-Educational-orange)
+
 # 🥬 FreshTrack – AI Smart Pantry Manager
 
-FreshTrack is an AI-powered smart pantry management system that helps users organize groceries, reduce food waste, and monitor expiry dates through intelligent inventory management.
+> An AI-powered smart pantry management system that helps users organize groceries, reduce food waste, and track expiry dates with intelligent inventory management.
 
-Built as a Class XII Capstone Project, FreshTrack combines modern web technologies with AI-assisted features to create a seamless pantry management experience.
+## 🌐 Live Demo
+
+🔗 **Website:** https://freshtrackmvp1.lovable.app/
+
+> *(This project is actively under development. Features and UI may change over time.)*
 
 ---
 
@@ -10,54 +20,57 @@ Built as a Class XII Capstone Project, FreshTrack combines modern web technologi
 
 - 🔐 Secure User Authentication
 - 🥫 Smart Pantry Management
-- 📷 Camera-based Item Capture
+- 📷 AI Camera Item Detection
 - 📦 Barcode Scanning
-- 📝 Manual & Quick Add Items
+- ⚡ Quick Add Grocery Catalog
+- 📝 Manual Item Management
 - 🛒 Smart Shopping Lists
 - 🔔 Expiry Notifications
-- 📊 Pantry Dashboard & Analytics
+- 📊 Dashboard & Pantry Analytics
 - 📜 Scan History
-- 🍽️ Recipe Recommendations
-- 🤖 AI-powered Pantry Assistant
+- 🍽️ AI Recipe Suggestions
+- 🤖 AI Pantry Assistant
 - 📱 Progressive Web App (PWA)
 
 ---
 
 ## 🚀 Tech Stack
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Material Design 3
-- Supabase
-- OpenFoodFacts API
-- Progressive Web App (PWA)
+- **Frontend:** React + TypeScript
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS + Material Design 3
+- **Backend:** Supabase
+- **Authentication:** Supabase Auth
+- **Database:** PostgreSQL (Supabase)
+- **Barcode API:** OpenFoodFacts
+- **Deployment:** Lovable
+- **Version Control:** GitHub
 
 ---
 
-## 🎯 Project Objective
+## 🎯 Project Overview
 
-FreshTrack aims to reduce household food waste by making pantry management simple, intelligent, and automated.
+FreshTrack is an AI-powered pantry management application designed to reduce food waste and simplify household grocery management.
 
-The application allows users to:
+The application enables users to:
 
-- Track grocery inventory
+- Track groceries in real time
 - Monitor expiry dates
-- Receive timely reminders
-- Quickly add groceries using AI and barcode scanning
+- Receive smart reminders
+- Scan barcodes and grocery items
 - Generate shopping lists
-- Discover recipes based on available ingredients
+- View pantry analytics
+- Discover recipes using available ingredients
 
 ---
 
 ## 📸 Screenshots
 
-*(Screenshots will be added here.)*
+*(Screenshots coming soon.)*
 
 ---
 
-## 🛠️ Installation
+## 🛠️ Running Locally
 
 Clone the repository
 
@@ -71,7 +84,7 @@ Install dependencies
 npm install
 ```
 
-Run locally
+Start the development server
 
 ```bash
 npm run dev
@@ -79,37 +92,41 @@ npm run dev
 
 ---
 
-## 📂 Project Status
+## 🚧 Roadmap
 
-🚧 Currently under active development.
-
-Upcoming improvements include:
-
-- AI image recognition
-- Receipt scanning (OCR)
-- Advanced dashboard analytics
-- Smart expiry prediction
-- Enhanced AI assistant
-- Native Android APK
+- ✅ Pantry Management
+- ✅ Authentication
+- ✅ Barcode Scanner
+- ✅ Dashboard
+- ✅ Notifications
+- 🚧 AI Vision Recognition
+- 🚧 Receipt OCR
+- 🚧 Advanced AI Assistant
+- 🚧 Native Android APK
 
 ---
 
-## 👨‍💻 Team
+## 👥 Team
 
-**Team Leader**
-- Raghav Goyal
+### Team Leader
+- **Raghav Goyal**
 
-**Team Members**
+### Team Members
 - Gaurang Koul
 - Apoorv Jha
 - Manik Das Chopra
 - Nalin Sinha
 
-Teacher Guide:
-- Mrs. Sunita Tokas
+**Teacher Guide:** Mrs. Sunita Tokas
+
+---
+
+## ⭐ If you like this project
+
+Please consider starring ⭐ the repository!
 
 ---
 
 ## 📄 License
 
-This project is developed for educational purposes as part of the Class XII Capstone Project.
+Developed as a **Class XII Capstone Project** for educational purposes.
