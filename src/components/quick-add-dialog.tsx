@@ -49,6 +49,8 @@ interface Props {
   defaultUnit?: string;
   /** Escape hatch: open the full manual form with these values prefilled. */
   onDetails: (prefill?: ItemFormPrefill) => void;
+  /** Called after a catalog product is stored, so callers can remember it. */
+  onAdded?: (product: GroceryProduct, storage: string) => void;
 }
 
 export function QuickAddDialog({
@@ -57,6 +59,7 @@ export function QuickAddDialog({
   defaultStorage = "Fridge",
   defaultUnit = "pcs",
   onDetails,
+  onAdded,
 }: Props) {
   const { user } = useAuth();
   const smartAdd = useSmartAdd();
@@ -135,6 +138,7 @@ export function QuickAddDialog({
       });
       persist(recordAdd(store, selected.id));
       if (result) {
+        onAdded?.(selected, storage);
         toast.success(
           result.outcome === "merged"
             ? result.message
