@@ -75,6 +75,8 @@ function Dashboard() {
   const { data: settings } = useSettings();
   const { resolved, toggle } = useTheme();
   const [addOpen, setAddOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
   const stats = computeStats(items, soonDays);
