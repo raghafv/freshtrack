@@ -111,11 +111,19 @@ export function ItemFormDialog({
     }
   }, [open, item, prefill, defaultStorage, defaultUnit]);
 
+  const product = findProduct(name);
+  const unusualStorage = product ? isUnusualStorage(product, storage) : false;
+
   // Auto-calculate expiry until the user overrides it manually.
   useEffect(() => {
     if (!open || expiryTouched) return;
-    setExpiryDate(estimateExpiry(category, storage, purchaseDate));
-  }, [open, expiryTouched, category, storage, purchaseDate]);
+    const known = findProduct(name);
+    setExpiryDate(
+      known
+        ? expiryForProduct(known, storage, purchaseDate)
+        : estimateExpiry(category, storage, purchaseDate),
+    );
+  }, [open, expiryTouched, name, category, storage, purchaseDate]);
 
   function onNameBlur() {
     if (!item && name && category === "Other") {
