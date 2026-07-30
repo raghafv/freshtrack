@@ -10,6 +10,7 @@ import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dia
 import { useAuth } from "@/lib/auth";
 import { useRecordScan, useScanHistory, useSettings, uploadPantryImage } from "@/lib/data";
 import { guessCategory } from "@/lib/freshtrack";
+import { findProduct } from "@/lib/grocery-catalog";
 
 export const Route = createFileRoute("/_shell/scanner")({
   head: () => ({
