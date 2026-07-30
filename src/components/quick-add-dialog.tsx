@@ -122,7 +122,7 @@ export function QuickAddDialog({
         brand: null,
         category: selected.category,
         quantity: qty,
-        unit: selected.unit || defaultUnit,
+        unit: unit || selected.unit || defaultUnit,
         purchase_date: purchaseDate,
         expiry_date: expiry,
         storage,
@@ -280,7 +280,7 @@ export function QuickAddDialog({
                     name: selected.name,
                     category: selected.category,
                     storage,
-                    unit: selected.unit,
+                    unit,
                     quantity: Number(quantity) || 1,
                     source: "quick-add",
                   });
