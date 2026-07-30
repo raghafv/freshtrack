@@ -76,6 +76,8 @@ export function buildCandidate(input: {
   packageSize?: string | null;
   quantity?: number;
   source?: string;
+  labelExpiry?: string | null;
+  labelManufactured?: string | null;
 }): ScanCandidate {
   const match = findProduct(input.name);
   if (match) {
@@ -87,6 +89,8 @@ export function buildCandidate(input: {
       packageSize: input.packageSize ?? null,
       quantity: input.quantity ?? 1,
       source: input.source ?? "scan",
+      labelExpiry: input.labelExpiry ?? null,
+      labelManufactured: input.labelManufactured ?? null,
       unit: input.unit && input.unit !== "pcs" ? input.unit : match.form === "count" ? "pcs" : match.unit,
     });
   }
@@ -116,6 +120,8 @@ export function buildCandidate(input: {
     matched: false,
     quantity: input.quantity ?? 1,
     source: input.source ?? "scan",
+    labelExpiry: input.labelExpiry ?? null,
+    labelManufactured: input.labelManufactured ?? null,
   };
 }
 
