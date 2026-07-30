@@ -31,6 +31,7 @@ import {
   toISODate,
   type PantryItem,
 } from "@/lib/freshtrack";
+import { expiryForProduct, findProduct, isUnusualStorage } from "@/lib/grocery-catalog";
 
 export interface ItemFormPrefill {
   name?: string;
