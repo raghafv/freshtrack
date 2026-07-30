@@ -14,7 +14,7 @@ export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <nav className="glass fixed inset-x-0 bottom-0 z-40 safe-bottom rounded-t-3xl">
+    <nav className="nav-surface fixed inset-x-0 bottom-0 z-40 safe-bottom">
       <ul className="mx-auto flex max-w-2xl items-stretch justify-between px-1 py-1.5">
         {NAV.map(({ to, label, icon: Icon }) => {
           const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
@@ -24,7 +24,7 @@ export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
                 to={to}
                 aria-label={label}
                 className={cn(
-                  "press relative flex flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[10px] font-medium transition-colors",
+                  "press relative flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium tracking-tight transition-colors",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -59,7 +59,7 @@ export function PageHeader({
   return (
     <header className="mb-5 flex items-start justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <h1 className="text-[26px] font-bold tracking-[-0.03em]">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {action}
@@ -68,7 +68,7 @@ export function PageHeader({
 }
 
 export function PageContainer({ children }: { children: ReactNode }) {
-  return <div className="mx-auto w-full max-w-2xl animate-fade-up px-4 pb-28 pt-6">{children}</div>;
+  return <div className="mx-auto w-full max-w-2xl animate-fade-up px-5 pb-32 pt-7">{children}</div>;
 }
 
 export function EmptyState({
