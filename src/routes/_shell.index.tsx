@@ -138,7 +138,11 @@ function Dashboard() {
 
       <section className="mb-5 grid grid-cols-3 gap-3">
         <MiniStat label="Added today" value={String(stats.addedToday)} />
-        <MiniStat label="Est. savings" value={`$${stats.savings.toFixed(0)}`} icon={CircleDollarSign} />
+        <MiniStat
+          label="Est. savings"
+          value={formatCurrency(stats.savings)}
+          icon={CircleDollarSign}
+        />
         <MiniStat label="Waste prevented" value={`${stats.wastePrevented} kg`} />
       </section>
 
