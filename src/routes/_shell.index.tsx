@@ -352,15 +352,7 @@ function Dashboard() {
   );
 }
 
-function Quick({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "danger";
-}) {
+function Quick({ label, value, tone }: { label: string; value: string; tone?: "danger" }) {
   return (
     <div className="surface-card p-4 text-center">
       <p className={cn("text-lg font-bold leading-none", tone === "danger" && "text-destructive")}>

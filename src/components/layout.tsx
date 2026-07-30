@@ -10,7 +10,6 @@ const NAV = [
   { to: "/assistant", label: "AI", icon: Sparkles },
 ] as const;
 
-
 export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
