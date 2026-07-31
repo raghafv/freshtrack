@@ -4,7 +4,7 @@ import { Leaf, Loader2 } from "lucide-react";
 import { BottomNav } from "@/components/layout";
 import { PushPrompt } from "@/components/push-prompt";
 import { useAuth } from "@/lib/auth";
-import { useNotifications, useSettings } from "@/lib/data";
+import { useClearAssistant, useNotifications, useSettings } from "@/lib/data";
 import { useTheme } from "@/lib/theme";
 
 
