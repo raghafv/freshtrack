@@ -25,14 +25,12 @@ import {
   useActivity,
   usePantryItems,
   useProfile,
-  useSavedRecipes,
   useSettings,
   useShoppingItems,
   useShoppingMutations,
 } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, formatQty, getStatus } from "@/lib/freshtrack";
 import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
-import { emojiFor } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/")({
@@ -103,7 +101,6 @@ function Dashboard() {
   const { data: activity = [] } = useActivity(6);
   const { data: fullActivity = [] } = useActivity(200);
   const { data: shopping = [] } = useShoppingItems();
-  const { data: savedRecipes = [] } = useSavedRecipes(3);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
   const { toggle } = useShoppingMutations();
