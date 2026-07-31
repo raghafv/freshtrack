@@ -284,3 +284,144 @@ export const getAdminProducts = createServerFn({ method: "GET" })
     if (error) throw error;
     return { total: count ?? rows?.length ?? 0, rows: (rows ?? []) as AdminProductRow[] };
   });
+
+export interface PendingProductRow {
+  id: string;
+  barcode: string;
+  name: string;
+  quantity: string | null;
+  image_url: string | null;
+  submitted_by: string | null;
+  submitter_email: string | null;
+  status: string;
+  created_at: string;
+}
+
+/** Owner-only queue of user-submitted barcodes awaiting approval. */
+export const getPendingProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { status?: string } | undefined) => ({ status: data?.status ?? "pending" }))
+  .handler(async ({ data, context }): Promise<{ rows: PendingProductRow[] }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("pending_products")
+      .select("id, barcode, name, quantity, image_url, submitted_by, status, created_at")
+      .eq("status", data.status)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw error;
+
+    const ids = [...new Set((rows ?? []).map((r) => r.submitted_by).filter(Boolean))] as string[];
+    const emails = new Map<string, string | null>();
+    if (ids.length) {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email")
+        .in("id", ids);
+      for (const p of profiles ?? []) emails.set(p.id, p.email);
+    }
+
+    return {
+      rows: (rows ?? []).map((r) => ({
+        ...r,
+        submitter_email: r.submitted_by ? (emails.get(r.submitted_by) ?? null) : null,
+      })) as PendingProductRow[],
+    };
+  });
+
+/** Approve a submission: move it into the global products catalog. */
+export const approvePendingProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      id: string;
+      name?: string;
+      quantity?: string | null;
+      brand?: string | null;
+      category?: string | null;
+      storage?: string | null;
+      shelfLifeDays?: number | null;
+    }) => data,
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true; barcode: string }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { brandForName, categoryForName, shelfDaysForCategory, storageForCategory } =
+      await import("@/lib/product-meta");
+
+    const { data: row, error } = await supabaseAdmin
+      .from("pending_products")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row) throw new Error("Submission not found");
+
+    const name = (data.name ?? row.name).trim();
+    const size = (data.quantity ?? row.quantity)?.trim() || null;
+    const category = data.category?.trim() || categoryForName(name);
+    const brand = data.brand?.trim() || brandForName(name);
+    const storage = data.storage?.trim() || storageForCategory(category, name);
+    const shelf =
+      data.shelfLifeDays && data.shelfLifeDays > 0
+        ? data.shelfLifeDays
+        : shelfDaysForCategory(category, name);
+
+    const { data: existing } = await supabaseAdmin
+      .from("products")
+      .select("barcode")
+      .eq("barcode", row.barcode)
+      .maybeSingle();
+
+    if (existing) {
+      const { error: upErr } = await supabaseAdmin
+        .from("products")
+        .update({ name, brand, category, size, storage, shelf_life_days: shelf })
+        .eq("barcode", row.barcode);
+      if (upErr) throw upErr;
+    } else {
+      const { error: insErr } = await supabaseAdmin.from("products").insert({
+        barcode: row.barcode,
+        name,
+        brand,
+        category,
+        size,
+        image_url: row.image_url,
+        storage,
+        shelf_life_days: shelf,
+        source: "Community",
+        created_by: row.submitted_by,
+      });
+      if (insErr) throw insErr;
+    }
+
+    const { error: stErr } = await supabaseAdmin
+      .from("pending_products")
+      .update({ status: "approved", reviewed_by: context.userId, reviewed_at: new Date().toISOString() })
+      .eq("id", row.id);
+    if (stErr) throw stErr;
+
+    return { ok: true, barcode: row.barcode };
+  });
+
+/** Reject a submission with an optional reason. */
+export const rejectPendingProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; note?: string }) => data)
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("pending_products")
+      .update({
+        status: "rejected",
+        note: data.note ?? null,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
