@@ -37,7 +37,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { useAdjustQuantity, useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
-import { emojiFor } from "@/lib/emoji";
+import { foodImage } from "@/lib/food-image";
 import { friendlyMessage } from "@/lib/errors";
 import { smartFilter } from "@/lib/pantry-search";
 import { stepForUnit } from "@/lib/grocery-catalog";
