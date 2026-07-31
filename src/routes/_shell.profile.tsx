@@ -5,22 +5,18 @@ import {
   BarChart3,
   ChevronRight,
   LogOut,
-  Moon,
   Package,
   Pencil,
   Settings as SettingsIcon,
   ShieldCheck,
-  Sun,
   TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { useAuth } from "@/lib/auth";
-import { useTheme } from "@/lib/theme";
 import {
   useActivity,
   usePantryItems,
@@ -28,7 +24,6 @@ import {
   useScanHistory,
   useSettings,
   useUpdateProfile,
-  useUpdateSettings,
 } from "@/lib/data";
 import { computeStats } from "@/lib/freshtrack";
 import { useQuery } from "@tanstack/react-query";
@@ -63,7 +58,6 @@ function ProfilePage() {
   const { data: scans = [] } = useScanHistory();
   const { data: settings } = useSettings();
   const updateProfile = useUpdateProfile();
-  const updateSettings = useUpdateSettings();
   const checkAdmin = useServerFn(amIAdmin);
   const { data: adminCheck } = useQuery({
     queryKey: ["am-i-admin"],
@@ -71,7 +65,6 @@ function ProfilePage() {
     staleTime: 5 * 60_000,
   });
   const isAdmin = adminCheck?.admin === true;
-  const { resolved, setTheme } = useTheme();
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
@@ -152,28 +145,6 @@ function ProfilePage() {
         <StatBox icon={TrendingUp} label="Scans completed" value={String(scans.length)} />
       </section>
 
-      <section className="surface-card mb-5 flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-            {resolved === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </span>
-          <div>
-            <Label htmlFor="dark-toggle" className="text-sm font-semibold">
-              Dark mode
-            </Label>
-            <p className="text-xs text-muted-foreground">Switch the whole app instantly</p>
-          </div>
-        </div>
-        <Switch
-          id="dark-toggle"
-          checked={resolved === "dark"}
-          onCheckedChange={(v) => {
-            const mode = v ? "dark" : "light";
-            setTheme(mode);
-            updateSettings.mutate({ theme: mode });
-          }}
-        />
-      </section>
 
       <Link
         to="/analytics"
