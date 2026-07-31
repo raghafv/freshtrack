@@ -52,7 +52,6 @@ function AssistantPage() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const endRef = useRef<HTMLDivElement | null>(null);
 
   const ask = useMutation({
     mutationFn: (question: string) => askAssistant({ data: { question } }),
@@ -155,7 +154,6 @@ function AssistantPage() {
             Checking your pantry…
           </div>
         )}
-        <div ref={endRef} />
       </section>
 
       <div className="mt-4 flex flex-wrap gap-2">
