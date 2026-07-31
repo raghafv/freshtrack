@@ -1,0 +1,102 @@
+/** Browser-side push helpers. Safe to import from components (guards for SSR). */
+
+const SW_URL = "/push-sw.js";
+
+export type PushState = "unsupported" | "blocked" | "default" | "granted";
+
+export function pushSupported() {
+  return (
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
+}
+
+/** Notifications cannot be requested reliably inside the editor preview iframe. */
+export function inEmbeddedPreview() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+export function pushState(): PushState {
+  if (!pushSupported()) return "unsupported";
+  const p = Notification.permission;
+  if (p === "denied") return "blocked";
+  return p === "granted" ? "granted" : "default";
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
+  return output;
+}
+
+function keyToB64(sub: PushSubscription, name: "p256dh" | "auth") {
+  const key = sub.getKey(name);
+  if (!key) return "";
+  let bin = "";
+  for (const b of new Uint8Array(key)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export interface SubscribeResult {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent: string;
+}
+
+/** Asks for permission (if needed), registers the worker and returns the subscription. */
+export async function subscribeToPush(publicKey: string): Promise<SubscribeResult> {
+  if (!pushSupported()) throw new Error("This browser doesn't support push notifications.");
+
+  const permission =
+    Notification.permission === "granted"
+      ? "granted"
+      : await Notification.requestPermission();
+  if (permission !== "granted") throw new Error("Notification permission was not granted.");
+
+  const registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
+  await navigator.serviceWorker.ready;
+
+  const existing = await registration.pushManager.getSubscription();
+  const sub =
+    existing ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+    }));
+
+  return {
+    endpoint: sub.endpoint,
+    p256dh: keyToB64(sub, "p256dh"),
+    auth: keyToB64(sub, "auth"),
+    userAgent: navigator.userAgent.slice(0, 400),
+  };
+}
+
+/** Removes the local subscription; returns the endpoint that was removed. */
+export async function unsubscribeFromPush(): Promise<string | null> {
+  if (!pushSupported()) return null;
+  const registration = await navigator.serviceWorker.getRegistration(SW_URL);
+  const sub = await registration?.pushManager.getSubscription();
+  if (!sub) return null;
+  const endpoint = sub.endpoint;
+  await sub.unsubscribe();
+  return endpoint;
+}
+
+export async function currentEndpoint(): Promise<string | null> {
+  if (!pushSupported()) return null;
+  const registration = await navigator.serviceWorker.getRegistration(SW_URL);
+  const sub = await registration?.pushManager.getSubscription();
+  return sub?.endpoint ?? null;
+}
