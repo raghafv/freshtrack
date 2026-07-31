@@ -219,20 +219,14 @@ function ScannerPage() {
         return;
       }
 
-      const res = await fetch(
-        `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_url,quantity`,
-      );
-      const json = (await res.json()) as {
-        status?: number;
-        product?: { product_name?: string; brands?: string; image_url?: string; quantity?: string };
-      };
-      if (json.status !== 1 || !json.product?.product_name) {
+      // FreshTrack's own database first; Open Food Facts only when it misses.
+      const { product, origin } = await lookupBarcodeDb(code, user?.id);
+      if (!product) {
         setLearnBarcode(code);
-        openManual("New barcode — add the product once and FreshTrack will remember it.");
+        openManual("New barcode detected — add the product once and every user benefits.");
         return;
       }
-      const name = json.product.product_name;
-      const known = findProduct(name);
+      const known = findProduct(product.name);
 
       // Read any MFG / EXPIRY printed near the barcode from the same frame.
       let labelExpiry: string | null = null;
@@ -251,26 +245,30 @@ function ScannerPage() {
       setPendingMethod("barcode");
       setConfirming(
         buildCandidate({
-          name: known?.name ?? name,
-          brand: json.product.brands?.split(",")[0]?.trim() ?? null,
+          name: known?.name ?? product.name,
+          brand: product.brand,
+          category: known ? undefined : product.category,
           unit: known?.unit,
-          storage: known?.storage,
-          image_url: json.product.image_url ?? null,
-          packageSize: json.product.quantity ?? null,
+          storage: known?.storage ?? product.storage,
+          shelfLifeDays: product.shelf_life_days,
+          image_url: product.image_url,
+          packageSize: product.size,
+          packaged: true,
           source: "barcode",
           labelExpiry,
           labelManufactured,
         }),
       );
       toast.success(
-        labelExpiry
-          ? `Found: ${name} · expiry ${labelExpiry}`
-          : `Found: ${name} · expiry estimated`,
+        `${origin === "db" ? "Found in FreshTrack" : "Added to FreshTrack"}: ${product.name}${
+          labelExpiry ? ` · expiry ${labelExpiry}` : " · expiry estimated"
+        }`,
       );
     } catch (e) {
       setLearnBarcode(code);
       openManual(friendlyMessage(e, "Barcode lookup failed — add the product manually."));
     } finally {
+
       setBusy(null);
     }
   }
