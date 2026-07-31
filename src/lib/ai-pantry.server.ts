@@ -191,7 +191,7 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
   const strList = (v: unknown, max: number) =>
     Array.isArray(v) ? v.map(String).filter((s) => s.trim().length > 0).slice(0, max) : [];
   return raw
-    .map((entry) => {
+    .map((entry): PantryRecipe | null => {
       const r = entry as Record<string, unknown>;
       const title = String(r.title ?? "").trim();
       if (!title) return null;
@@ -245,7 +245,7 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
           : [],
         savesWaste: r.savesWaste ? String(r.savesWaste) : null,
         note: r.note ? String(r.note) : null,
-      } satisfies PantryRecipe;
+      };
     })
     .filter((v): v is PantryRecipe => v !== null)
     .slice(0, 6);
