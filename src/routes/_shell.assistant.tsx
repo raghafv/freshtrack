@@ -97,7 +97,7 @@ function AssistantPage() {
       <AiTabs active="assistant" />
       <PageHeader
         title="Ask FreshTrack"
-        subtitle="Real answers from the groceries you actually own."
+        subtitle="This chat clears when you close FreshTrack — lists and recipes are saved to your home screen."
         action={
           messages.length > 0 ? (
             <Button
