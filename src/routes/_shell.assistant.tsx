@@ -39,12 +39,10 @@ export const Route = createFileRoute("/_shell/assistant")({
 const SUGGESTIONS = [
   "What expires this week?",
   "What should I cook today?",
-  "What should I freeze?",
   "What should I buy?",
-  "Build a shopping list under ₹500",
-  "Plan my meals for the next 3 days",
-  "How do I cut my food waste?",
+  "Plan my meals for 3 days",
 ];
+
 
 function AssistantPage() {
   const { user } = useAuth();
