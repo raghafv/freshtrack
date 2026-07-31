@@ -91,60 +91,14 @@ function ScannerPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [pendingMethod, setPendingMethod] = useState("camera");
-  /** Barcode waiting to be taught, set when a lookup came back empty. */
+  /** Barcode waiting to be contributed, set when a lookup came back empty. */
   const [learnBarcode, setLearnBarcode] = useState<string | null>(null);
-
-  /** Remembers an unknown barcode so the next scan recognises it instantly. */
-  function rememberBarcode(input: {
-    name: string;
-    brand?: string | null;
-    category: string;
-    unit: string;
-    storage: string;
-    shelfLifeDays: number;
-  }) {
-    if (!learnBarcode) return;
-    const barcode = learnBarcode;
-    learnProduct(
-      {
-        barcode,
-        name: input.name,
-        brand: input.brand ?? null,
-        category: input.category,
-        unit: input.unit,
-        storage: input.storage as StorageType,
-        shelfLifeDays: input.shelfLifeDays,
-        savedAt: new Date().toISOString(),
-      },
-      user?.id,
-    );
-    // Share it with every FreshTrack user through the global product database.
-    void saveProduct(
-      {
-        barcode,
-        name: input.name,
-        brand: input.brand ?? null,
-        category: input.category,
-        size: null,
-        image_url: null,
-        shelf_life_days:
-          input.shelfLifeDays > 0
-            ? input.shelfLifeDays
-            : shelfDaysForCategory(input.category, input.name),
-        storage: input.storage,
-        source: "User",
-      },
-      user?.id,
-    ).catch(() => undefined);
-    toast.success(`Saved — I'll recognise this barcode next time`);
-    setLearnBarcode(null);
-  }
-
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
     setManualOpen(true);
   }
+
 
   /* ------------------------------- AI photo scan ------------------------------ */
 
