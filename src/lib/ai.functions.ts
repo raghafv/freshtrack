@@ -151,23 +151,57 @@ export const askAssistant = createServerFn({ method: "POST" })
   });
 
 
-/** Recipe ideas built strictly from what is currently in the pantry. */
+const RecipeInput = z.object({
+  mode: z.enum(["surprise", "selected"]).default("surprise"),
+  ingredients: z.array(z.string().min(1).max(80)).max(20).default([]),
+});
+
+/**
+ * Recipe ideas built strictly from the pantry. "surprise" lets the AI pick;
+ * "selected" restricts the dishes to the ingredients the user chose. Results are
+ * saved so they stay on the home screen after the app is closed.
+ */
 export const suggestRecipes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ recipes: PantryRecipe[] }> => {
+  .inputValidator((input: unknown) => RecipeInput.parse(input ?? {}))
+  .handler(async ({ data, context }): Promise<{ recipes: PantryRecipe[] }> => {
     const supabase = context.supabase as unknown as SupabaseLike;
     const ctx = await loadPantryContext(supabase);
     if (ctx.items.length === 0) return { recipes: [] };
 
+    const chosen = data.mode === "selected" ? data.ingredients.filter(Boolean) : [];
+    const focus =
+      chosen.length > 0
+        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Every recipe must centre on these ingredients.`
+        : "\nSurprise the user with a varied mix of dishes.";
+
     const parsed = await generateAIResponse("recipes", [
       { role: "system", content: pantrySystemPrompt(ctx) },
-      { role: "user", content: recipeRequest },
+      { role: "user", content: recipeRequest + focus },
     ]);
 
     const recipes = normalizeRecipes(parsed);
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
+
+    if (recipes.length > 0) {
+      const { error } = await supabase.from("saved_recipes").insert(
+        recipes.map((r) => ({
+          user_id: context.userId,
+          title: r.title,
+          emoji: null,
+          minutes: r.minutes,
+          uses: r.uses,
+          missing: r.substitutions.map((s) => s.missing).filter(Boolean),
+          steps: r.steps,
+          mode: data.mode,
+        })),
+      );
+      if (error) console.error("[recipes] save failed", error);
+    }
+
     return { recipes };
   });
+
 
 /** Auto-generate a shopping list from pantry gaps, without duplicating what you own. */
 export const suggestShoppingList = createServerFn({ method: "POST" })
