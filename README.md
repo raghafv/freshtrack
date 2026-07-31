@@ -10,9 +10,7 @@
 
 ## 🌐 Live Demo
 
-🔗 **Website:** https://freshtrack.example.com/
-
-> *(This project is actively under development. Features and UI may change over time.)*
+🔗 **Website:** fresh-track.in
 
 ---
 
@@ -62,35 +60,6 @@ The application enables users to:
 - View pantry analytics
 - Discover recipes using available ingredients
 
----
-
-## 📸 Screenshots
-
-*(Screenshots coming soon.)*
-
----
-
-## 🛠️ Running Locally
-
-Clone the repository
-
-```bash
-git clone https://github.com/raghavv/freshtrackmvp1.git
-```
-
-Install dependencies
-
-```bash
-npm install
-```
-
-Start the development server
-
-```bash
-npm run dev
-```
-
----
 
 ## 🚧 Roadmap
 
@@ -103,29 +72,6 @@ npm run dev
 - 🚧 Receipt OCR
 - 🚧 Advanced AI Assistant
 - 🚧 Native Android APK
-
----
-
-## 👥 Team
-
-### Team Leader
-- **Raghav Goyal**
-
-### Team Members
-- Gaurang Koul
-- Apoorv Jha
-- Manik Das Chopra
-- Nalin Sinha
-
-**Teacher Guide:** Mrs. Sunita Tokas
-
----
-
-## ⭐ If you like this project
-
-Please consider starring ⭐ the repository!
-
----
 
 ## 📄 License
 
