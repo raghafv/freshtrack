@@ -560,17 +560,16 @@ function ScannerPage() {
         candidate={confirming}
         onOpenChange={(open) => !open && setConfirming(null)}
         onSaved={(c) => {
-          rememberBarcode({
-            name: c.name,
-            brand: c.brand,
-            category: c.category,
-            unit: c.unit,
-            storage: c.storage,
-            shelfLifeDays: candidateShelfDays(c, c.storage),
-          });
           setDetections((d) => d.filter((x) => x.key !== c.key));
           void recordScan.mutateAsync({ method: c.source || pendingMethod, items_added: 1 });
         }}
+      />
+
+      <UnknownBarcodeDialog
+        open={Boolean(learnBarcode)}
+        barcode={learnBarcode}
+        userId={user?.id}
+        onOpenChange={(open) => !open && setLearnBarcode(null)}
       />
 
       <QuickAddDialog
@@ -578,20 +577,12 @@ function ScannerPage() {
         onOpenChange={setManualOpen}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
-        onAdded={(product, storage) =>
-          rememberBarcode({
-            name: product.name,
-            category: product.category,
-            unit: product.form === "count" ? "pcs" : product.unit,
-            storage,
-            shelfLifeDays: shelfDaysFrom(product.shelf, storage),
-          })
-        }
         onDetails={(p) => {
           setPrefill(p);
           setFormOpen(true);
         }}
       />
+
 
       <ItemFormDialog
         open={formOpen}
