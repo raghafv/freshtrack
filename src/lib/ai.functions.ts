@@ -183,21 +183,7 @@ export const suggestRecipes = createServerFn({ method: "POST" })
     const recipes = normalizeRecipes(parsed);
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
 
-    if (recipes.length > 0) {
-      const { error } = await supabase.from("saved_recipes").insert(
-        recipes.map((r) => ({
-          user_id: context.userId,
-          title: r.title,
-          emoji: null,
-          minutes: r.minutes,
-          uses: r.uses,
-          missing: r.substitutions.map((s) => s.missing).filter(Boolean),
-          steps: r.steps,
-          mode: data.mode,
-        })),
-      );
-      if (error) console.error("[recipes] save failed", error);
-    }
+    // Recipes are not auto-saved — the user explicitly saves the ones they like.
 
     return { recipes };
   });

@@ -547,5 +547,29 @@ export function useRecipeMutations() {
     onSuccess: invalidate,
   });
 
-  return { remove, clearAll };
+  const save = useMutation({
+    mutationFn: async (recipe: {
+      title: string;
+      minutes?: number | null;
+      uses?: string[];
+      missing?: string[];
+      steps?: string[];
+      mode?: string;
+    }) => {
+      const { error } = await supabase.from("saved_recipes").insert({
+        user_id: user!.id,
+        title: recipe.title,
+        emoji: null,
+        minutes: recipe.minutes ?? null,
+        uses: recipe.uses ?? [],
+        missing: recipe.missing ?? [],
+        steps: recipe.steps ?? [],
+        mode: recipe.mode ?? "surprise",
+      });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return { remove, clearAll, save };
 }
