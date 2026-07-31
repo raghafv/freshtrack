@@ -507,11 +507,29 @@ function ScannerPage() {
             onCapture={runReceiptScan}
           />
 
-          {receiptLines && (
+          {receiptLines && receiptLines.length > 0 && (
             <section className="mt-4 animate-fade-up">
               <h2 className="mb-2 text-base font-semibold">
                 Detected products ({receiptLines.length})
               </h2>
+              <Button
+                className="press mb-3 h-11 w-full rounded-2xl"
+                onClick={() => {
+                  setReceiptPicked(Object.fromEntries(receiptLines.map((_, i) => [i, true])));
+                  void importReceipt(receiptLines);
+                }}
+                disabled={importing}
+              >
+                {importing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                Add all {receiptLines.length} item{receiptLines.length === 1 ? "" : "s"}
+              </Button>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Tap any product to edit its quantity, storage and expiry before adding.
+              </p>
               <ul className="space-y-2">
                 {receiptLines.map((line, i) => (
                   <li
@@ -523,19 +541,35 @@ function ScannerPage() {
                       checked={!!receiptPicked[i]}
                       onCheckedChange={(v) => setReceiptPicked((p) => ({ ...p, [i]: v === true }))}
                     />
-                    <label htmlFor={`rl-${i}`} className="min-w-0 flex-1 cursor-pointer">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 text-left"
+                      onClick={() => {
+                        setPendingMethod("receipt");
+                        setReceiptEditIndex(i);
+                        setConfirming(
+                          buildCandidate({
+                            name: line.name,
+                            unit: line.unit,
+                            quantity: line.quantity,
+                            source: "receipt",
+                          }),
+                        );
+                      }}
+                    >
                       <p className="truncate text-sm font-medium">{line.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {line.quantity} {line.unit}
-                        {line.price != null ? ` · ₹${line.price}` : ""}
+                        {line.price != null ? ` · ₹${line.price}` : ""} · tap to edit
                       </p>
-                    </label>
+                    </button>
                   </li>
                 ))}
               </ul>
               <Button
+                variant="secondary"
                 className="press mt-3 h-12 w-full rounded-2xl"
-                onClick={importReceipt}
+                onClick={() => void importReceipt()}
                 disabled={importing}
               >
                 {importing ? (
