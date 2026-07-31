@@ -22,6 +22,7 @@ import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
 import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
+import { Route as ShellAdminBarcodesRouteImport } from './routes/_shell.admin-barcodes'
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
 import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
 import { Route as ShellAdminUserUserIdRouteImport } from './routes/_shell.admin-user.$userId'
@@ -90,6 +91,11 @@ const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellAdminBarcodesRoute = ShellAdminBarcodesRouteImport.update({
+  id: '/admin-barcodes',
+  path: '/admin-barcodes',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellAdminRoute = ShellAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof ShellAdminRoute
+  '/admin-barcodes': typeof ShellAdminBarcodesRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof ShellAdminRoute
+  '/admin-barcodes': typeof ShellAdminBarcodesRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_shell/admin': typeof ShellAdminRoute
+  '/_shell/admin-barcodes': typeof ShellAdminBarcodesRoute
   '/_shell/analytics': typeof ShellAnalyticsRoute
   '/_shell/assistant': typeof ShellAssistantRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin'
+    | '/admin-barcodes'
     | '/analytics'
     | '/assistant'
     | '/notifications'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin'
+    | '/admin-barcodes'
     | '/analytics'
     | '/assistant'
     | '/notifications'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/_shell/admin'
+    | '/_shell/admin-barcodes'
     | '/_shell/analytics'
     | '/_shell/assistant'
     | '/_shell/notifications'
@@ -314,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAnalyticsRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/admin-barcodes': {
+      id: '/_shell/admin-barcodes'
+      path: '/admin-barcodes'
+      fullPath: '/admin-barcodes'
+      preLoaderRoute: typeof ShellAdminBarcodesRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/admin': {
       id: '/_shell/admin'
       path: '/admin'
@@ -340,6 +359,7 @@ declare module '@tanstack/react-router' {
 
 interface ShellRouteChildren {
   ShellAdminRoute: typeof ShellAdminRoute
+  ShellAdminBarcodesRoute: typeof ShellAdminBarcodesRoute
   ShellAnalyticsRoute: typeof ShellAnalyticsRoute
   ShellAssistantRoute: typeof ShellAssistantRoute
   ShellNotificationsRoute: typeof ShellNotificationsRoute
@@ -355,6 +375,7 @@ interface ShellRouteChildren {
 
 const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminRoute: ShellAdminRoute,
+  ShellAdminBarcodesRoute: ShellAdminBarcodesRoute,
   ShellAnalyticsRoute: ShellAnalyticsRoute,
   ShellAssistantRoute: ShellAssistantRoute,
   ShellNotificationsRoute: ShellNotificationsRoute,
