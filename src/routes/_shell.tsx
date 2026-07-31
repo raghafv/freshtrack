@@ -50,6 +50,7 @@ function AuthedShell() {
   return (
     <div className="min-h-screen bg-background">
       <Outlet />
+      <PushPrompt />
       <BottomNav unread={unread} />
     </div>
   );
