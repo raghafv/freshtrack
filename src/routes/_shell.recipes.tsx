@@ -1,5 +1,5 @@
 import { friendlyMessage } from "@/lib/errors";
-import { emojiFor } from "@/lib/emoji";
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -127,7 +127,7 @@ function RecipesPage() {
                   <Shuffle className="h-4 w-4" />
                 )}
               </span>
-              <span className="text-sm font-semibold">Surprise me ✨</span>
+              <span className="text-sm font-semibold">Surprise me</span>
               <span className="text-xs text-muted-foreground">
                 Multiple ideas from your whole pantry.
               </span>
@@ -141,7 +141,7 @@ function RecipesPage() {
               <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-soft text-primary">
                 <ListChecks className="h-4 w-4" />
               </span>
-              <span className="text-sm font-semibold">Pick ingredients 🧺</span>
+              <span className="text-sm font-semibold">Pick ingredients</span>
               <span className="text-xs text-muted-foreground">
                 Choose what you feel like cooking with.
               </span>
@@ -168,9 +168,6 @@ function RecipesPage() {
                           : "border border-border/60 text-muted-foreground",
                       )}
                     >
-                      <span aria-hidden className="mr-1">
-                        {emojiFor(i.name, i.category)}
-                      </span>
                       {i.name}
                     </button>
                   );
@@ -203,9 +200,6 @@ function RecipesPage() {
                     key={i.id}
                     className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary"
                   >
-                    <span aria-hidden className="mr-1">
-                      {emojiFor(i.name, i.category)}
-                    </span>
                     {i.name} · {expiryText(i.expiry_date).toLowerCase()}
                   </span>
                 ))}
@@ -213,27 +207,55 @@ function RecipesPage() {
             </section>
           )}
 
-          {recipes.length > 0 ? (
-            <ul className="space-y-3">
-              {recipes.map((r) => (
-                <RecipeCard key={r.title} recipe={r} />
-              ))}
-            </ul>
-          ) : saved.length > 0 ? (
+          {recipes.length > 0 && (
+            <section className="mb-6">
+              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+                New ideas — save the ones you like
+              </h2>
+              <ul className="space-y-3">
+                {recipes.map((r) => (
+                  <RecipeCard
+                    key={r.title}
+                    recipe={r}
+                    saved={saved.some((s) => s.title === r.title)}
+                    saving={save.isPending}
+                    onSave={() =>
+                      save.mutate(
+                        {
+                          title: r.title,
+                          minutes: r.minutes,
+                          uses: r.uses,
+                          missing: r.substitutions.map((s) => s.missing).filter(Boolean),
+                          steps: r.steps,
+                          mode: gen.variables?.mode ?? "surprise",
+                        },
+                        {
+                          onSuccess: () => toast.success("Recipe saved"),
+                          onError: (e) => toast.error(friendlyMessage(e, "Could not save recipe")),
+                        },
+                      )
+                    }
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {saved.length > 0 ? (
             <section>
-              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Your recipes</h2>
+              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Saved recipes</h2>
               <ul className="space-y-3">
                 {saved.map((r) => (
                   <SavedRecipeCard key={r.id} recipe={r} />
                 ))}
               </ul>
             </section>
-          ) : (
+          ) : recipes.length === 0 ? (
             <div className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">
               Pick a mode above and FreshTrack will build meals from your {items.length} tracked
-              item{items.length === 1 ? "" : "s"}. Recipes stay here even after you close the app.
+              item{items.length === 1 ? "" : "s"}. Save the ones you like and they stay here.
             </div>
-          )}
+          ) : null}
         </>
       )}
 
@@ -253,12 +275,7 @@ function SavedRecipeCard({ recipe }: { recipe: SavedRecipe }) {
   return (
     <li className="surface-card animate-fade-up p-4">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <h3 className="text-base font-semibold">
-          <span aria-hidden className="mr-1">
-            {recipe.emoji ?? emojiFor(recipe.title)}
-          </span>
-          {recipe.title}
-        </h3>
+        <h3 className="text-base font-semibold">{recipe.title}</h3>
         <div className="flex shrink-0 items-center gap-2">
           {recipe.minutes ? (
             <span className="rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
@@ -283,9 +300,6 @@ function SavedRecipeCard({ recipe }: { recipe: SavedRecipe }) {
               key={u}
               className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
             >
-              <span aria-hidden className="mr-1">
-                {emojiFor(u)}
-              </span>
               {u}
             </span>
           ))}
@@ -307,14 +321,36 @@ function SavedRecipeCard({ recipe }: { recipe: SavedRecipe }) {
 }
 
 
-function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
+function RecipeCard({
+  recipe,
+  saved,
+  saving,
+  onSave,
+}: {
+  recipe: PantryRecipe;
+  saved: boolean;
+  saving: boolean;
+  onSave: () => void;
+}) {
   return (
     <li className="surface-card animate-fade-up p-4">
       <div className="mb-2 flex items-start justify-between gap-3">
         <h3 className="text-base font-semibold">{recipe.title}</h3>
-        <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
-          {recipe.minutes} min
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
+            {recipe.minutes} min
+          </span>
+          <Button
+            size="sm"
+            variant={saved ? "secondary" : "default"}
+            className="h-7 rounded-full px-3 text-[11px]"
+            disabled={saved || saving}
+            onClick={onSave}
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bookmark className="h-3 w-3" />}
+            {saved ? "Saved" : "Save"}
+          </Button>
+        </div>
       </div>
 
       {recipe.priority.length > 0 && (
@@ -330,9 +366,6 @@ function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
               key={u}
               className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
             >
-              <span aria-hidden className="mr-1">
-                {emojiFor(u)}
-              </span>
               {u}
             </span>
           ))}
