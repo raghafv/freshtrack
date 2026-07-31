@@ -4,7 +4,7 @@ import { Leaf, Loader2 } from "lucide-react";
 import { BottomNav } from "@/components/layout";
 import { PushPrompt } from "@/components/push-prompt";
 import { useAuth } from "@/lib/auth";
-import { useClearAssistant, useNotifications, useSettings } from "@/lib/data";
+import {useClearAssistant,useNotifications} from "@/lib/data";
 
 
 export const Route = createFileRoute("/_shell")({
@@ -37,7 +37,6 @@ const CHAT_SESSION_KEY = "freshtrack.chat.session";
 
 function AuthedShell() {
   const { data: notifications } = useNotifications();
-  const { data: settings } = useSettings();
   const clearChat = useClearAssistant();
 
 
