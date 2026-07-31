@@ -2,9 +2,11 @@ import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Leaf, Loader2 } from "lucide-react";
 import { BottomNav } from "@/components/layout";
+import { PushPrompt } from "@/components/push-prompt";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, useSettings } from "@/lib/data";
 import { useTheme } from "@/lib/theme";
+
 
 export const Route = createFileRoute("/_shell")({
   component: ShellLayout,
