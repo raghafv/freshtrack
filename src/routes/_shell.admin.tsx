@@ -142,10 +142,27 @@ function AdminPage() {
           </section>
 
           <section className="surface-card p-5">
-            <h2 className="mb-3 text-sm font-semibold tracking-tight">Users</h2>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold tracking-tight">Users</h2>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded-xl"
+                onClick={() => navigate({ to: "/admin-barcodes" })}
+              >
+                Barcode database
+              </Button>
+            </div>
             <div className="space-y-2">
               {data.users.map((u) => (
-                <div key={u.user_id} className="rounded-2xl bg-muted/40 px-4 py-3">
+                <button
+                  key={u.user_id}
+                  type="button"
+                  className="w-full rounded-2xl bg-muted/40 px-4 py-3 text-left transition hover:bg-muted/60"
+                  onClick={() =>
+                    navigate({ to: "/admin-user/$userId", params: { userId: u.user_id } })
+                  }
+                >
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="truncate text-sm font-medium">
                       {u.full_name || u.email || u.user_id.slice(0, 8)}
@@ -159,10 +176,11 @@ function AdminPage() {
                     🧺 {u.pantry_items} pantry · 🛒 {u.shopping_items} list · 📷 {u.scans} scans ·
                     🔔 {u.push_devices} device{u.push_devices === 1 ? "" : "s"}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           </section>
+
         </div>
       ) : null}
     </PageContainer>
