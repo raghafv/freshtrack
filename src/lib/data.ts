@@ -419,7 +419,11 @@ export function useUpdateProfile() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (patch: { full_name?: string; avatar_url?: string }) => {
+    mutationFn: async (patch: {
+      full_name?: string;
+      avatar_url?: string;
+      onboarded_at?: string;
+    }) => {
       const { error } = await supabase
         .from("profiles")
         .upsert({ id: user!.id, ...patch }, { onConflict: "id" });
