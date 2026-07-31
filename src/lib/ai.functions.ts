@@ -186,7 +186,9 @@ export const suggestShoppingList = createServerFn({ method: "POST" })
         (n) => n.toLowerCase(),
       ),
     );
-    return { suggestions: normalizeSuggestions(parsed, existing) };
+    const suggestions = normalizeSuggestions(parsed, existing);
+    await logUsage("shopping", context.userId, JSON.stringify(suggestions).length);
+    return { suggestions };
   });
 
 /** Debug-only: recent AI provider activity (which provider answered, timing, fallbacks). */
