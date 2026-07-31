@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 import { useSmartAdd } from "@/lib/smart-add";
 import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
 import { friendlyMessage } from "@/lib/errors";
-import { emojiFor } from "@/lib/emoji";
 import {
   Select,
   SelectContent,
@@ -110,7 +109,6 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
       <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden rounded-3xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
-            <span aria-hidden>{emojiFor(candidate.name, candidate.category)}</span>
             {candidate.name}
             {conf && (
               <span

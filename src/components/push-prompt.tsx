@@ -46,7 +46,7 @@ export function usePush() {
       setActive(true);
       setState(pushState());
       await test({});
-      toast.success("Notifications enabled 🎉", {
+      toast.success("Notifications enabled", {
         description: "We just sent a test alert to this device.",
       });
     } catch (error) {
@@ -100,7 +100,7 @@ export function PushPrompt() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold tracking-tight text-foreground">
-              Never lose food again 🔔
+              Never lose food again
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               Let FreshTrack run in the background and send expiry alerts straight to your lock
@@ -151,7 +151,7 @@ export function PushSettingsRow() {
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">Lock-screen alerts 🔔</p>
+        <p className="text-sm font-medium text-foreground">Lock-screen alerts</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
       </div>
       {state === "preview" ? (

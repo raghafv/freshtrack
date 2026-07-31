@@ -17,7 +17,6 @@ import {
 } from "@/lib/data";
 import { expiryText, formatCurrency, getStatus } from "@/lib/freshtrack";
 import { generateInsights, spendingInsights } from "@/lib/analytics";
-import { emojiFor } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/notifications")({
@@ -72,8 +71,8 @@ function NotificationsPage() {
         const expired = getStatus(item, soonDays) === "expired";
         await notify(
           expired
-            ? `${emojiFor(item.name, item.category)} ${item.name} has expired`
-            : `${emojiFor(item.name, item.category)} Use ${item.name} soon`,
+            ? `${item.name} has expired`
+            : `Use ${item.name} soon`,
           `${item.storage} · ${expiryText(item.expiry_date)}`,
           expired ? "danger" : "warning",
         );
@@ -98,7 +97,7 @@ function NotificationsPage() {
         const delta = spend.totalValue - previous;
         if (Math.abs(delta) >= Math.max(200, previous * 0.15)) {
           await notify(
-            delta > 0 ? "📈 Your pantry value went up" : "📉 Your pantry value dropped",
+            delta > 0 ? "Your pantry value went up" : "Your pantry value dropped",
             `Now ${formatCurrency(spend.totalValue)} (${delta > 0 ? "+" : "−"}${formatCurrency(Math.abs(delta))} since the last check).`,
             "info",
           );
@@ -114,7 +113,7 @@ function NotificationsPage() {
         const expired = items.filter((i) => getStatus(i, soonDays) === "expired").length;
         const soon = items.filter((i) => getStatus(i, soonDays) === "soon").length;
         await notify(
-          "🗓️ Your weekly pantry summary",
+          "Your weekly pantry summary",
           `${items.length} items worth ${formatCurrency(spend.totalValue)} · ${soon} to use soon · ${expired} expired · average pantry age ${spend.avgPantryAgeDays} days.`,
           expired > 0 ? "warning" : "success",
         );

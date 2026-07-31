@@ -32,7 +32,7 @@ import {
   storageDistribution,
   type Insight,
 } from "@/lib/analytics";
-import { categoryEmoji, emojiFor, storageEmoji } from "@/lib/emoji";
+import { categoryEmoji, storageEmoji } from "@/lib/emoji";
 import { formatCurrency, type ActivityEntry, type PantryItem } from "@/lib/freshtrack";
 import { cn } from "@/lib/utils";
 
@@ -234,9 +234,6 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
             {purchases.map((p) => (
               <li key={p.name} className="flex items-center justify-between gap-3 text-sm">
                 <span className="truncate">
-                  <span aria-hidden className="mr-1">
-                    {emojiFor(p.name)}
-                  </span>
                   {p.name}
                 </span>
                 <span className="shrink-0 text-xs text-muted-foreground">
@@ -258,9 +255,6 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
             {runOut.map((r) => (
               <li key={r.name} className="text-sm">
                 <p className="font-medium">
-                  <span aria-hidden className="mr-1">
-                    {emojiFor(r.name)}
-                  </span>
                   {r.name} runs out in {Math.max(0, r.daysLeft)} day
                   {r.daysLeft === 1 ? "" : "s"}
                 </p>

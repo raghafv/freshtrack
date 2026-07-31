@@ -184,8 +184,8 @@ function AdminPage() {
                   </div>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">{u.email}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    🧺 {u.pantry_items} pantry · 🛒 {u.shopping_items} list · 📷 {u.scans} scans ·
-                    🔔 {u.push_devices} device{u.push_devices === 1 ? "" : "s"}
+                    {u.pantry_items} pantry · {u.shopping_items} list · {u.scans} scans ·
+                    {u.push_devices} device{u.push_devices === 1 ? "" : "s"}
                   </p>
                 </button>
               ))}

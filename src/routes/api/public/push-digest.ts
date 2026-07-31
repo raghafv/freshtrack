@@ -68,7 +68,6 @@ export const Route = createFileRoute("/api/public/push-digest")({
             const result = await sendPush(device, {
               title: soon.length > 0 ? "Use it before you lose it" : "Pantry check-in",
               body,
-              emoji: soon.length > 0 ? "⏳" : "🧹",
               url: "/pantry",
               tag: "freshtrack-digest",
             });

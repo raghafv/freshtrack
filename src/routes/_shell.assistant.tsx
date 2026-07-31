@@ -64,7 +64,7 @@ function AssistantPage() {
         qc.invalidateQueries({ queryKey: ["shopping", user?.id] });
       }
       if (res.added.length > 0) toast.success(`Added to shopping list: ${res.added.join(", ")}`);
-      if (res.cleared) toast.success("Shopping list cleared 🧹");
+      if (res.cleared) toast.success("Shopping list cleared");
       else if (removed.length > 0) toast.success(`Removed: ${removed.join(", ")}`);
       if (checked.length > 0) toast.success(`Marked as bought: ${checked.join(", ")}`);
     },

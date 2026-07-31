@@ -177,7 +177,7 @@ function ProfilePage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
               <ShieldCheck className="h-5 w-5" />
             </span>
-            <span className="text-sm font-semibold">Admin dashboard 🛡️</span>
+            <span className="text-sm font-semibold">Admin dashboard</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
