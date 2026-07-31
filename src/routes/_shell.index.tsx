@@ -25,6 +25,7 @@ import {
   useActivity,
   usePantryItems,
   useProfile,
+  useSavedRecipes,
   useSettings,
   useShoppingItems,
   useShoppingMutations,
@@ -93,6 +94,7 @@ function Dashboard() {
   const { data: activity = [] } = useActivity(6);
   const { data: fullActivity = [] } = useActivity(200);
   const { data: shopping = [] } = useShoppingItems();
+  const { data: savedRecipes = [] } = useSavedRecipes(3);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
   const { toggle } = useShoppingMutations();
