@@ -127,7 +127,8 @@ function Dashboard() {
   return (
     <PageContainer>
       <AppBar
-        greeting={`${greetingFor(new Date())}, ${firstName}!`}
+        greeting={`${greetingFor(new Date())},`}
+        name={`${firstName}!`}
         subtitle={new Date().toLocaleDateString(undefined, {
           weekday: "long",
           day: "numeric",
