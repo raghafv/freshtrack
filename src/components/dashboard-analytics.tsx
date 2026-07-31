@@ -32,7 +32,6 @@ import {
   storageDistribution,
   type Insight,
 } from "@/lib/analytics";
-import { categoryEmoji, storageEmoji } from "@/lib/emoji";
 import { formatCurrency, type ActivityEntry, type PantryItem } from "@/lib/freshtrack";
 import { cn } from "@/lib/utils";
 
@@ -121,7 +120,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
         <h2 className="mb-1 text-base font-semibold">Where your pantry sits</h2>
         <p className="mb-3 text-xs text-muted-foreground">
           {categories.length} categor{categories.length === 1 ? "y" : "ies"} ·{" "}
-          {storages.map((s) => `${storageEmoji(s.name)} ${s.name} ${s.value}`).join(" · ")}
+          {storages.map((s) => `${s.name} ${s.value}`).join(" · ")}
         </p>
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
@@ -159,7 +158,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
                 className="h-2.5 w-2.5 rounded-full"
                 style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
               />
-              {categoryEmoji(c.name)} {c.name} · {c.value}
+              {c.name} · {c.value}
             </li>
           ))}
         </ul>
@@ -172,7 +171,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
         </div>
         <p className="mb-3 text-xs text-muted-foreground">
           {worstCategory
-            ? `Most wasted: ${categoryEmoji(worstCategory.category)} ${worstCategory.category} (${formatCurrency(worstCategory.value)})`
+            ? `Most wasted: ${worstCategory.category} (${formatCurrency(worstCategory.value)})`
             : "No expired items recorded — nothing wasted yet."}
         </p>
         <div className="h-44">
@@ -216,8 +215,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
         </div>
         {spending.topCategory && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Most of your money sits in {categoryEmoji(spending.topCategory.category)}{" "}
-            {spending.topCategory.category} ({formatCurrency(spending.topCategory.value)}).
+            Most of your money sits in             {spending.topCategory.category} ({formatCurrency(spending.topCategory.value)}).
             {spending.pricedItems < items.length &&
               ` ${items.length - spending.pricedItems} item(s) have no price yet, so these use a typical ₹120 estimate.`}
           </p>
