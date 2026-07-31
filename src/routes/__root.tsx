@@ -106,16 +106,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/placeholder-id-preview.png",
+        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7540a93f-ccf7-4ef8-9c33-ab00ef616f2f/id-preview-0a96fa82--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1785486383496.png",
       },
       {
         name: "twitter:image",
-        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/placeholder-id-preview.png",
+        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7540a93f-ccf7-4ef8-9c33-ab00ef616f2f/id-preview-0a96fa82--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1785486383496.png",
       },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
