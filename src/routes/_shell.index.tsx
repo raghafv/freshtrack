@@ -31,7 +31,9 @@ import {
 } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, formatQty, getStatus } from "@/lib/freshtrack";
 import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
+import { foodImage } from "@/lib/food-image";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
