@@ -216,8 +216,8 @@ function ScannerPage() {
         }`,
       );
     } catch (e) {
+      toast.error(friendlyMessage(e, "Barcode lookup failed"));
       setLearnBarcode(code);
-      openManual(friendlyMessage(e, "Barcode lookup failed — add the product manually."));
     } finally {
 
       setBusy(null);
