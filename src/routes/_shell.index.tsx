@@ -31,7 +31,9 @@ import {
 } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, formatQty, getStatus } from "@/lib/freshtrack";
 import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
+import { foodImage } from "@/lib/food-image";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
@@ -173,8 +175,16 @@ function Dashboard() {
         ) : (
           <ul className="space-y-3">
             {alerts.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
+              <li key={item.id} className="flex items-center gap-3">
+                <img
+                  src={foodImage(item.name, item.category, item.image_url)}
+                  alt={item.name}
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                  className="h-12 w-12 shrink-0 rounded-2xl bg-muted object-cover"
+                />
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {item.storage} · {expiryText(item.expiry_date)}
@@ -183,6 +193,7 @@ function Dashboard() {
                 <StatusBadge status={getStatus(item, soonDays)} />
               </li>
             ))}
+
             {lowStock.map((i) => (
               <li key={i.id} className="text-sm">
                 <p className="font-medium">{i.title}</p>
