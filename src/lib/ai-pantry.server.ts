@@ -159,20 +159,79 @@ export function normalizeShoppingAdds(parsed: Record<string, unknown>, existing:
     .slice(0, 20);
 }
 
+const STORAGES = ["Fridge", "Freezer", "Pantry"];
+
+/** Items the assistant should place directly into the pantry. */
+export function normalizePantryAdds(parsed: Record<string, unknown>) {
+  const raw = Array.isArray(parsed.pantryAdds) ? parsed.pantryAdds : [];
+  const seen = new Set<string>();
+  return raw
+    .map((entry) => {
+      const it = entry as Record<string, unknown>;
+      const name = String(it.name ?? "").trim();
+      if (!name || seen.has(name.toLowerCase())) return null;
+      seen.add(name.toLowerCase());
+      const qty = Number(it.quantity);
+      const shelf = Number(it.shelfLifeDays);
+      return {
+        name,
+        quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
+        unit: UNITS.includes(String(it.unit)) ? String(it.unit) : "pcs",
+        category: String(it.category ?? "Other"),
+        storage: STORAGES.includes(String(it.storage)) ? String(it.storage) : "Pantry",
+        shelfLifeDays: Number.isFinite(shelf) && shelf > 0 ? Math.round(shelf) : 7,
+      };
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null)
+    .slice(0, 20);
+}
+
 export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
   const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
+  const strList = (v: unknown, max: number) =>
+    Array.isArray(v) ? v.map(String).filter((s) => s.trim().length > 0).slice(0, max) : [];
   return raw
     .map((entry) => {
       const r = entry as Record<string, unknown>;
       const title = String(r.title ?? "").trim();
       if (!title) return null;
-      const minutes = Number(r.minutes);
+      const num = (v: unknown, fallback: number) => {
+        const n = Number(v);
+        return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
+      };
+      const prepMinutes = num(r.prepMinutes, 0);
+      const cookMinutes = num(r.cookMinutes, 0);
       return {
         title,
-        minutes: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 20,
-        uses: Array.isArray(r.uses) ? r.uses.map(String).slice(0, 12) : [],
-        priority: Array.isArray(r.priority) ? r.priority.map(String).slice(0, 6) : [],
-        steps: Array.isArray(r.steps) ? r.steps.map(String).slice(0, 8) : [],
+        description: r.description ? String(r.description) : undefined,
+        cuisine: r.cuisine ? String(r.cuisine) : undefined,
+        difficulty: r.difficulty ? String(r.difficulty) : undefined,
+        servings: num(r.servings, 2),
+        prepMinutes: prepMinutes || undefined,
+        cookMinutes: cookMinutes || undefined,
+        minutes: num(r.minutes, prepMinutes + cookMinutes || 20),
+        ingredients: Array.isArray(r.ingredients)
+          ? r.ingredients
+              .map((ing) => {
+                const o = ing as Record<string, unknown>;
+                const name = String(o.name ?? "").trim();
+                if (!name) return null;
+                return {
+                  name,
+                  amount: String(o.amount ?? "").trim(),
+                  inPantry: o.inPantry !== false,
+                };
+              })
+              .filter((v): v is { name: string; amount: string; inPantry: boolean } => v !== null)
+              .slice(0, 25)
+          : [],
+        equipment: strList(r.equipment, 8),
+        uses: strList(r.uses, 12),
+        priority: strList(r.priority, 6),
+        steps: strList(r.steps, 14),
+        tips: strList(r.tips, 6),
+        storageAdvice: r.storageAdvice ? String(r.storageAdvice) : null,
+        nutrition: r.nutrition ? String(r.nutrition) : null,
         substitutions: Array.isArray(r.substitutions)
           ? r.substitutions
               .map((sub) => {
@@ -191,6 +250,7 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
     .filter((v): v is PantryRecipe => v !== null)
     .slice(0, 6);
 }
+
 
 export function normalizeSuggestions(
   parsed: Record<string, unknown>,
