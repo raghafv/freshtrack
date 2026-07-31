@@ -24,7 +24,6 @@ import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
 import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
-import { Route as ApiPublicPushCheckRouteImport } from './routes/api/public/push-check'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -100,11 +99,6 @@ const ApiPublicPushDigestRoute = ApiPublicPushDigestRouteImport.update({
   path: '/api/public/push-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPushCheckRoute = ApiPublicPushCheckRouteImport.update({
-  id: '/api/public/push-check',
-  path: '/api/public/push-check',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -120,7 +114,6 @@ export interface FileRoutesByFullPath {
   '/scanner': typeof ShellScannerRoute
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
-  '/api/public/push-check': typeof ApiPublicPushCheckRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRoutesByTo {
@@ -137,7 +130,6 @@ export interface FileRoutesByTo {
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
   '/': typeof ShellIndexRoute
-  '/api/public/push-check': typeof ApiPublicPushCheckRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRoutesById {
@@ -156,7 +148,6 @@ export interface FileRoutesById {
   '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
   '/_shell/': typeof ShellIndexRoute
-  '/api/public/push-check': typeof ApiPublicPushCheckRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRouteTypes {
@@ -175,7 +166,6 @@ export interface FileRouteTypes {
     | '/scanner'
     | '/settings'
     | '/shopping'
-    | '/api/public/push-check'
     | '/api/public/push-digest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -192,7 +182,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shopping'
     | '/'
-    | '/api/public/push-check'
     | '/api/public/push-digest'
   id:
     | '__root__'
@@ -210,7 +199,6 @@ export interface FileRouteTypes {
     | '/_shell/settings'
     | '/_shell/shopping'
     | '/_shell/'
-    | '/api/public/push-check'
     | '/api/public/push-digest'
   fileRoutesById: FileRoutesById
 }
@@ -218,7 +206,6 @@ export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ApiPublicPushCheckRoute: typeof ApiPublicPushCheckRoute
   ApiPublicPushDigestRoute: typeof ApiPublicPushDigestRoute
 }
 
@@ -329,13 +316,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPushDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/push-check': {
-      id: '/api/public/push-check'
-      path: '/api/public/push-check'
-      fullPath: '/api/public/push-check'
-      preLoaderRoute: typeof ApiPublicPushCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -373,7 +353,6 @@ const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ApiPublicPushCheckRoute: ApiPublicPushCheckRoute,
   ApiPublicPushDigestRoute: ApiPublicPushDigestRoute,
 }
 export const routeTree = rootRouteImport
