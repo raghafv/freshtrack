@@ -164,7 +164,9 @@ export const suggestRecipes = createServerFn({ method: "POST" })
       { role: "user", content: recipeRequest },
     ]);
 
-    return { recipes: normalizeRecipes(parsed) };
+    const recipes = normalizeRecipes(parsed);
+    await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
+    return { recipes };
   });
 
 /** Auto-generate a shopping list from pantry gaps, without duplicating what you own. */
