@@ -22,6 +22,7 @@ import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
 import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
+import { Route as ShellAdminPendingRouteImport } from './routes/_shell.admin-pending'
 import { Route as ShellAdminBarcodesRouteImport } from './routes/_shell.admin-barcodes'
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
 import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
@@ -91,6 +92,11 @@ const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellAdminPendingRoute = ShellAdminPendingRouteImport.update({
+  id: '/admin-pending',
+  path: '/admin-pending',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellAdminBarcodesRoute = ShellAdminBarcodesRouteImport.update({
   id: '/admin-barcodes',
   path: '/admin-barcodes',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof ShellAdminRoute
   '/admin-barcodes': typeof ShellAdminBarcodesRoute
+  '/admin-pending': typeof ShellAdminPendingRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof ShellAdminRoute
   '/admin-barcodes': typeof ShellAdminBarcodesRoute
+  '/admin-pending': typeof ShellAdminPendingRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_shell/admin': typeof ShellAdminRoute
   '/_shell/admin-barcodes': typeof ShellAdminBarcodesRoute
+  '/_shell/admin-pending': typeof ShellAdminPendingRoute
   '/_shell/analytics': typeof ShellAnalyticsRoute
   '/_shell/assistant': typeof ShellAssistantRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/admin-barcodes'
+    | '/admin-pending'
     | '/analytics'
     | '/assistant'
     | '/notifications'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/admin-barcodes'
+    | '/admin-pending'
     | '/analytics'
     | '/assistant'
     | '/notifications'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_shell/admin'
     | '/_shell/admin-barcodes'
+    | '/_shell/admin-pending'
     | '/_shell/analytics'
     | '/_shell/assistant'
     | '/_shell/notifications'
@@ -326,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAnalyticsRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/admin-pending': {
+      id: '/_shell/admin-pending'
+      path: '/admin-pending'
+      fullPath: '/admin-pending'
+      preLoaderRoute: typeof ShellAdminPendingRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/admin-barcodes': {
       id: '/_shell/admin-barcodes'
       path: '/admin-barcodes'
@@ -360,6 +379,7 @@ declare module '@tanstack/react-router' {
 interface ShellRouteChildren {
   ShellAdminRoute: typeof ShellAdminRoute
   ShellAdminBarcodesRoute: typeof ShellAdminBarcodesRoute
+  ShellAdminPendingRoute: typeof ShellAdminPendingRoute
   ShellAnalyticsRoute: typeof ShellAnalyticsRoute
   ShellAssistantRoute: typeof ShellAssistantRoute
   ShellNotificationsRoute: typeof ShellNotificationsRoute
@@ -376,6 +396,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminRoute: ShellAdminRoute,
   ShellAdminBarcodesRoute: ShellAdminBarcodesRoute,
+  ShellAdminPendingRoute: ShellAdminPendingRoute,
   ShellAnalyticsRoute: ShellAnalyticsRoute,
   ShellAssistantRoute: ShellAssistantRoute,
   ShellNotificationsRoute: ShellNotificationsRoute,
