@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { emojiFor } from "@/lib/emoji";
 import { friendlyMessage } from "@/lib/errors";
 import { learnProduct, lookupLearned } from "@/lib/custom-products";
+import { lookupBarcode, saveProduct, shelfDaysForCategory } from "@/lib/product-db";
+
 import { useAuth } from "@/lib/auth";
 import {
   useAddPantryItem,
