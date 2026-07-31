@@ -67,7 +67,7 @@ export const askAssistant = createServerFn({ method: "POST" })
       { role: "user", content: data.question },
     ]);
 
-    const reply = String(parsed.reply ?? "").trim() || "I couldn't work that out — try rephrasing.";
+    let reply = String(parsed.reply ?? "").trim() || "I couldn't work that out — try rephrasing.";
 
     const existing = new Set(
       [...ctx.shoppingNames, ...ctx.items.map((i) => i.name)].map((n) => n.toLowerCase()),
@@ -81,14 +81,75 @@ export const askAssistant = createServerFn({ method: "POST" })
       if (error) console.error("[assistant] shopping insert failed", error);
     }
 
+    // ---- list actions (remove / clear / check off) -------------------------
+    const question = data.question.toLowerCase();
+    const wantsClear =
+      /\b(clear|empty|delete|remove|wipe)\b/.test(question) &&
+      /\b(everything|all|entire|whole)\b/.test(question) &&
+      /(shopping|grocery|list)/.test(question);
+
+    let cleared = parsed.clearShopping === true || wantsClear;
+    let removed: string[] = [];
+    const checked: string[] = [];
+
+    if (cleared) {
+      const { error } = await supabase
+        .from("shopping_items")
+        .delete()
+        .eq("user_id", context.userId);
+      if (error) {
+        console.error("[assistant] shopping clear failed", error);
+        cleared = false;
+      } else {
+        removed = ctx.shoppingNames;
+      }
+    } else {
+      const requested = normalizeNameList(parsed.shoppingRemoves);
+      const match = (wanted: string) =>
+        ctx.shoppingNames.filter(
+          (n) =>
+            n.toLowerCase() === wanted.toLowerCase() ||
+            n.toLowerCase().includes(wanted.toLowerCase()) ||
+            wanted.toLowerCase().includes(n.toLowerCase()),
+        );
+      const targets = [...new Set(requested.flatMap(match))];
+      if (targets.length > 0) {
+        const { error } = await supabase
+          .from("shopping_items")
+          .delete()
+          .eq("user_id", context.userId)
+          .in("name", targets);
+        if (error) console.error("[assistant] shopping remove failed", error);
+        else removed = targets;
+      }
+
+      const toCheck = [...new Set(normalizeNameList(parsed.shoppingChecked).flatMap(match))];
+      if (toCheck.length > 0) {
+        const { error } = await supabase
+          .from("shopping_items")
+          .update({ checked: true })
+          .eq("user_id", context.userId)
+          .in("name", toCheck);
+        if (error) console.error("[assistant] shopping check failed", error);
+        else checked.push(...toCheck);
+      }
+    }
+
+    if (cleared && !/clear|empt|remov|delete/i.test(reply)) {
+      reply = `Cleared your shopping list — ${removed.length} item${removed.length === 1 ? "" : "s"} removed.\n\n${reply}`;
+    }
+
     const { error: saveError } = await supabase.from("assistant_messages").insert([
       { user_id: context.userId, role: "user", content: data.question },
       { user_id: context.userId, role: "assistant", content: reply },
     ]);
     if (saveError) console.error("[assistant] message save failed", saveError);
 
-    return { reply, added: adds.map((a) => a.name) };
+    await logUsage("assistant", context.userId, data.question.length + reply.length);
+
+    return { reply, added: adds.map((a) => a.name), removed, checked, cleared };
   });
+
 
 /** Recipe ideas built strictly from what is currently in the pantry. */
 export const suggestRecipes = createServerFn({ method: "POST" })
