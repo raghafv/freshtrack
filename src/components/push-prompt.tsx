@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell, BellOff, Loader2, X } from "lucide-react";
+import { Bell, BellOff, ExternalLink, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,39 +133,58 @@ export function PushPrompt() {
 export function PushSettingsRow() {
   const { state, active, busy, enable, disable } = usePush();
 
+  const blockedish = state === "unsupported" || state === "blocked" || state === "preview" || state === "needs-install";
+
+  const hint =
+    state === "preview"
+      ? "Open FreshTrack in its own browser tab (or install it) to switch on lock-screen alerts — the preview window blocks them."
+      : state === "needs-install"
+        ? "On iPhone, tap Share → Add to Home Screen, open FreshTrack from there, then enable alerts."
+        : state === "unsupported"
+          ? "This browser doesn't support push notifications."
+          : state === "blocked"
+            ? "Blocked in browser settings — allow notifications for this site to re-enable."
+            : active
+              ? "This device receives expiry alerts even when FreshTrack is closed."
+              : "Get expiry alerts even when the app is closed.";
+
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">Lock-screen alerts 🔔</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {state === "unsupported"
-            ? "This browser doesn't support push notifications."
-            : state === "blocked"
-              ? "Blocked in browser settings — allow notifications for this site to re-enable."
-              : active
-                ? "This device receives expiry alerts even when FreshTrack is closed."
-                : "Get expiry alerts even when the app is closed."}
-        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
       </div>
-      <Button
-        size="sm"
-        variant={active ? "outline" : "default"}
-        className="shrink-0 rounded-full"
-        disabled={busy || state === "unsupported" || state === "blocked"}
-        onClick={active ? disable : enable}
-      >
-        {busy ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : active ? (
-          <>
-            <BellOff className="mr-1.5 h-3.5 w-3.5" /> Turn off
-          </>
-        ) : (
-          <>
-            <Bell className="mr-1.5 h-3.5 w-3.5" /> Enable
-          </>
-        )}
-      </Button>
+      {state === "preview" ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className="shrink-0 rounded-full"
+          onClick={() => window.open(window.location.href, "_blank", "noopener")}
+        >
+          <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> Open app
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant={active ? "outline" : "default"}
+          className="shrink-0 rounded-full"
+          disabled={busy || blockedish}
+          onClick={active ? disable : enable}
+        >
+          {busy ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : active ? (
+            <>
+              <BellOff className="mr-1.5 h-3.5 w-3.5" /> Turn off
+            </>
+          ) : (
+            <>
+              <Bell className="mr-1.5 h-3.5 w-3.5" /> Enable
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 }
+

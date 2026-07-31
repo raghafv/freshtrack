@@ -2,7 +2,13 @@
 
 const SW_URL = "/push-sw.js";
 
-export type PushState = "unsupported" | "blocked" | "default" | "granted";
+export type PushState =
+  | "unsupported"
+  | "preview"
+  | "needs-install"
+  | "blocked"
+  | "default"
+  | "granted";
 
 export function pushSupported() {
   return (
@@ -23,12 +29,30 @@ export function inEmbeddedPreview() {
   }
 }
 
+/** iOS/iPadOS only exposes web push to PWAs added to the home screen. */
+export function iosNeedsInstall() {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && (navigator as unknown as { maxTouchPoints: number }).maxTouchPoints > 1);
+  if (!isIOS) return false;
+  const standalone =
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true;
+  return !standalone;
+}
+
 export function pushState(): PushState {
+  if (typeof window === "undefined") return "unsupported";
+  if (inEmbeddedPreview()) return "preview";
+  if (iosNeedsInstall()) return "needs-install";
   if (!pushSupported()) return "unsupported";
   const p = Notification.permission;
   if (p === "denied") return "blocked";
   return p === "granted" ? "granted" : "default";
 }
+
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -56,13 +80,25 @@ export interface SubscribeResult {
 
 /** Asks for permission (if needed), registers the worker and returns the subscription. */
 export async function subscribeToPush(publicKey: string): Promise<SubscribeResult> {
+  if (inEmbeddedPreview())
+    throw new Error(
+      "Notifications can't be enabled inside the preview window. Open FreshTrack in its own tab or install it, then try again.",
+    );
+  if (iosNeedsInstall())
+    throw new Error(
+      "On iPhone, add FreshTrack to your Home Screen first (Share → Add to Home Screen), then enable notifications from there.",
+    );
   if (!pushSupported()) throw new Error("This browser doesn't support push notifications.");
 
   const permission =
     Notification.permission === "granted"
       ? "granted"
       : await Notification.requestPermission();
-  if (permission !== "granted") throw new Error("Notification permission was not granted.");
+  if (permission !== "granted")
+    throw new Error(
+      "Notification permission was blocked. Allow notifications for this site in your browser settings.",
+    );
+
 
   const registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
   await navigator.serviceWorker.ready;
