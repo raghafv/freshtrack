@@ -43,7 +43,6 @@ const SUGGESTIONS = [
   "Plan my meals for 3 days",
 ];
 
-
 function AssistantPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -52,7 +51,6 @@ function AssistantPage() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const endRef = useRef<HTMLDivElement | null>(null);
 
   const ask = useMutation({
     mutationFn: (question: string) => askAssistant({ data: { question } }),
@@ -64,25 +62,32 @@ function AssistantPage() {
         qc.invalidateQueries({ queryKey: ["shopping", user?.id] });
       }
       if (res.added.length > 0) toast.success(`Added to shopping list: ${res.added.join(", ")}`);
-      if (res.cleared) toast.success("Shopping list cleared 🧹");
+      if (res.cleared) toast.success("Shopping list cleared");
       else if (removed.length > 0) toast.success(`Removed: ${removed.join(", ")}`);
       if (checked.length > 0) toast.success(`Marked as bought: ${checked.join(", ")}`);
     },
 
     onError: (e) => toast.error(friendlyMessage(e, "The assistant failed")),
-    onSettled: () => {
-      setPending(null);
-      inputRef.current?.focus();
-    },
+    onSettled: () => setPending(null),
   });
 
+  // Open at the top of the chat and never steal focus — the phone keyboard
+  // should only appear when the user taps the input themselves.
   useEffect(() => {
-    inputRef.current?.focus();
+    window.scrollTo({ top: 0 });
   }, []);
 
+  // Scrolling up dismisses the keyboard.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, pending]);
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < last - 8) inputRef.current?.blur();
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function send(question: string) {
     const q = question.trim();
@@ -97,7 +102,7 @@ function AssistantPage() {
       <AiTabs active="assistant" />
       <PageHeader
         title="Ask FreshTrack"
-        subtitle="This chat clears when you close FreshTrack — lists and recipes are saved to your home screen."
+        subtitle="This chat clears when you close FreshTrack — shopping list changes are saved, and recipes you save stay on the Recipes page."
         action={
           messages.length > 0 ? (
             <Button
@@ -148,7 +153,6 @@ function AssistantPage() {
             Checking your pantry…
           </div>
         )}
-        <div ref={endRef} />
       </section>
 
       <div className="mt-4 flex flex-wrap gap-2">

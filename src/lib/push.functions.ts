@@ -57,7 +57,6 @@ export const sendTestPush = createServerFn({ method: "POST" })
       const result = await sendPush(sub, {
         title: "Notifications are on",
         body: "FreshTrack will nudge you before anything in your pantry goes bad.",
-        emoji: "✨",
         url: "/",
         tag: "freshtrack-test",
       });

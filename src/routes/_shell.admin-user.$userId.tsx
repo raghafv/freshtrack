@@ -78,8 +78,8 @@ function AdminUserPage() {
               {data.profile.created_at
                 ? new Date(data.profile.created_at).toLocaleDateString()
                 : "—"}{" "}
-              · 🧺 {data.pantry.length} pantry · 🛒 {data.shopping.length} list · 📷{" "}
-              {data.scans.length} scans · 🤖 {data.aiCalls} AI calls
+              · {data.pantry.length} pantry · {data.shopping.length} list ·{" "}
+              {data.scans.length} scans · {data.aiCalls} AI calls
             </p>
             <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
               Read-only

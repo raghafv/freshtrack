@@ -19,7 +19,7 @@ interface Props {
   imageUrl?: string | null;
   userId?: string | null;
   onOpenChange: (open: boolean) => void;
-  onDone?: () => void;
+  onDone?: (info: { name: string; quantity: string }) => void;
 }
 
 /** Shown when a scanned barcode isn't in the global database yet. */
@@ -64,7 +64,7 @@ export function UnknownBarcodeDialog({
       return;
     }
     onOpenChange(false);
-    onDone?.();
+    onDone?.({ name: name.trim(), quantity: quantity.trim() });
   }
 
   return (

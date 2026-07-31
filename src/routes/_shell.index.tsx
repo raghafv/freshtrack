@@ -25,14 +25,12 @@ import {
   useActivity,
   usePantryItems,
   useProfile,
-  useSavedRecipes,
   useSettings,
   useShoppingItems,
   useShoppingMutations,
 } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, formatQty, getStatus } from "@/lib/freshtrack";
 import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
-import { emojiFor } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/")({
@@ -89,12 +87,20 @@ function healthLabel(score: number) {
   return "At risk";
 }
 
+/** Time-of-day greeting shown at the top left of the home screen. */
+function greetingFor(now: Date) {
+  const h = now.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Good night";
+}
+
 function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
   const { data: activity = [] } = useActivity(6);
   const { data: fullActivity = [] } = useActivity(200);
   const { data: shopping = [] } = useShoppingItems();
-  const { data: savedRecipes = [] } = useSavedRecipes(3);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
   const { toggle } = useShoppingMutations();
@@ -121,7 +127,7 @@ function Dashboard() {
   return (
     <PageContainer>
       <AppBar
-        greeting={`Hi ${firstName} 👋`}
+        greeting={`${greetingFor(new Date())}, ${firstName}!`}
         subtitle={new Date().toLocaleDateString(undefined, {
           weekday: "long",
           day: "numeric",
@@ -168,12 +174,7 @@ function Dashboard() {
             {alerts.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    <span aria-hidden className="mr-1">
-                      {emojiFor(item.name, item.category)}
-                    </span>
-                    {item.name}
-                  </p>
+                  <p className="truncate text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {item.storage} · {expiryText(item.expiry_date)}
                   </p>
@@ -215,9 +216,6 @@ function Dashboard() {
                   onCheckedChange={(v) => toggle.mutate({ id: s.id, checked: !!v })}
                 />
                 <label htmlFor={`shop-${s.id}`} className="min-w-0 flex-1 text-sm">
-                  <span aria-hidden className="mr-1">
-                    {emojiFor(s.name, s.category)}
-                  </span>
                   {s.name}
                   <span className="ml-1 text-xs text-muted-foreground">
                     {formatQty(s.quantity, s.unit)}
@@ -228,43 +226,6 @@ function Dashboard() {
           </ul>
         )}
       </section>
-
-      {/* Your recipes — AI recipes persist here after the app is closed */}
-      {savedRecipes.length > 0 && (
-        <section className="surface-card mb-6 p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-base font-semibold">
-              <ChefHat className="h-4 w-4 text-primary" /> Your recipes
-            </h2>
-            <Link to="/recipes" className="text-xs font-medium text-primary">
-              View all <ArrowRight className="inline h-3 w-3" />
-            </Link>
-          </div>
-          <ul className="space-y-3">
-            {savedRecipes.map((r) => (
-              <li key={r.id} className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    <span aria-hidden className="mr-1">
-                      {r.emoji ?? emojiFor(r.title)}
-                    </span>
-                    {r.title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {r.uses.slice(0, 4).join(", ") || "From your pantry"}
-                  </p>
-                </div>
-                {r.minutes ? (
-                  <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
-                    {r.minutes} min
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
 
       {/* AI suggestions */}
       {suggestions.length > 0 && (
