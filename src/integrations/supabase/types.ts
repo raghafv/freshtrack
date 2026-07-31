@@ -191,6 +191,51 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_products: {
+        Row: {
+          barcode: string
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          note: string | null
+          quantity: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          barcode: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          note?: string | null
+          quantity?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          note?: string | null
+          quantity?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string

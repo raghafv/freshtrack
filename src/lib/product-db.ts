@@ -19,72 +19,11 @@ export interface ProductRecord {
   source: string;
 }
 
-/** Default shelf life (days) per grocery category, used when nothing better is known. */
-const CATEGORY_SHELF_DAYS: Record<string, number> = {
-  milk: 5,
-  dairy: 7,
-  curd: 5,
-  yogurt: 7,
-  cheese: 21,
-  butter: 60,
-  paneer: 4,
-  eggs: 21,
-  bread: 4,
-  bakery: 5,
-  rice: 365,
-  pasta: 365,
-  noodles: 240,
-  grains: 365,
-  flour: 180,
-  pulses: 365,
-  sugar: 730,
-  salt: 1095,
-  spices: 540,
-  masala: 540,
-  oil: 365,
-  ghee: 270,
-  ketchup: 240,
-  sauces: 180,
-  jam: 240,
-  pickle: 365,
-  honey: 730,
-  snacks: 120,
-  biscuits: 180,
-  chocolate: 240,
-  confectionery: 180,
-  beverages: 180,
-  juice: 90,
-  tea: 540,
-  coffee: 365,
-  frozen: 180,
-  "frozen foods": 180,
-  "ready to eat": 240,
-  canned: 540,
-  meat: 3,
-  seafood: 2,
-  fruits: 7,
-  vegetables: 7,
-  produce: 7,
-  other: 30,
-};
+import { shelfDaysForCategory, storageForCategory } from "@/lib/product-meta";
 
-/** Best-guess shelf life from a category / product name. */
-export function shelfDaysForCategory(category?: string | null, name?: string | null): number {
-  const haystack = `${category ?? ""} ${name ?? ""}`.toLowerCase();
-  for (const [key, days] of Object.entries(CATEGORY_SHELF_DAYS)) {
-    if (haystack.includes(key)) return days;
-  }
-  return 30;
-}
+export { shelfDaysForCategory, storageForCategory };
 
-/** Storage guess matching the shelf-life estimate. */
-export function storageForCategory(category?: string | null, name?: string | null): string {
-  const haystack = `${category ?? ""} ${name ?? ""}`.toLowerCase();
-  if (/frozen|ice cream|peas frozen/.test(haystack)) return "Freezer";
-  if (/milk|curd|yogurt|paneer|cheese|butter|egg|meat|fish|seafood|juice|fruit|vegetable/.test(haystack))
-    return "Fridge";
-  return "Pantry";
-}
+
 
 function normaliseBarcode(code: string): string {
   return code.replace(/\D/g, "");

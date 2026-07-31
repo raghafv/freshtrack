@@ -10,15 +10,13 @@ import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dia
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
+import { UnknownBarcodeDialog } from "@/components/unknown-barcode-dialog";
 import { cn } from "@/lib/utils";
 import { emojiFor } from "@/lib/emoji";
 import { friendlyMessage } from "@/lib/errors";
-import { learnProduct, lookupLearned } from "@/lib/custom-products";
-import {
-  lookupBarcode as lookupBarcodeDb,
-  saveProduct,
-  shelfDaysForCategory,
-} from "@/lib/product-db";
+import { lookupLearned } from "@/lib/custom-products";
+import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
+
 
 
 import { useAuth } from "@/lib/auth";
@@ -91,60 +89,14 @@ function ScannerPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [pendingMethod, setPendingMethod] = useState("camera");
-  /** Barcode waiting to be taught, set when a lookup came back empty. */
+  /** Barcode waiting to be contributed, set when a lookup came back empty. */
   const [learnBarcode, setLearnBarcode] = useState<string | null>(null);
-
-  /** Remembers an unknown barcode so the next scan recognises it instantly. */
-  function rememberBarcode(input: {
-    name: string;
-    brand?: string | null;
-    category: string;
-    unit: string;
-    storage: string;
-    shelfLifeDays: number;
-  }) {
-    if (!learnBarcode) return;
-    const barcode = learnBarcode;
-    learnProduct(
-      {
-        barcode,
-        name: input.name,
-        brand: input.brand ?? null,
-        category: input.category,
-        unit: input.unit,
-        storage: input.storage as StorageType,
-        shelfLifeDays: input.shelfLifeDays,
-        savedAt: new Date().toISOString(),
-      },
-      user?.id,
-    );
-    // Share it with every FreshTrack user through the global product database.
-    void saveProduct(
-      {
-        barcode,
-        name: input.name,
-        brand: input.brand ?? null,
-        category: input.category,
-        size: null,
-        image_url: null,
-        shelf_life_days:
-          input.shelfLifeDays > 0
-            ? input.shelfLifeDays
-            : shelfDaysForCategory(input.category, input.name),
-        storage: input.storage,
-        source: "User",
-      },
-      user?.id,
-    ).catch(() => undefined);
-    toast.success(`Saved — I'll recognise this barcode next time`);
-    setLearnBarcode(null);
-  }
-
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
     setManualOpen(true);
   }
+
 
   /* ------------------------------- AI photo scan ------------------------------ */
 
@@ -223,7 +175,6 @@ function ScannerPage() {
       const { product, origin } = await lookupBarcodeDb(code, user?.id);
       if (!product) {
         setLearnBarcode(code);
-        openManual("New barcode detected — add the product once and every user benefits.");
         return;
       }
       const known = findProduct(product.name);
@@ -265,8 +216,8 @@ function ScannerPage() {
         }`,
       );
     } catch (e) {
+      toast.error(friendlyMessage(e, "Barcode lookup failed"));
       setLearnBarcode(code);
-      openManual(friendlyMessage(e, "Barcode lookup failed — add the product manually."));
     } finally {
 
       setBusy(null);
@@ -606,17 +557,16 @@ function ScannerPage() {
         candidate={confirming}
         onOpenChange={(open) => !open && setConfirming(null)}
         onSaved={(c) => {
-          rememberBarcode({
-            name: c.name,
-            brand: c.brand,
-            category: c.category,
-            unit: c.unit,
-            storage: c.storage,
-            shelfLifeDays: candidateShelfDays(c, c.storage),
-          });
           setDetections((d) => d.filter((x) => x.key !== c.key));
           void recordScan.mutateAsync({ method: c.source || pendingMethod, items_added: 1 });
         }}
+      />
+
+      <UnknownBarcodeDialog
+        open={Boolean(learnBarcode)}
+        barcode={learnBarcode}
+        userId={user?.id}
+        onOpenChange={(open) => !open && setLearnBarcode(null)}
       />
 
       <QuickAddDialog
@@ -624,20 +574,12 @@ function ScannerPage() {
         onOpenChange={setManualOpen}
         defaultStorage={settings?.default_storage}
         defaultUnit={settings?.default_unit}
-        onAdded={(product, storage) =>
-          rememberBarcode({
-            name: product.name,
-            category: product.category,
-            unit: product.form === "count" ? "pcs" : product.unit,
-            storage,
-            shelfLifeDays: shelfDaysFrom(product.shelf, storage),
-          })
-        }
         onDetails={(p) => {
           setPrefill(p);
           setFormOpen(true);
         }}
       />
+
 
       <ItemFormDialog
         open={formOpen}
