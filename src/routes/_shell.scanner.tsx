@@ -401,7 +401,7 @@ function ScannerPage() {
                   Clear
                 </Button>
               </div>
-              {detections.length > 1 && (
+              {detections.length > 0 && (
                 <Button
                   className="press mb-3 h-11 w-full rounded-2xl"
                   onClick={addAllDetections}
