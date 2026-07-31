@@ -177,7 +177,6 @@ function ScannerPage() {
       const { product, origin } = await lookupBarcodeDb(code, user?.id);
       if (!product) {
         setLearnBarcode(code);
-        openManual("New barcode detected — add the product once and every user benefits.");
         return;
       }
       const known = findProduct(product.name);
