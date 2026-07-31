@@ -1,7 +1,7 @@
 import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Check, Loader2, Plus, ShoppingCart, Sparkles, Trash2 } from "lucide-react";
+import { Check, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
