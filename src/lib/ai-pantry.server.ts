@@ -93,8 +93,15 @@ export function pantrySystemPrompt(ctx: PantryContext) {
     `VALUE: total ₹${ctx.value.toFixed(0)}, at risk in the next ${ctx.soonDays} days ₹${ctx.atRisk.toFixed(0)}, already expired ₹${ctx.wasted.toFixed(0)}.`,
     `REPEAT PURCHASES (name, times bought): ${JSON.stringify(ctx.repeatBuys)}`,
     "",
-    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[{"name":"","quantity":1,"unit":"pcs","category":""}]}.',
-    "shoppingAdds must be an empty array unless the user explicitly asked to add things to the shopping list.",
+    "You can also CHANGE the shopping list when the user asks. Return the right action arrays and describe what you did in `reply`:",
+    '- add items -> "shoppingAdds"',
+    '- remove specific items -> "shoppingRemoves": ["item name", ...] (use the exact names from the shopping list)',
+    '- remove/clear/empty EVERYTHING on the list -> "clearShopping": true',
+    '- mark items as bought/done -> "shoppingChecked": ["item name", ...]',
+    "Never claim you removed or added something unless you returned it in the matching array.",
+    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[{"name":"","quantity":1,"unit":"pcs","category":""}],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
+    "All action fields default to empty/false — only fill them when the user actually asked for that change.",
+
   ].join("\n");
 }
 
