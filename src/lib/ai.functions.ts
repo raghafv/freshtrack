@@ -191,7 +191,16 @@ export const suggestShoppingList = createServerFn({ method: "POST" })
     return { suggestions };
   });
 
-/** Debug-only: recent AI provider activity (which provider answered, timing, fallbacks). */
+/** Admin-only: recent AI provider activity (which provider answered, timing, fallbacks). */
 export const getAiDebugLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<{ logs: AiProviderLog[] }> => ({ logs: getProviderLogs() }));
+  .handler(async ({ context }): Promise<{ logs: AiProviderLog[] }> => {
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) throw new Error("Forbidden");
+    return { logs: getProviderLogs() };
+  });
