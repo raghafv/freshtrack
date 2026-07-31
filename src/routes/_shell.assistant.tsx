@@ -43,7 +43,6 @@ const SUGGESTIONS = [
   "Plan my meals for 3 days",
 ];
 
-
 function AssistantPage() {
   const { user } = useAuth();
   const qc = useQueryClient();

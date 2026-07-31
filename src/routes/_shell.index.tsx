@@ -227,10 +227,6 @@ function Dashboard() {
         )}
       </section>
 
-
-
-
-
       {/* AI suggestions */}
       {suggestions.length > 0 && (
         <section className="surface-card mb-6 p-5">

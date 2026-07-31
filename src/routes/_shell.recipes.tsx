@@ -28,7 +28,6 @@ import {
 import { expiryText, getStatus } from "@/lib/freshtrack";
 import { suggestRecipes, type PantryRecipe } from "@/lib/ai.functions";
 
-
 export const Route = createFileRoute("/_shell/recipes")({
   head: () => ({
     meta: [
@@ -321,7 +320,6 @@ function SavedRecipeCard({ recipe }: { recipe: SavedRecipe }) {
   );
 }
 
-
 function RecipeCard({
   recipe,
   saved,
@@ -348,7 +346,11 @@ function RecipeCard({
             disabled={saved || saving}
             onClick={onSave}
           >
-            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bookmark className="h-3 w-3" />}
+            {saving ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Bookmark className="h-3 w-3" />
+            )}
             {saved ? "Saved" : "Save"}
           </Button>
         </div>

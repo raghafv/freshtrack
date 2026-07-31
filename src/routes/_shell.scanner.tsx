@@ -26,8 +26,6 @@ import { friendlyMessage } from "@/lib/errors";
 import { lookupLearned } from "@/lib/custom-products";
 import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
 
-
-
 import { useAuth } from "@/lib/auth";
 import {
   useAddPantryItem,
@@ -108,7 +106,6 @@ function ScannerPage() {
     if (reason) toast.info(reason);
     setManualOpen(true);
   }
-
 
   /* ------------------------------- AI photo scan ------------------------------ */
 
@@ -231,7 +228,6 @@ function ScannerPage() {
       toast.error(friendlyMessage(e, "Barcode lookup failed"));
       setLearnBarcode(code);
     } finally {
-
       setBusy(null);
     }
   }
@@ -665,7 +661,6 @@ function ScannerPage() {
           setFormOpen(true);
         }}
       />
-
 
       <ItemFormDialog
         open={formOpen}
