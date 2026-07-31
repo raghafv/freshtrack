@@ -34,16 +34,30 @@ function ShellLayout() {
   return <AuthedShell />;
 }
 
+const CHAT_SESSION_KEY = "freshtrack.chat.session";
+
 function AuthedShell() {
   const { data: notifications } = useNotifications();
   const { data: settings } = useSettings();
   const { setTheme, theme } = useTheme();
+  const clearChat = useClearAssistant();
 
   // Keep the saved theme preference in sync with the device on first load.
   useEffect(() => {
     if (settings?.theme && settings.theme !== theme) setTheme(settings.theme);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.theme]);
+
+  // The AI chat is a per-visit conversation: wipe it once whenever FreshTrack
+  // is opened fresh. Generated shopping lists and recipes are stored separately
+  // and stay on the home screen.
+  useEffect(() => {
+    if (sessionStorage.getItem(CHAT_SESSION_KEY) === "1") return;
+    sessionStorage.setItem(CHAT_SESSION_KEY, "1");
+    clearChat.mutate(undefined, { onError: () => undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const unread = (notifications ?? []).filter((n) => !n.read).length;
 
