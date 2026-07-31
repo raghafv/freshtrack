@@ -28,7 +28,6 @@ import { PageContainer } from "@/components/layout";
 import { PushSettingsRow } from "@/components/push-prompt";
 
 import { useSettings, useUpdateSettings } from "@/lib/data";
-import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { deleteAccount } from "@/lib/account.functions";
 import { STORAGE_TYPES, UNITS } from "@/lib/freshtrack";
@@ -56,7 +55,6 @@ function SettingsPage() {
   const navigate = useNavigate();
   const { data: settings } = useSettings();
   const update = useUpdateSettings();
-  const { theme, setTheme } = useTheme();
   const { signOut } = useAuth();
   const removeAccount = useServerFn(deleteAccount);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -90,24 +88,6 @@ function SettingsPage() {
         </Button>
         <h1 className="text-[26px] font-bold tracking-[-0.03em]">Settings</h1>
       </div>
-
-      <Section icon={Palette} title="Theme">
-        <div className="grid grid-cols-3 gap-2">
-          {(["light", "dark", "system"] as ThemeMode[]).map((mode) => (
-            <Button
-              key={mode}
-              variant={theme === mode ? "default" : "secondary"}
-              className="press rounded-2xl capitalize"
-              onClick={() => {
-                setTheme(mode);
-                update.mutate({ theme: mode });
-              }}
-            >
-              {mode}
-            </Button>
-          ))}
-        </div>
-      </Section>
 
       <Section icon={Bell} title="Notifications">
         <div className="flex items-center justify-between">

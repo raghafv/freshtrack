@@ -4,8 +4,7 @@ import { Leaf, Loader2 } from "lucide-react";
 import { BottomNav } from "@/components/layout";
 import { PushPrompt } from "@/components/push-prompt";
 import { useAuth } from "@/lib/auth";
-import { useClearAssistant, useNotifications, useSettings } from "@/lib/data";
-import { useTheme } from "@/lib/theme";
+import {useClearAssistant,useNotifications} from "@/lib/data";
 
 
 export const Route = createFileRoute("/_shell")({
@@ -38,15 +37,8 @@ const CHAT_SESSION_KEY = "freshtrack.chat.session";
 
 function AuthedShell() {
   const { data: notifications } = useNotifications();
-  const { data: settings } = useSettings();
-  const { setTheme, theme } = useTheme();
   const clearChat = useClearAssistant();
 
-  // Keep the saved theme preference in sync with the device on first load.
-  useEffect(() => {
-    if (settings?.theme && settings.theme !== theme) setTheme(settings.theme);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.theme]);
 
   // The AI chat is a per-visit conversation: wipe it once whenever FreshTrack
   // is opened fresh. Generated shopping lists and recipes are stored separately
