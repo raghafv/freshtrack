@@ -10,15 +10,13 @@ import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dia
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
+import { UnknownBarcodeDialog } from "@/components/unknown-barcode-dialog";
 import { cn } from "@/lib/utils";
 import { emojiFor } from "@/lib/emoji";
 import { friendlyMessage } from "@/lib/errors";
-import { learnProduct, lookupLearned } from "@/lib/custom-products";
-import {
-  lookupBarcode as lookupBarcodeDb,
-  saveProduct,
-  shelfDaysForCategory,
-} from "@/lib/product-db";
+import { lookupLearned } from "@/lib/custom-products";
+import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
+
 
 
 import { useAuth } from "@/lib/auth";
