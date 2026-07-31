@@ -54,7 +54,7 @@ function RecipesPage() {
   const { data: items = [] } = usePantryItems();
   const { data: settings } = useSettings();
   const { data: saved = [] } = useSavedRecipes(12);
-  const { clearAll } = useRecipeMutations();
+  const { clearAll, save } = useRecipeMutations();
   const qc = useQueryClient();
   const soonDays = settings?.expiry_reminder_days ?? 3;
 
