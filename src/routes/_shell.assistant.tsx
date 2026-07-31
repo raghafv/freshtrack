@@ -60,11 +60,17 @@ function AssistantPage() {
     mutationFn: (question: string) => askAssistant({ data: { question } }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["assistant", user?.id] });
-      if (res.added.length > 0) {
+      const removed = res.removed ?? [];
+      const checked = res.checked ?? [];
+      if (res.added.length > 0 || removed.length > 0 || checked.length > 0 || res.cleared) {
         qc.invalidateQueries({ queryKey: ["shopping", user?.id] });
-        toast.success(`Added to shopping list: ${res.added.join(", ")}`);
       }
+      if (res.added.length > 0) toast.success(`Added to shopping list: ${res.added.join(", ")}`);
+      if (res.cleared) toast.success("Shopping list cleared 🧹");
+      else if (removed.length > 0) toast.success(`Removed: ${removed.join(", ")}`);
+      if (checked.length > 0) toast.success(`Marked as bought: ${checked.join(", ")}`);
     },
+
     onError: (e) => toast.error(friendlyMessage(e, "The assistant failed")),
     onSettled: () => {
       setPending(null);
