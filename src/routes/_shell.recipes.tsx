@@ -36,16 +36,30 @@ export const Route = createFileRoute("/_shell/recipes")({
 function RecipesPage() {
   const { data: items = [] } = usePantryItems();
   const { data: settings } = useSettings();
+  const { data: saved = [] } = useSavedRecipes(12);
+  const { clearAll } = useRecipeMutations();
+  const qc = useQueryClient();
   const soonDays = settings?.expiry_reminder_days ?? 3;
+
+  const [picking, setPicking] = useState(false);
+  const [chosen, setChosen] = useState<string[]>([]);
 
   const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
 
   const gen = useMutation({
-    mutationFn: () => suggestRecipes({}),
+    mutationFn: (vars: { mode: "surprise" | "selected"; ingredients: string[] }) =>
+      suggestRecipes({ data: vars }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["saved-recipes"] });
+      setPicking(false);
+      setChosen([]);
+    },
     onError: (e) => toast.error(friendlyMessage(e, "Could not generate recipes")),
   });
 
   const recipes = gen.data?.recipes ?? [];
+  const toggleIngredient = (name: string) =>
+    setChosen((c) => (c.includes(name) ? c.filter((n) => n !== name) : [...c, name]));
 
   return (
     <PageContainer>
@@ -54,52 +68,19 @@ function RecipesPage() {
         title="Recipes"
         subtitle="Cook what's about to expire — generated from your live pantry."
         action={
-          recipes.length > 0 ? (
+          saved.length > 0 ? (
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-xl"
-              onClick={() => gen.mutate()}
-              disabled={gen.isPending}
+              className="rounded-xl text-muted-foreground"
+              onClick={() => clearAll.mutate()}
+              disabled={clearAll.isPending}
             >
-              <RefreshCw className="h-4 w-4" /> Redo
+              <Trash2 className="h-4 w-4" /> Clear
             </Button>
           ) : undefined
         }
       />
-
-      <section className="surface-card mb-5 p-5">
-        <div className="mb-2 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h2 className="text-base font-semibold">Cook-first ingredients</h2>
-        </div>
-        {priority.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nothing in your pantry needs cooking urgently right now. Items entering their last{" "}
-            {soonDays} days will show up here.
-          </p>
-        ) : (
-          <>
-            <p className="mb-3 text-sm text-muted-foreground">
-              These {priority.length} ingredient{priority.length === 1 ? "" : "s"} should be used
-              first:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {priority.map((i) => (
-                <span
-                  key={i.id}
-                  className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary"
-                >
-                  <span aria-hidden className="mr-1">
-                    {emojiFor(i.name, i.category)}
-                  </span>
-                  {i.name} · {expiryText(i.expiry_date).toLowerCase()}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
 
       {items.length === 0 ? (
         <EmptyState
@@ -112,35 +93,131 @@ function RecipesPage() {
             </Button>
           }
         />
-      ) : recipes.length === 0 ? (
-        <div className="surface-card flex flex-col items-center gap-3 px-6 py-12 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <ChefHat className="h-7 w-7" />
-          </span>
-          <h3 className="text-lg font-semibold">Cook from your pantry</h3>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            FreshTrack will suggest meals using only your {items.length} tracked item
-            {items.length === 1 ? "" : "s"}, starting with whatever expires first.
-          </p>
-          <Button
-            className="press mt-2 h-12 rounded-2xl"
-            onClick={() => gen.mutate()}
-            disabled={gen.isPending}
-          >
-            {gen.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {gen.isPending ? "Reading your pantry…" : "Suggest recipes"}
-          </Button>
-        </div>
       ) : (
-        <ul className="space-y-3">
-          {recipes.map((r) => (
-            <RecipeCard key={r.title} recipe={r} />
-          ))}
-        </ul>
+        <>
+          {/* Two ways to cook */}
+          <section className="mb-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => gen.mutate({ mode: "surprise", ingredients: [] })}
+              disabled={gen.isPending}
+              className="press surface-card flex flex-col items-start gap-1 p-4 text-left disabled:opacity-60"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+                {gen.isPending && gen.variables?.mode === "surprise" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Shuffle className="h-4 w-4" />
+                )}
+              </span>
+              <span className="text-sm font-semibold">Surprise me ✨</span>
+              <span className="text-xs text-muted-foreground">
+                Multiple ideas from your whole pantry.
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPicking((p) => !p)}
+              className="press surface-card flex flex-col items-start gap-1 p-4 text-left"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+                <ListChecks className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-semibold">Pick ingredients 🧺</span>
+              <span className="text-xs text-muted-foreground">
+                Choose what you feel like cooking with.
+              </span>
+            </button>
+          </section>
+
+          {picking && (
+            <section className="surface-card animate-fade-up mb-5 p-5">
+              <p className="mb-3 text-sm text-muted-foreground">
+                Tap the ingredients you want to cook with, then generate.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {items.map((i) => {
+                  const on = chosen.includes(i.name);
+                  return (
+                    <button
+                      key={i.id}
+                      type="button"
+                      onClick={() => toggleIngredient(i.name)}
+                      className={cn(
+                        "press rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                        on
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border/60 text-muted-foreground",
+                      )}
+                    >
+                      <span aria-hidden className="mr-1">
+                        {emojiFor(i.name, i.category)}
+                      </span>
+                      {i.name}
+                    </button>
+                  );
+                })}
+              </div>
+              <Button
+                className="press mt-4 h-11 w-full rounded-2xl"
+                disabled={chosen.length === 0 || gen.isPending}
+                onClick={() => gen.mutate({ mode: "selected", ingredients: chosen })}
+              >
+                {gen.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                Cook with {chosen.length} ingredient{chosen.length === 1 ? "" : "s"}
+              </Button>
+            </section>
+          )}
+
+          {priority.length > 0 && (
+            <section className="surface-card mb-5 p-5">
+              <div className="mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="text-base font-semibold">Cook-first ingredients</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {priority.map((i) => (
+                  <span
+                    key={i.id}
+                    className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary"
+                  >
+                    <span aria-hidden className="mr-1">
+                      {emojiFor(i.name, i.category)}
+                    </span>
+                    {i.name} · {expiryText(i.expiry_date).toLowerCase()}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {recipes.length > 0 ? (
+            <ul className="space-y-3">
+              {recipes.map((r) => (
+                <RecipeCard key={r.title} recipe={r} />
+              ))}
+            </ul>
+          ) : saved.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Your recipes</h2>
+              <ul className="space-y-3">
+                {saved.map((r) => (
+                  <SavedRecipeCard key={r.id} recipe={r} />
+                ))}
+              </ul>
+            </section>
+          ) : (
+            <div className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">
+              Pick a mode above and FreshTrack will build meals from your {items.length} tracked
+              item{items.length === 1 ? "" : "s"}. Recipes stay here even after you close the app.
+            </div>
+          )}
+        </>
       )}
 
       <div className="surface-card mt-5 flex items-start gap-3 p-4">
@@ -153,6 +230,65 @@ function RecipesPage() {
     </PageContainer>
   );
 }
+
+function SavedRecipeCard({ recipe }: { recipe: SavedRecipe }) {
+  const { remove } = useRecipeMutations();
+  return (
+    <li className="surface-card animate-fade-up p-4">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <h3 className="text-base font-semibold">
+          <span aria-hidden className="mr-1">
+            {recipe.emoji ?? emojiFor(recipe.title)}
+          </span>
+          {recipe.title}
+        </h3>
+        <div className="flex shrink-0 items-center gap-2">
+          {recipe.minutes ? (
+            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
+              {recipe.minutes} min
+            </span>
+          ) : null}
+          <button
+            type="button"
+            aria-label="Remove recipe"
+            onClick={() => remove.mutate(recipe.id)}
+            className="rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {recipe.uses.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {recipe.uses.map((u) => (
+            <span
+              key={u}
+              className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+            >
+              <span aria-hidden className="mr-1">
+                {emojiFor(u)}
+              </span>
+              {u}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <ol className="space-y-1.5">
+        {recipe.steps.map((step, i) => (
+          <li key={i} className="flex gap-2 text-sm">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold">
+              {i + 1}
+            </span>
+            <span className="text-muted-foreground">{step}</span>
+          </li>
+        ))}
+      </ol>
+    </li>
+  );
+}
+
 
 function RecipeCard({ recipe }: { recipe: PantryRecipe }) {
   return (
