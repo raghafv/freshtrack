@@ -97,9 +97,10 @@ function ScannerPage() {
     shelfLifeDays: number;
   }) {
     if (!learnBarcode) return;
+    const barcode = learnBarcode;
     learnProduct(
       {
-        barcode: learnBarcode,
+        barcode,
         name: input.name,
         brand: input.brand ?? null,
         category: input.category,
@@ -110,9 +111,28 @@ function ScannerPage() {
       },
       user?.id,
     );
+    // Share it with every FreshTrack user through the global product database.
+    void saveProduct(
+      {
+        barcode,
+        name: input.name,
+        brand: input.brand ?? null,
+        category: input.category,
+        size: null,
+        image_url: null,
+        shelf_life_days:
+          input.shelfLifeDays > 0
+            ? input.shelfLifeDays
+            : shelfDaysForCategory(input.category, input.name),
+        storage: input.storage,
+        source: "User",
+      },
+      user?.id,
+    ).catch(() => undefined);
     toast.success(`Saved — I'll recognise this barcode next time`);
     setLearnBarcode(null);
   }
+
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
