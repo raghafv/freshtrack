@@ -25,6 +25,7 @@ import {
   useActivity,
   usePantryItems,
   useProfile,
+  useSavedRecipes,
   useSettings,
   useShoppingItems,
   useShoppingMutations,
@@ -93,6 +94,7 @@ function Dashboard() {
   const { data: activity = [] } = useActivity(6);
   const { data: fullActivity = [] } = useActivity(200);
   const { data: shopping = [] } = useShoppingItems();
+  const { data: savedRecipes = [] } = useSavedRecipes(3);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
   const { toggle } = useShoppingMutations();
@@ -226,6 +228,43 @@ function Dashboard() {
           </ul>
         )}
       </section>
+
+      {/* Your recipes — AI recipes persist here after the app is closed */}
+      {savedRecipes.length > 0 && (
+        <section className="surface-card mb-6 p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <ChefHat className="h-4 w-4 text-primary" /> Your recipes
+            </h2>
+            <Link to="/recipes" className="text-xs font-medium text-primary">
+              View all <ArrowRight className="inline h-3 w-3" />
+            </Link>
+          </div>
+          <ul className="space-y-3">
+            {savedRecipes.map((r) => (
+              <li key={r.id} className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    <span aria-hidden className="mr-1">
+                      {r.emoji ?? emojiFor(r.title)}
+                    </span>
+                    {r.title}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {r.uses.slice(0, 4).join(", ") || "From your pantry"}
+                  </p>
+                </div>
+                {r.minutes ? (
+                  <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
+                    {r.minutes} min
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
 
       {/* AI suggestions */}
       {suggestions.length > 0 && (

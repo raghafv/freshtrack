@@ -492,3 +492,60 @@ export function useClearAssistant() {
 }
 
 export { logActivity, notify };
+
+// ---------------------------------------------------------------------------
+// Saved recipes — AI recipes persist on the home screen after the app closes.
+// ---------------------------------------------------------------------------
+
+export interface SavedRecipe {
+  id: string;
+  title: string;
+  emoji: string | null;
+  minutes: number | null;
+  uses: string[];
+  missing: string[];
+  steps: string[];
+  mode: string;
+  created_at: string;
+}
+
+export function useSavedRecipes(limit = 20) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["saved-recipes", user?.id, limit],
+    enabled: !!user,
+    queryFn: async (): Promise<SavedRecipe[]> => {
+      const { data, error } = await supabase
+        .from("saved_recipes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as SavedRecipe[];
+    },
+  });
+}
+
+export function useRecipeMutations() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["saved-recipes"] });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("saved_recipes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const clearAll = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("saved_recipes").delete().eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return { remove, clearAll };
+}

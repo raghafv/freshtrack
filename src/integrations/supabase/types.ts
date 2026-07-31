@@ -299,6 +299,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_recipes: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          minutes: number | null
+          missing: string[]
+          mode: string
+          steps: string[]
+          title: string
+          updated_at: string
+          user_id: string
+          uses: string[]
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          minutes?: number | null
+          missing?: string[]
+          mode?: string
+          steps?: string[]
+          title: string
+          updated_at?: string
+          user_id?: string
+          uses?: string[]
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          minutes?: number | null
+          missing?: string[]
+          mode?: string
+          steps?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+          uses?: string[]
+        }
+        Relationships: []
+      }
       scan_history: {
         Row: {
           created_at: string

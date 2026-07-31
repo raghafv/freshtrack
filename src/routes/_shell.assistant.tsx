@@ -39,12 +39,10 @@ export const Route = createFileRoute("/_shell/assistant")({
 const SUGGESTIONS = [
   "What expires this week?",
   "What should I cook today?",
-  "What should I freeze?",
   "What should I buy?",
-  "Build a shopping list under ₹500",
-  "Plan my meals for the next 3 days",
-  "How do I cut my food waste?",
+  "Plan my meals for 3 days",
 ];
+
 
 function AssistantPage() {
   const { user } = useAuth();
@@ -99,7 +97,7 @@ function AssistantPage() {
       <AiTabs active="assistant" />
       <PageHeader
         title="Ask FreshTrack"
-        subtitle="Real answers from the groceries you actually own."
+        subtitle="This chat clears when you close FreshTrack — lists and recipes are saved to your home screen."
         action={
           messages.length > 0 ? (
             <Button
