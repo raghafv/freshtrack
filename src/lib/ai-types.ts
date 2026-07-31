@@ -23,7 +23,11 @@ export interface AiProviderLog {
 export interface AssistantReply {
   reply: string;
   added: string[];
+  removed?: string[];
+  checked?: string[];
+  cleared?: boolean;
 }
+
 
 export interface PantryRecipe {
   title: string;

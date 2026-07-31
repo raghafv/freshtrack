@@ -9,6 +9,7 @@ import {
   Package,
   Pencil,
   Settings as SettingsIcon,
+  ShieldCheck,
   Sun,
   TrendingUp,
 } from "lucide-react";
@@ -30,6 +31,9 @@ import {
   useUpdateSettings,
 } from "@/lib/data";
 import { computeStats } from "@/lib/freshtrack";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { amIAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_shell/profile")({
   head: () => ({
@@ -60,6 +64,13 @@ function ProfilePage() {
   const { data: settings } = useSettings();
   const updateProfile = useUpdateProfile();
   const updateSettings = useUpdateSettings();
+  const checkAdmin = useServerFn(amIAdmin);
+  const { data: adminCheck } = useQuery({
+    queryKey: ["am-i-admin"],
+    queryFn: () => checkAdmin({}),
+    staleTime: 5 * 60_000,
+  });
+  const isAdmin = adminCheck?.admin === true;
   const { resolved, setTheme } = useTheme();
 
   const [editing, setEditing] = useState(false);
@@ -189,6 +200,20 @@ function ProfilePage() {
         </span>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
+
+      {isAdmin ? (
+        <Link to="/admin" className="surface-card press mb-3 flex items-center justify-between p-4">
+          <span className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <span className="text-sm font-semibold">Admin dashboard 🛡️</span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      ) : null}
+
+
 
       <Button
         variant="secondary"

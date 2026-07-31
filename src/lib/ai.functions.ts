@@ -5,6 +5,7 @@ import { generateAIResponse, getProviderLogs } from "./ai-service.server";
 import {
   historyMessages,
   loadPantryContext,
+  normalizeNameList,
   normalizeRecipes,
   normalizeShoppingAdds,
   normalizeSuggestions,
@@ -23,7 +24,28 @@ export type {
 
 import type { AssistantReply, PantryRecipe, ShoppingSuggestion, AiProviderLog } from "./ai-types";
 
+/** Records one AI call for the owner-only usage dashboard. Never throws. */
+async function logUsage(feature: string, userId: string | null, chars: number) {
+  try {
+    const last = getProviderLogs()[0];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("ai_usage_log").insert({
+      user_id: userId,
+      feature,
+      provider: last?.provider ?? null,
+      model: null,
+      ok: last?.ok ?? true,
+      ms: last?.ms ?? null,
+      chars,
+      error: last?.error ?? null,
+    });
+  } catch (error) {
+    console.error("[ai] usage log failed", error);
+  }
+}
+
 const AskInput = z.object({ question: z.string().min(1).max(1000) });
+
 
 /** Natural-language pantry assistant grounded in the user's live pantry. */
 export const askAssistant = createServerFn({ method: "POST" })
@@ -45,7 +67,7 @@ export const askAssistant = createServerFn({ method: "POST" })
       { role: "user", content: data.question },
     ]);
 
-    const reply = String(parsed.reply ?? "").trim() || "I couldn't work that out — try rephrasing.";
+    let reply = String(parsed.reply ?? "").trim() || "I couldn't work that out — try rephrasing.";
 
     const existing = new Set(
       [...ctx.shoppingNames, ...ctx.items.map((i) => i.name)].map((n) => n.toLowerCase()),
@@ -59,14 +81,75 @@ export const askAssistant = createServerFn({ method: "POST" })
       if (error) console.error("[assistant] shopping insert failed", error);
     }
 
+    // ---- list actions (remove / clear / check off) -------------------------
+    const question = data.question.toLowerCase();
+    const wantsClear =
+      /\b(clear|empty|delete|remove|wipe)\b/.test(question) &&
+      /\b(everything|all|entire|whole)\b/.test(question) &&
+      /(shopping|grocery|list)/.test(question);
+
+    let cleared = parsed.clearShopping === true || wantsClear;
+    let removed: string[] = [];
+    const checked: string[] = [];
+
+    if (cleared) {
+      const { error } = await supabase
+        .from("shopping_items")
+        .delete()
+        .eq("user_id", context.userId);
+      if (error) {
+        console.error("[assistant] shopping clear failed", error);
+        cleared = false;
+      } else {
+        removed = ctx.shoppingNames;
+      }
+    } else {
+      const requested = normalizeNameList(parsed.shoppingRemoves);
+      const match = (wanted: string) =>
+        ctx.shoppingNames.filter(
+          (n) =>
+            n.toLowerCase() === wanted.toLowerCase() ||
+            n.toLowerCase().includes(wanted.toLowerCase()) ||
+            wanted.toLowerCase().includes(n.toLowerCase()),
+        );
+      const targets = [...new Set(requested.flatMap(match))];
+      if (targets.length > 0) {
+        const { error } = await supabase
+          .from("shopping_items")
+          .delete()
+          .eq("user_id", context.userId)
+          .in("name", targets);
+        if (error) console.error("[assistant] shopping remove failed", error);
+        else removed = targets;
+      }
+
+      const toCheck = [...new Set(normalizeNameList(parsed.shoppingChecked).flatMap(match))];
+      if (toCheck.length > 0) {
+        const { error } = await supabase
+          .from("shopping_items")
+          .update({ checked: true })
+          .eq("user_id", context.userId)
+          .in("name", toCheck);
+        if (error) console.error("[assistant] shopping check failed", error);
+        else checked.push(...toCheck);
+      }
+    }
+
+    if (cleared && !/clear|empt|remov|delete/i.test(reply)) {
+      reply = `Cleared your shopping list — ${removed.length} item${removed.length === 1 ? "" : "s"} removed.\n\n${reply}`;
+    }
+
     const { error: saveError } = await supabase.from("assistant_messages").insert([
       { user_id: context.userId, role: "user", content: data.question },
       { user_id: context.userId, role: "assistant", content: reply },
     ]);
     if (saveError) console.error("[assistant] message save failed", saveError);
 
-    return { reply, added: adds.map((a) => a.name) };
+    await logUsage("assistant", context.userId, data.question.length + reply.length);
+
+    return { reply, added: adds.map((a) => a.name), removed, checked, cleared };
   });
+
 
 /** Recipe ideas built strictly from what is currently in the pantry. */
 export const suggestRecipes = createServerFn({ method: "POST" })
@@ -81,7 +164,9 @@ export const suggestRecipes = createServerFn({ method: "POST" })
       { role: "user", content: recipeRequest },
     ]);
 
-    return { recipes: normalizeRecipes(parsed) };
+    const recipes = normalizeRecipes(parsed);
+    await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
+    return { recipes };
   });
 
 /** Auto-generate a shopping list from pantry gaps, without duplicating what you own. */
@@ -101,7 +186,9 @@ export const suggestShoppingList = createServerFn({ method: "POST" })
         (n) => n.toLowerCase(),
       ),
     );
-    return { suggestions: normalizeSuggestions(parsed, existing) };
+    const suggestions = normalizeSuggestions(parsed, existing);
+    await logUsage("shopping", context.userId, JSON.stringify(suggestions).length);
+    return { suggestions };
   });
 
 /** Debug-only: recent AI provider activity (which provider answered, timing, fallbacks). */

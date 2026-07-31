@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageContainer } from "@/components/layout";
+import { PushSettingsRow } from "@/components/push-prompt";
+
 import { useSettings, useUpdateSettings } from "@/lib/data";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -136,7 +138,11 @@ function SettingsPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="mt-5 border-t border-border/60 pt-4">
+          <PushSettingsRow />
+        </div>
       </Section>
+
 
       <Section icon={Ruler} title="Storage & units">
         <div className="grid gap-4">

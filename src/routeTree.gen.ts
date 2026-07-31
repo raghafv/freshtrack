@@ -22,6 +22,8 @@ import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
 import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
+import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
+import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -87,11 +89,22 @@ const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellAdminRoute = ShellAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ApiPublicPushDigestRoute = ApiPublicPushDigestRouteImport.update({
+  id: '/api/public/push-digest',
+  path: '/api/public/push-digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin': typeof ShellAdminRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
@@ -101,10 +114,12 @@ export interface FileRoutesByFullPath {
   '/scanner': typeof ShellScannerRoute
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
+  '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin': typeof ShellAdminRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
   '/notifications': typeof ShellNotificationsRoute
@@ -115,12 +130,14 @@ export interface FileRoutesByTo {
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
   '/': typeof ShellIndexRoute
+  '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_shell': typeof ShellRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_shell/admin': typeof ShellAdminRoute
   '/_shell/analytics': typeof ShellAnalyticsRoute
   '/_shell/assistant': typeof ShellAssistantRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
@@ -131,6 +148,7 @@ export interface FileRoutesById {
   '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
   '/_shell/': typeof ShellIndexRoute
+  '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/admin'
     | '/analytics'
     | '/assistant'
     | '/notifications'
@@ -147,10 +166,12 @@ export interface FileRouteTypes {
     | '/scanner'
     | '/settings'
     | '/shopping'
+    | '/api/public/push-digest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
     | '/sitemap.xml'
+    | '/admin'
     | '/analytics'
     | '/assistant'
     | '/notifications'
@@ -161,11 +182,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shopping'
     | '/'
+    | '/api/public/push-digest'
   id:
     | '__root__'
     | '/_shell'
     | '/auth'
     | '/sitemap.xml'
+    | '/_shell/admin'
     | '/_shell/analytics'
     | '/_shell/assistant'
     | '/_shell/notifications'
@@ -176,12 +199,14 @@ export interface FileRouteTypes {
     | '/_shell/settings'
     | '/_shell/shopping'
     | '/_shell/'
+    | '/api/public/push-digest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicPushDigestRoute: typeof ApiPublicPushDigestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -277,10 +302,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAnalyticsRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/admin': {
+      id: '/_shell/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof ShellAdminRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/api/public/push-digest': {
+      id: '/api/public/push-digest'
+      path: '/api/public/push-digest'
+      fullPath: '/api/public/push-digest'
+      preLoaderRoute: typeof ApiPublicPushDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface ShellRouteChildren {
+  ShellAdminRoute: typeof ShellAdminRoute
   ShellAnalyticsRoute: typeof ShellAnalyticsRoute
   ShellAssistantRoute: typeof ShellAssistantRoute
   ShellNotificationsRoute: typeof ShellNotificationsRoute
@@ -294,6 +334,7 @@ interface ShellRouteChildren {
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
+  ShellAdminRoute: ShellAdminRoute,
   ShellAnalyticsRoute: ShellAnalyticsRoute,
   ShellAssistantRoute: ShellAssistantRoute,
   ShellNotificationsRoute: ShellNotificationsRoute,
@@ -312,17 +353,8 @@ const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicPushDigestRoute: ApiPublicPushDigestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
