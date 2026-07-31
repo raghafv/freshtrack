@@ -70,19 +70,26 @@ function AssistantPage() {
     },
 
     onError: (e) => toast.error(friendlyMessage(e, "The assistant failed")),
-    onSettled: () => {
-      setPending(null);
-      inputRef.current?.focus();
-    },
+    onSettled: () => setPending(null),
   });
 
+  // Open at the top of the chat and never steal focus — the phone keyboard
+  // should only appear when the user taps the input themselves.
   useEffect(() => {
-    inputRef.current?.focus();
+    window.scrollTo({ top: 0 });
   }, []);
 
+  // Scrolling up dismisses the keyboard.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, pending]);
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < last - 8) inputRef.current?.blur();
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function send(question: string) {
     const q = question.trim();
