@@ -1,15 +1,32 @@
 import { friendlyMessage } from "@/lib/errors";
 import { emojiFor } from "@/lib/emoji";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
-import { ChefHat, Clock, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ChefHat,
+  Clock,
+  ListChecks,
+  Loader2,
+  Shuffle,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import { AiTabs } from "@/components/ai-tabs";
-import { usePantryItems, useSettings } from "@/lib/data";
+import { cn } from "@/lib/utils";
+import {
+  usePantryItems,
+  useRecipeMutations,
+  useSavedRecipes,
+  useSettings,
+  type SavedRecipe,
+} from "@/lib/data";
 import { expiryText, getStatus } from "@/lib/freshtrack";
 import { suggestRecipes, type PantryRecipe } from "@/lib/ai.functions";
+
 
 export const Route = createFileRoute("/_shell/recipes")({
   head: () => ({
