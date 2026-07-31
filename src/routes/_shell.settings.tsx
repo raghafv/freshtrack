@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageContainer } from "@/components/layout";
+import { PushSettingsRow } from "@/components/push-prompt";
+
 import { useSettings, useUpdateSettings } from "@/lib/data";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
