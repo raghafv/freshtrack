@@ -12,7 +12,16 @@ import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
 import { UnknownBarcodeDialog } from "@/components/unknown-barcode-dialog";
 import { cn } from "@/lib/utils";
-import { emojiFor } from "@/lib/emoji";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { friendlyMessage } from "@/lib/errors";
 import { lookupLearned } from "@/lib/custom-products";
 import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
@@ -91,6 +100,9 @@ function ScannerPage() {
   const [pendingMethod, setPendingMethod] = useState("camera");
   /** Barcode waiting to be contributed, set when a lookup came back empty. */
   const [learnBarcode, setLearnBarcode] = useState<string | null>(null);
+  /** Shown instead of jumping straight into manual search when nothing was found. */
+  const [noItemsOpen, setNoItemsOpen] = useState(false);
+  const [addingAll, setAddingAll] = useState(false);
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
@@ -107,7 +119,7 @@ function ScannerPage() {
       const dataUrl = await toDataUrl(blob);
       const { items } = await detectGroceries({ data: { image: dataUrl } });
       if (items.length === 0) {
-        openManual("Couldn't recognise anything — search the catalog instead.");
+        setNoItemsOpen(true);
         return;
       }
       let imageUrl: string | null = null;
@@ -310,6 +322,39 @@ function ScannerPage() {
     }
   }
 
+  /** Adds every detected item to the pantry with its suggested defaults. */
+  async function addAllDetections() {
+    if (detections.length === 0) return;
+    setAddingAll(true);
+    const purchase = new Date().toISOString().slice(0, 10);
+    let added = 0;
+    try {
+      for (const c of detections) {
+        await addItem.mutateAsync({
+          name: c.name,
+          brand: c.brand,
+          category: c.category,
+          quantity: c.quantity,
+          unit: c.unit,
+          purchase_date: purchase,
+          expiry_date: candidateExpiry(c, c.storage, purchase),
+          storage: c.storage as StorageType,
+          image_url: c.image_url,
+          source: c.source || "camera",
+          price: null,
+        });
+        added++;
+      }
+      await recordScan.mutateAsync({ method: "camera", items_added: added });
+      toast.success(`${added} item${added === 1 ? "" : "s"} added to your pantry`);
+      setDetections([]);
+    } catch (e) {
+      toast.error(friendlyMessage(e, "Could not add all items"));
+    } finally {
+      setAddingAll(false);
+    }
+  }
+
   /* ----------------------------------- ui ------------------------------------ */
 
   return (
@@ -358,6 +403,23 @@ function ScannerPage() {
                   Clear
                 </Button>
               </div>
+              {detections.length > 1 && (
+                <Button
+                  className="press mb-3 h-11 w-full rounded-2xl"
+                  onClick={addAllDetections}
+                  disabled={addingAll}
+                >
+                  {addingAll ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Add all {detections.length} items
+                </Button>
+              )}
+              <p className="mb-2 text-xs text-muted-foreground">
+                Tap any item to edit its quantity, storage and expiry before adding.
+              </p>
               <ul className="space-y-2">
                 {detections.map((c) => {
                   const conf = c.confidence != null ? confidenceLabel(c.confidence) : null;
@@ -374,12 +436,7 @@ function ScannerPage() {
                         className="press surface-card flex w-full items-start justify-between gap-3 p-3 text-left"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">
-                            <span aria-hidden className="mr-1">
-                              {emojiFor(c.name, c.category)}
-                            </span>
-                            {c.name}
-                          </p>
+                          <p className="truncate text-sm font-semibold">{c.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.category} · {c.storage} ·{" "}
                             <span className="font-medium text-foreground">
@@ -567,7 +624,36 @@ function ScannerPage() {
         barcode={learnBarcode}
         userId={user?.id}
         onOpenChange={(open) => !open && setLearnBarcode(null)}
+        onDone={(info) => {
+          setLearnBarcode(null);
+          if (!info?.name) return;
+          setPendingMethod("barcode");
+          setConfirming(
+            buildCandidate({
+              name: info.name,
+              packageSize: info.quantity || null,
+              packaged: true,
+              source: "barcode",
+            }),
+          );
+          toast.info("Now add it to your own pantry.");
+        }}
       />
+
+      <AlertDialog open={noItemsOpen} onOpenChange={setNoItemsOpen}>
+        <AlertDialogContent className="max-w-xs rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>No items detected</AlertDialogTitle>
+            <AlertDialogDescription>Search manually?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row justify-end gap-2">
+            <AlertDialogCancel className="mt-0 rounded-2xl">No</AlertDialogCancel>
+            <AlertDialogAction className="rounded-2xl" onClick={() => setManualOpen(true)}>
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <QuickAddDialog
         open={manualOpen}
