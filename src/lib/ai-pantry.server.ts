@@ -93,13 +93,15 @@ export function pantrySystemPrompt(ctx: PantryContext) {
     `VALUE: total ₹${ctx.value.toFixed(0)}, at risk in the next ${ctx.soonDays} days ₹${ctx.atRisk.toFixed(0)}, already expired ₹${ctx.wasted.toFixed(0)}.`,
     `REPEAT PURCHASES (name, times bought): ${JSON.stringify(ctx.repeatBuys)}`,
     "",
-    "You can also CHANGE the shopping list when the user asks. Return the right action arrays and describe what you did in `reply`:",
-    '- add items -> "shoppingAdds"',
+    "You can also CHANGE the user's data when they ask. Return the right action arrays and describe what you did in `reply`:",
+    '- add items to the SHOPPING LIST -> "shoppingAdds": [{"name":"","quantity":1,"unit":"pcs","category":""}]',
     '- remove specific items -> "shoppingRemoves": ["item name", ...] (use the exact names from the shopping list)',
     '- remove/clear/empty EVERYTHING on the list -> "clearShopping": true',
     '- mark items as bought/done -> "shoppingChecked": ["item name", ...]',
+    '- add items the user says they ALREADY HAVE / bought / want stored in the PANTRY -> "pantryAdds": [{"name":"","quantity":1,"unit":"pcs","category":"","storage":"Fridge|Freezer|Pantry","shelfLifeDays":7}]',
+    "IMPORTANT: whenever the user asks you to add something ('add milk', 'put eggs on my list', 'I bought 2 kg rice'), you MUST fill the matching array — never reply that you added something without returning it. Add to shoppingAdds even if a similar item already exists in the pantry.",
     "Never claim you removed or added something unless you returned it in the matching array.",
-    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[{"name":"","quantity":1,"unit":"pcs","category":""}],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
+    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[],"pantryAdds":[],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
     "All action fields default to empty/false — only fill them when the user actually asked for that change.",
 
   ].join("\n");
@@ -116,13 +118,15 @@ export function historyMessages(rows: { role: string; content: string }[]): AiMe
 }
 
 export const recipeRequest = [
-  "Suggest 4 realistic home recipes I can cook right now.",
+  "Suggest 4 realistic, COMPLETE home recipes I can cook right now — written so a beginner can follow them end to end with no other source.",
   "Every ingredient must already be in my pantry (salt, water, oil and common spices excepted).",
   "Prioritise the ingredients with the smallest days_left.",
   "If a classic version of the dish needs something I do not have, keep the dish and swap in a pantry item instead — list that as a substitution.",
-  'Reply with JSON only: {"recipes":[{"title":"","minutes":20,"uses":[""],"priority":[""],"steps":["",""],"substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
-  'uses: pantry item names used. priority: the expiring items this recipe rescues. steps: 3-6 short steps. substitutions: [] when nothing is missing. savesWaste: what this rescues, e.g. "uses 250 g spinach expiring in 1 day".',
+  "Each recipe MUST include: a one-line description, servings, prep and cook time, difficulty, cuisine, a FULL ingredient list with exact measurements (grams/ml/tbsp/tsp/pieces) including salt, oil and spices, the equipment needed, 6-12 numbered steps that state heat level, timings and visual cues, 2-4 practical tips, storage/leftover advice and a rough nutrition line per serving.",
+  'Reply with JSON only: {"recipes":[{"title":"","description":"","cuisine":"","difficulty":"Easy","servings":2,"prepMinutes":10,"cookMinutes":20,"minutes":30,"ingredients":[{"name":"","amount":"200 g","inPantry":true}],"equipment":[""],"uses":[""],"priority":[""],"steps":["",""],"tips":[""],"storageAdvice":"","nutrition":"","substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
+  'uses: pantry item names used. priority: the expiring items this recipe rescues. inPantry: false only for salt/oil/spice style basics. substitutions: [] when nothing is missing. savesWaste: what this rescues, e.g. "uses 250 g spinach expiring in 1 day".',
 ].join("\n");
+
 
 export const shoppingRequest = [
   "Build my next grocery shopping list.",
