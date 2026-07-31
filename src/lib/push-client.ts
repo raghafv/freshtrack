@@ -80,13 +80,25 @@ export interface SubscribeResult {
 
 /** Asks for permission (if needed), registers the worker and returns the subscription. */
 export async function subscribeToPush(publicKey: string): Promise<SubscribeResult> {
+  if (inEmbeddedPreview())
+    throw new Error(
+      "Notifications can't be enabled inside the preview window. Open FreshTrack in its own tab or install it, then try again.",
+    );
+  if (iosNeedsInstall())
+    throw new Error(
+      "On iPhone, add FreshTrack to your Home Screen first (Share → Add to Home Screen), then enable notifications from there.",
+    );
   if (!pushSupported()) throw new Error("This browser doesn't support push notifications.");
 
   const permission =
     Notification.permission === "granted"
       ? "granted"
       : await Notification.requestPermission();
-  if (permission !== "granted") throw new Error("Notification permission was not granted.");
+  if (permission !== "granted")
+    throw new Error(
+      "Notification permission was blocked. Allow notifications for this site in your browser settings.",
+    );
+
 
   const registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
   await navigator.serviceWorker.ready;
