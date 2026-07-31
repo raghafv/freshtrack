@@ -78,11 +78,14 @@ export function OnboardingDialog() {
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
-    if (!user || isLoading || closed || !profile) return;
-    if (profile.onboarded_at) return;
-    setName((profile.full_name ?? "").split(" ")[0] ?? "");
+    // `profile` is null for a brand-new account whose row has not landed yet —
+    // that is exactly the case the tour is for, so only bail while loading.
+    if (!user || isLoading || closed) return;
+    if (profile?.onboarded_at) return;
+    setName((profile?.full_name ?? "").split(" ")[0] ?? "");
     setOpen(true);
   }, [user, isLoading, profile, closed]);
+
 
   function finish() {
     setClosed(true);
