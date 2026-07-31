@@ -644,9 +644,29 @@ function ScannerPage() {
 
       <ScanConfirmDialog
         candidate={confirming}
-        onOpenChange={(open) => !open && setConfirming(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirming(null);
+            setReceiptEditIndex(null);
+          }
+        }}
         onSaved={(c) => {
           setDetections((d) => d.filter((x) => x.key !== c.key));
+          if (receiptEditIndex != null) {
+            const idx = receiptEditIndex;
+            setReceiptLines((lines) => (lines ? lines.filter((_, i) => i !== idx) : lines));
+            setReceiptPicked((p) => {
+              const next: Record<number, boolean> = {};
+              Object.keys(p)
+                .map(Number)
+                .forEach((k) => {
+                  if (k < idx) next[k] = p[k];
+                  else if (k > idx) next[k - 1] = p[k];
+                });
+              return next;
+            });
+            setReceiptEditIndex(null);
+          }
           void recordScan.mutateAsync({ method: c.source || pendingMethod, items_added: 1 });
         }}
       />
