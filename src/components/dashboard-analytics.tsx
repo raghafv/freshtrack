@@ -215,7 +215,7 @@ export function DashboardAnalytics({ items, activity, soonDays }: Props) {
         </div>
         {spending.topCategory && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Most of your money sits in             {spending.topCategory.category} ({formatCurrency(spending.topCategory.value)}).
+            Most of your money sits in {spending.topCategory.category} ({formatCurrency(spending.topCategory.value)}).
             {spending.pricedItems < items.length &&
               ` ${items.length - spending.pricedItems} item(s) have no price yet, so these use a typical ₹120 estimate.`}
           </p>
