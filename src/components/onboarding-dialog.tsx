@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   Bell,
@@ -18,69 +19,82 @@ import { useProfile, useUpdateProfile } from "@/lib/data";
 const STEPS = [
   {
     icon: Home,
+    route: "/" as const,
     title: "Your home screen",
     body: "One calm view that answers what needs attention today: your pantry health score, what is expiring and what you still need to buy.",
     why: "So nothing quietly rots at the back of the fridge.",
   },
   {
     icon: ScanLine,
+    route: "/scanner" as const,
     title: "Scan anything",
     body: "Scan a barcode, photograph fruits and vegetables, or snap a receipt. FreshTrack reads the label dates and fills in storage and shelf life for you.",
     why: "Adding groceries takes seconds instead of typing every field.",
   },
   {
     icon: Sparkles,
+    route: "/assistant" as const,
     title: "Ask FreshTrack",
     body: "Chat with the assistant in plain language: \"what expires this week?\", \"add milk and eggs to my list\", \"plan 3 days of meals\".",
     why: "It can see your real pantry, so answers and list changes are always accurate.",
   },
   {
     icon: ChefHat,
+    route: "/recipes" as const,
     title: "Recipes from your pantry",
     body: "Get complete recipes — measurements, timings, steps and tips — built only from ingredients you already own, starting with what expires first.",
     why: "Cook first, shop later. That is where the savings come from.",
   },
   {
     icon: ShoppingCart,
+    route: "/shopping" as const,
     title: "Shopping list",
     body: "A categorised, tickable list that lives right next to your pantry and never duplicates something you already have.",
     why: "Fewer forgotten items, fewer double buys.",
   },
   {
     icon: Bell,
+    route: "/notifications" as const,
     title: "Expiry reminders",
     body: "Turn on notifications and FreshTrack alerts you on your phone before food goes bad.",
     why: "The reminder arrives while the food is still usable.",
   },
 ];
 
-function storageKey(userId: string) {
-  return `freshtrack.onboarded.${userId}`;
-}
-
 /**
- * First-run experience: asks for a first name, then walks through what the app
- * does and why. Shown once per account; the tutorial can be skipped.
+ * First-run experience: asks for a first name, then walks the user through the
+ * real screens of the app — each step navigates to the page it describes.
+ * Shown once per account, tracked server-side on the profile so signing out
+ * and back in never replays it.
  */
 export function OnboardingDialog() {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(-1); // -1 = name step
   const [name, setName] = useState("");
+  const [closed, setClosed] = useState(false);
 
   useEffect(() => {
-    if (!user || isLoading) return;
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(storageKey(user.id)) === "1") return;
-    setName((profile?.full_name ?? "").split(" ")[0] ?? "");
+    if (!user || isLoading || closed || !profile) return;
+    if (profile.onboarded_at) return;
+    setName((profile.full_name ?? "").split(" ")[0] ?? "");
     setOpen(true);
-  }, [user, isLoading, profile?.full_name]);
+  }, [user, isLoading, profile, closed]);
 
   function finish() {
-    if (user) window.localStorage.setItem(storageKey(user.id), "1");
+    setClosed(true);
     setOpen(false);
+    updateProfile.mutate({ onboarded_at: new Date().toISOString() });
+    void navigate({ to: "/" });
+  }
+
+  function goToStep(next: number) {
+    setStep(next);
+    const target = STEPS[next];
+    if (target) void navigate({ to: target.route });
   }
 
   async function saveName() {
@@ -88,7 +102,7 @@ export function OnboardingDialog() {
     if (trimmed.length > 0) {
       await updateProfile.mutateAsync({ full_name: trimmed.slice(0, 40) });
     }
-    setStep(0);
+    goToStep(0);
   }
 
   const current = step >= 0 ? STEPS[step] : null;
@@ -161,14 +175,14 @@ export function OnboardingDialog() {
                   <Button
                     variant="secondary"
                     className="press h-11 rounded-2xl"
-                    onClick={() => setStep((s) => s - 1)}
+                    onClick={() => goToStep(step - 1)}
                   >
                     Back
                   </Button>
                 )}
                 <Button
                   className="press h-11 flex-1 rounded-2xl"
-                  onClick={() => (step === STEPS.length - 1 ? finish() : setStep((s) => s + 1))}
+                  onClick={() => (step === STEPS.length - 1 ? finish() : goToStep(step + 1))}
                 >
                   {step === STEPS.length - 1 ? "Start using FreshTrack" : "Next"}
                   <ArrowRight className="h-4 w-4" />
