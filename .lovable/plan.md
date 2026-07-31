@@ -1,50 +1,56 @@
-## 1. Quick Add: weight + piece count
+# FreshTrack — Premium UI Pass
 
-Today the confirm step asks for a single "Quantity (unit)". Change it to a two-part measure that matches the product type:
+A visual-only elevation of FreshTrack: calmer palette, larger radii, real product photography, and a scan-first bottom bar. No schema changes, no new features, no removed pages. Every existing button keeps its current handler.
 
-- Each catalog product gets a `form: "solid" | "liquid" | "count"` derived from its existing unit (`g`/`kg` → solid, `mL`/`L` → liquid, `pcs` → count).
-- Confirm step shows a small unit toggle:
-  - solid → `g` / `kg`
-  - liquid → `mL` / `L`
-  - all products additionally offer `pcs` (number of pieces/packs)
-- One numeric field + −/+ steppers (step adapts: 1 for pcs, 50 for g/mL, 0.5 for kg/L).
-- Saved `quantity` + `unit` reflect exactly what was picked; nothing else in the schema changes.
+## Scope (this pass)
 
-Same control is reused by the scanner confirmation screens, so it lives in a shared `MeasureInput` component.
+Home, Pantry, Recipes + AI, Scanner. Shopping, Notifications, Profile, Settings, Analytics and Admin inherit the new tokens automatically and get a bespoke pass later.
 
-## 2. Scanner: real AI item recognition
+## Design system
 
-Quick Scan opens the live camera (already does) or a gallery photo. After capture:
+Rework `src/styles.css` tokens only — components keep using the same semantic names, so untouched screens update for free.
 
-- Image is sent to a new server function that calls Lovable AI vision (Gemini) and returns structured JSON: detected items with `name`, `confidence`, `suggestedStorage`, `shelfLifeDays`, `estimatedExpiry`.
-- Each detection is matched against the built-in 223-product catalog; a match overrides unit/shelf-life with the trusted local rules, otherwise the AI values are used.
-- Results screen: one card per detected item with an AI confidence bar/badge, suggested storage, shelf life and expiry date.
-- Tapping an item opens the confirmation step (quantity/measure, purchase date, storage) before saving; unusual-storage warning still shows.
-- If nothing is recognised (or confidence is very low), Manual Search opens immediately with the photo attached.
+- Background off-white `#FAFAF8`, cards pure white, text near-black, secondary neutral gray.
+- Accent stays the existing FreshTrack brown. Muted green = fresh, soft amber = expiring, muted red = expired. Green never used as a surface or brand color.
+- Radii: cards 28px, buttons 22px, inputs 20px. Shadows reduced to near-invisible Apple-style elevation.
+- Typography scale widened: larger headings, more line height, more section spacing.
+- Motion tokens: press-scale on tappables, gentle lift on cards, fade transitions. Nothing bouncy.
 
-## 3. Barcode: camera scanning instead of typing
+## Product photography
 
-- Live barcode scanning from the rear camera using the browser `BarcodeDetector` where available, with a lightweight JS decoder fallback so it works on iOS/desktop too.
-- Animated scan line + auto-detect; no keyboard needed. Manual entry stays hidden behind a small "enter code" link as a fallback.
-- On a hit, Open Food Facts gives Product Name, Brand and Package Size; then only quantity, purchase date and storage are asked.
-- On a miss, Manual Search opens straight away pre-filled with whatever was found.
+Generate a curated set of ~34 realistic food photos into `src/assets/food/` (milk, eggs, yogurt, cheese, butter, tomato, onion, potato, spinach, banana, apple, rice, atta, dal, bread, oil, chicken, fish, paneer, snacks, beverages, frozen, spices, plus one per remaining catalog category and a neutral fallback).
 
-## 4. New Receipt Scanner tab
+A new `src/lib/food-image.ts` maps an item name/category to one of these, matching by name keyword first, then category, then fallback. If a pantry row already has `image_url` (scanned barcode), that wins. No emoji anywhere in these screens except the existing manual-add / My Pantry emoji picker, which stays.
 
-- Fourth tab: photograph a receipt or pick one from the gallery.
-- Image goes to a server function that runs AI OCR and returns line items (name, qty, price where present), filtering out totals/taxes.
-- Detected products are shown as a checklist (all pre-selected, matched to the catalog where possible, with category + expiry preview).
-- "Add N items" imports every selected row into the pantry in one go, logs a receipt scan in scan history and records the items as recent for quick add.
+## Home
 
-## 5. Gallery upload + polish
+Same data hooks and links, restructured presentation:
 
-- Every scan mode gets an "Upload photo" option (hidden file input, `capture` optional) alongside live camera.
-- Scanner animation polish only — animated scan line, pulsing focus frame, analysing shimmer, staggered result cards. No layout or design-system changes anywhere.
+- Header: greeting + notification bell + avatar (unchanged behavior), then a search bar with a scan icon on the right that routes to the existing scanner.
+- Expiring Soon: horizontal card with overlapping product thumbnails and a large count, tapping goes to the pantry expiry view.
+- Pantry Overview: item total plus a single segmented green/amber/red progress bar replacing the three stat tiles.
+- AI Suggestions: the centerpiece — full-width photo cards per suggestion with the existing action links (Cook / Ask AI / Recipes) rendered as pill buttons.
+- Impact card: the existing savings figure presented as a rewarding "₹X saved from food waste" statement.
+- Existing shopping-list preview, recent activity and analytics link stay, restyled.
+
+## Pantry
+
+Each row becomes a spacious card: thumbnail, name, quantity, expiry line, freshness pill, and the existing quick +/- and edit/delete actions kept as-is. Empty state becomes a minimal illustration with "Start by scanning your first grocery item." and a large Scan button.
+
+## Scanner
+
+Same four tabs and all logic untouched; restyled as a hero surface — full-bleed camera frame, calmer chrome, larger primary capture control, detection results as photo cards with the existing Add all / per-item edit flow.
+
+## Recipes + AI
+
+Recipe cards get large food photography, with cooking time, difficulty, available vs missing ingredient counts surfaced as clean metadata rows. Existing Surprise me / Pick ingredients / Save actions and the AI chat tab keep working exactly as now.
+
+## Bottom navigation
+
+Five slots: Home, Pantry, **Scan** (oversized center button), Recipes (which owns the AI tabs as today), Profile. The `/assistant` route stays and remains reachable from the Recipes tab switcher; Profile moves into the bar while the avatar in the header keeps working.
 
 ## Technical notes
 
-- New: `src/lib/vision.functions.ts` (`createServerFn`) with `detectGroceries` and `parseReceipt`, both calling Lovable AI Gateway with a vision-capable model and a small structured-output schema; `LOVABLE_API_KEY` stays server-side. Errors (429 / 402) surface as toasts.
-- New: `src/components/measure-input.tsx`, `src/components/scan-result-list.tsx`, `src/components/scan-confirm.tsx` (shared by all scan modes).
-- Edited: `src/lib/grocery-catalog.ts` (add `form`), `src/components/quick-add-dialog.tsx`, `src/routes/_shell.scanner.tsx`.
-- Images are uploaded to the existing private `pantry-images` bucket; receipt photos are sent inline to the model and not persisted.
-- No database migration required.
+- Only `src/styles.css`, route components under `src/routes/_shell.*`, `src/components/*` presentation files, and two new files (`src/lib/food-image.ts`, generated assets) change.
+- No edits to `src/lib/data.ts`, `src/lib/ai*`, server functions, migrations, or auth.
+- Head metadata on touched routes is preserved.
