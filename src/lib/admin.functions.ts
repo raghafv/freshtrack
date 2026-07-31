@@ -156,3 +156,131 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       users,
     };
   });
+
+export interface AdminPantryRow {
+  id: string;
+  name: string;
+  brand: string | null;
+  category: string;
+  quantity: number;
+  unit: string;
+  storage: string;
+  purchase_date: string;
+  expiry_date: string;
+}
+
+export interface AdminUserDetail {
+  profile: {
+    user_id: string;
+    email: string | null;
+    full_name: string | null;
+    created_at: string | null;
+  };
+  pantry: AdminPantryRow[];
+  shopping: { id: string; name: string; quantity: number; unit: string; checked: boolean }[];
+  scans: { id: string; method: string; items_added: number; created_at: string }[];
+  products: { id: string; barcode: string; name: string; brand: string | null; created_at: string }[];
+  aiCalls: number;
+}
+
+async function assertAdmin(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", context.userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden");
+}
+
+/** Owner-only, read-only detail view of a single user's account and pantry. */
+export const getAdminUserDetail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string }) => {
+    if (!data?.userId || typeof data.userId !== "string") throw new Error("userId required");
+    return { userId: data.userId };
+  })
+  .handler(async ({ data, context }): Promise<AdminUserDetail> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const uid = data.userId;
+
+    const [profile, pantry, shopping, scans, products, ai] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, email, full_name, created_at").eq("id", uid).maybeSingle(),
+      supabaseAdmin
+        .from("pantry_items")
+        .select("id, name, brand, category, quantity, unit, storage, purchase_date, expiry_date")
+        .eq("user_id", uid)
+        .order("expiry_date", { ascending: true }),
+      supabaseAdmin
+        .from("shopping_items")
+        .select("id, name, quantity, unit, checked")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("scan_history")
+        .select("id, method, items_added, created_at")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabaseAdmin
+        .from("products")
+        .select("id, barcode, name, brand, created_at")
+        .eq("created_by", uid)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabaseAdmin.from("ai_usage_log").select("id", { count: "exact", head: true }).eq("user_id", uid),
+    ]);
+
+    return {
+      profile: {
+        user_id: uid,
+        email: profile.data?.email ?? null,
+        full_name: profile.data?.full_name ?? null,
+        created_at: profile.data?.created_at ?? null,
+      },
+      pantry: (pantry.data ?? []) as AdminPantryRow[],
+      shopping: shopping.data ?? [],
+      scans: scans.data ?? [],
+      products: products.data ?? [],
+      aiCalls: ai.count ?? 0,
+    };
+  });
+
+export interface AdminProductRow {
+  id: string;
+  barcode: string;
+  name: string;
+  brand: string | null;
+  category: string;
+  size: string | null;
+  storage: string;
+  shelf_life_days: number;
+  source: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+/** Owner-only, read-only list of the global barcode/product database. */
+export const getAdminProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { search?: string } | undefined) => ({ search: data?.search ?? "" }))
+  .handler(async ({ data, context }): Promise<{ total: number; rows: AdminProductRow[] }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const term = data.search.trim();
+    let query = supabaseAdmin
+      .from("products")
+      .select(
+        "id, barcode, name, brand, category, size, storage, shelf_life_days, source, created_by, created_at",
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (term) query = query.or(`name.ilike.%${term}%,barcode.ilike.%${term}%,brand.ilike.%${term}%`);
+
+    const { data: rows, count, error } = await query;
+    if (error) throw error;
+    return { total: count ?? rows?.length ?? 0, rows: (rows ?? []) as AdminProductRow[] };
+  });
