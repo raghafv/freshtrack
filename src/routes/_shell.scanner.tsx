@@ -90,6 +90,8 @@ function ScannerPage() {
   const [receiptLines, setReceiptLines] = useState<ReceiptLine[] | null>(null);
   const [receiptPicked, setReceiptPicked] = useState<Record<number, boolean>>({});
   const [importing, setImporting] = useState(false);
+  /** Index of the receipt line currently being edited in the confirm dialog. */
+  const [receiptEditIndex, setReceiptEditIndex] = useState<number | null>(null);
 
   const [confirming, setConfirming] = useState<ScanCandidate | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
