@@ -211,3 +211,12 @@ export function normalizeSuggestions(
     .filter((v): v is ShoppingSuggestion => v !== null)
     .slice(0, 12);
 }
+
+/** Names the model asked to remove/check off, cleaned up. */
+export function normalizeNameList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((v) => String(v ?? "").trim())
+    .filter((v) => v.length > 0)
+    .slice(0, 100);
+}
