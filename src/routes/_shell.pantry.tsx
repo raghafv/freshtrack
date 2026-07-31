@@ -335,21 +335,15 @@ function PantryPage() {
                   </button>
                 )}
 
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    loading="lazy"
-                    className="h-14 w-14 shrink-0 rounded-2xl object-cover"
-                  />
-                ) : (
-                  <span
-                    aria-hidden
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-2xl"
-                  >
-                    {emojiFor(item.name, item.category)}
-                  </span>
-                )}
+                <img
+                  src={foodImage(item.name, item.category, item.image_url)}
+                  alt={item.name}
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                  className="h-16 w-16 shrink-0 rounded-2xl bg-muted object-cover"
+                />
+
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
