@@ -14,6 +14,13 @@ import { cn } from "@/lib/utils";
 import { emojiFor } from "@/lib/emoji";
 import { friendlyMessage } from "@/lib/errors";
 import { learnProduct, lookupLearned } from "@/lib/custom-products";
+import {
+  lookupBarcode as lookupBarcodeDb,
+  saveProduct,
+  shelfDaysForCategory,
+} from "@/lib/product-db";
+
+
 import { useAuth } from "@/lib/auth";
 import {
   useAddPantryItem,
@@ -97,9 +104,10 @@ function ScannerPage() {
     shelfLifeDays: number;
   }) {
     if (!learnBarcode) return;
+    const barcode = learnBarcode;
     learnProduct(
       {
-        barcode: learnBarcode,
+        barcode,
         name: input.name,
         brand: input.brand ?? null,
         category: input.category,
@@ -110,9 +118,28 @@ function ScannerPage() {
       },
       user?.id,
     );
+    // Share it with every FreshTrack user through the global product database.
+    void saveProduct(
+      {
+        barcode,
+        name: input.name,
+        brand: input.brand ?? null,
+        category: input.category,
+        size: null,
+        image_url: null,
+        shelf_life_days:
+          input.shelfLifeDays > 0
+            ? input.shelfLifeDays
+            : shelfDaysForCategory(input.category, input.name),
+        storage: input.storage,
+        source: "User",
+      },
+      user?.id,
+    ).catch(() => undefined);
     toast.success(`Saved — I'll recognise this barcode next time`);
     setLearnBarcode(null);
   }
+
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
@@ -192,20 +219,14 @@ function ScannerPage() {
         return;
       }
 
-      const res = await fetch(
-        `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_url,quantity`,
-      );
-      const json = (await res.json()) as {
-        status?: number;
-        product?: { product_name?: string; brands?: string; image_url?: string; quantity?: string };
-      };
-      if (json.status !== 1 || !json.product?.product_name) {
+      // FreshTrack's own database first; Open Food Facts only when it misses.
+      const { product, origin } = await lookupBarcodeDb(code, user?.id);
+      if (!product) {
         setLearnBarcode(code);
-        openManual("New barcode — add the product once and FreshTrack will remember it.");
+        openManual("New barcode detected — add the product once and every user benefits.");
         return;
       }
-      const name = json.product.product_name;
-      const known = findProduct(name);
+      const known = findProduct(product.name);
 
       // Read any MFG / EXPIRY printed near the barcode from the same frame.
       let labelExpiry: string | null = null;
@@ -224,26 +245,30 @@ function ScannerPage() {
       setPendingMethod("barcode");
       setConfirming(
         buildCandidate({
-          name: known?.name ?? name,
-          brand: json.product.brands?.split(",")[0]?.trim() ?? null,
+          name: known?.name ?? product.name,
+          brand: product.brand,
+          category: known ? undefined : product.category,
           unit: known?.unit,
-          storage: known?.storage,
-          image_url: json.product.image_url ?? null,
-          packageSize: json.product.quantity ?? null,
+          storage: known?.storage ?? product.storage,
+          shelfLifeDays: product.shelf_life_days,
+          image_url: product.image_url,
+          packageSize: product.size,
+          packaged: true,
           source: "barcode",
           labelExpiry,
           labelManufactured,
         }),
       );
       toast.success(
-        labelExpiry
-          ? `Found: ${name} · expiry ${labelExpiry}`
-          : `Found: ${name} · expiry estimated`,
+        `${origin === "db" ? "Found in FreshTrack" : "Added to FreshTrack"}: ${product.name}${
+          labelExpiry ? ` · expiry ${labelExpiry}` : " · expiry estimated"
+        }`,
       );
     } catch (e) {
       setLearnBarcode(code);
       openManual(friendlyMessage(e, "Barcode lookup failed — add the product manually."));
     } finally {
+
       setBusy(null);
     }
   }
