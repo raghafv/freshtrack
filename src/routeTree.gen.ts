@@ -24,6 +24,7 @@ import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
 import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
+import { Route as ShellAdminUserUserIdRouteImport } from './routes/_shell.admin-user.$userId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -99,6 +100,11 @@ const ApiPublicPushDigestRoute = ApiPublicPushDigestRouteImport.update({
   path: '/api/public/push-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShellAdminUserUserIdRoute = ShellAdminUserUserIdRouteImport.update({
+  id: '/admin-user/$userId',
+  path: '/admin-user/$userId',
+  getParentRoute: () => ShellRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/scanner': typeof ShellScannerRoute
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
+  '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRoutesByTo {
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
   '/': typeof ShellIndexRoute
+  '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRoutesById {
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
   '/_shell/': typeof ShellIndexRoute
+  '/_shell/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
 }
 export interface FileRouteTypes {
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/scanner'
     | '/settings'
     | '/shopping'
+    | '/admin-user/$userId'
     | '/api/public/push-digest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shopping'
     | '/'
+    | '/admin-user/$userId'
     | '/api/public/push-digest'
   id:
     | '__root__'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/_shell/settings'
     | '/_shell/shopping'
     | '/_shell/'
+    | '/_shell/admin-user/$userId'
     | '/api/public/push-digest'
   fileRoutesById: FileRoutesById
 }
@@ -316,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPushDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_shell/admin-user/$userId': {
+      id: '/_shell/admin-user/$userId'
+      path: '/admin-user/$userId'
+      fullPath: '/admin-user/$userId'
+      preLoaderRoute: typeof ShellAdminUserUserIdRouteImport
+      parentRoute: typeof ShellRoute
+    }
   }
 }
 
@@ -331,6 +350,7 @@ interface ShellRouteChildren {
   ShellSettingsRoute: typeof ShellSettingsRoute
   ShellShoppingRoute: typeof ShellShoppingRoute
   ShellIndexRoute: typeof ShellIndexRoute
+  ShellAdminUserUserIdRoute: typeof ShellAdminUserUserIdRoute
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
@@ -345,6 +365,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellSettingsRoute: ShellSettingsRoute,
   ShellShoppingRoute: ShellShoppingRoute,
   ShellIndexRoute: ShellIndexRoute,
+  ShellAdminUserUserIdRoute: ShellAdminUserUserIdRoute,
 }
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
@@ -358,13 +379,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
