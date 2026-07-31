@@ -5,6 +5,7 @@ import { generateAIResponse, getProviderLogs } from "./ai-service.server";
 import {
   historyMessages,
   loadPantryContext,
+  normalizeNameList,
   normalizeRecipes,
   normalizeShoppingAdds,
   normalizeSuggestions,
@@ -23,7 +24,28 @@ export type {
 
 import type { AssistantReply, PantryRecipe, ShoppingSuggestion, AiProviderLog } from "./ai-types";
 
+/** Records one AI call for the owner-only usage dashboard. Never throws. */
+async function logUsage(feature: string, userId: string | null, chars: number) {
+  try {
+    const last = getProviderLogs()[0];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("ai_usage_log").insert({
+      user_id: userId,
+      feature,
+      provider: last?.provider ?? null,
+      model: null,
+      ok: last?.ok ?? true,
+      ms: last?.ms ?? null,
+      chars,
+      error: last?.error ?? null,
+    });
+  } catch (error) {
+    console.error("[ai] usage log failed", error);
+  }
+}
+
 const AskInput = z.object({ question: z.string().min(1).max(1000) });
+
 
 /** Natural-language pantry assistant grounded in the user's live pantry. */
 export const askAssistant = createServerFn({ method: "POST" })
