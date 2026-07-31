@@ -277,9 +277,9 @@ function ScannerPage() {
     }
   }
 
-  async function importReceipt() {
+  async function importReceipt(all?: ReceiptLine[]) {
     if (!receiptLines) return;
-    const chosen = receiptLines.filter((_, i) => receiptPicked[i]);
+    const chosen = all ?? receiptLines.filter((_, i) => receiptPicked[i]);
     if (chosen.length === 0) {
       toast.error("Select at least one item");
       return;
