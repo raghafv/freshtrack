@@ -142,17 +142,28 @@ function AdminPage() {
           </section>
 
           <section className="surface-card p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold tracking-tight">Users</h2>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="rounded-xl"
-                onClick={() => navigate({ to: "/admin-barcodes" })}
-              >
-                Barcode database
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-xl"
+                  onClick={() => navigate({ to: "/admin-pending" })}
+                >
+                  Pending products
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-xl"
+                  onClick={() => navigate({ to: "/admin-barcodes" })}
+                >
+                  Barcode database
+                </Button>
+              </div>
             </div>
+
             <div className="space-y-2">
               {data.users.map((u) => (
                 <button
