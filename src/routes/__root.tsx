@@ -106,11 +106,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7540a93f-ccf7-4ef8-9c33-ab00ef616f2f/id-preview-0a96fa82--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1785486383496.png",
+        content: "https://storage.googleapis.com/gpt-engineer-file-uploads/aXOZxQQ7miX5ldTlgZDgOkiI3cA3/social-images/social-1785501722832-9e712fdc-486c-4a61-ba5f-1b81f018bf09.webp",
       },
       {
         name: "twitter:image",
-        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7540a93f-ccf7-4ef8-9c33-ab00ef616f2f/id-preview-0a96fa82--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1785486383496.png",
+        content: "https://storage.googleapis.com/gpt-engineer-file-uploads/aXOZxQQ7miX5ldTlgZDgOkiI3cA3/social-images/social-1785501722832-9e712fdc-486c-4a61-ba5f-1b81f018bf09.webp",
       },
     ],
     links: [
