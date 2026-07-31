@@ -19,7 +19,10 @@ export interface ProductRecord {
   source: string;
 }
 
-export { shelfDaysForCategory, storageForCategory } from "@/lib/product-meta";
+import { shelfDaysForCategory, storageForCategory } from "@/lib/product-meta";
+
+export { shelfDaysForCategory, storageForCategory };
+
 
 
 function normaliseBarcode(code: string): string {
