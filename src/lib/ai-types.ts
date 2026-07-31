@@ -26,19 +26,37 @@ export interface AssistantReply {
   removed?: string[];
   checked?: string[];
   cleared?: boolean;
+  pantryAdded?: string[];
 }
 
+export interface RecipeIngredient {
+  name: string;
+  amount: string;
+  inPantry: boolean;
+}
 
 export interface PantryRecipe {
   title: string;
   minutes: number;
+  prepMinutes?: number;
+  cookMinutes?: number;
+  servings?: number;
+  difficulty?: string;
+  cuisine?: string;
+  description?: string;
+  ingredients?: RecipeIngredient[];
+  equipment?: string[];
   uses: string[];
   priority: string[];
   steps: string[];
+  tips?: string[];
+  storageAdvice?: string | null;
+  nutrition?: string | null;
   substitutions: { missing: string; use: string }[];
   savesWaste: string | null;
   note: string | null;
 }
+
 
 export interface ShoppingSuggestion {
   name: string;

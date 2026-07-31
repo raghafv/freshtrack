@@ -6,7 +6,15 @@ import { useNotifications, useProfile } from "@/lib/data";
  * Top app bar: greeting on the left, notifications + profile avatar on the right.
  * The avatar replaces the old bottom-nav profile destination.
  */
-export function AppBar({ greeting, subtitle }: { greeting: string; subtitle?: string }) {
+export function AppBar({
+  greeting,
+  name,
+  subtitle,
+}: {
+  greeting: string;
+  name?: string;
+  subtitle?: string;
+}) {
   const { data: profile } = useProfile();
   const { data: notifications = [] } = useNotifications();
   const unread = notifications.filter((n) => !n.read).length;
@@ -16,7 +24,10 @@ export function AppBar({ greeting, subtitle }: { greeting: string; subtitle?: st
     <header className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
       <div className="min-w-0">
         {subtitle && <p className="truncate text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{subtitle}</p>}
-        <h1 className="mt-0.5 truncate text-[26px] font-bold tracking-[-0.03em]">{greeting}</h1>
+        <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-[-0.03em]">
+          <span className="block">{greeting}</span>
+          {name && <span className="block truncate">{name}</span>}
+        </h1>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Link

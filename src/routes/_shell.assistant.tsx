@@ -58,8 +58,14 @@ function AssistantPage() {
       qc.invalidateQueries({ queryKey: ["assistant", user?.id] });
       const removed = res.removed ?? [];
       const checked = res.checked ?? [];
+      const pantryAdded = res.pantryAdded ?? [];
       if (res.added.length > 0 || removed.length > 0 || checked.length > 0 || res.cleared) {
         qc.invalidateQueries({ queryKey: ["shopping", user?.id] });
+      }
+      if (pantryAdded.length > 0) {
+        qc.invalidateQueries({ queryKey: ["pantry", user?.id] });
+        qc.invalidateQueries({ queryKey: ["pantry"] });
+        toast.success(`Added to pantry: ${pantryAdded.join(", ")}`);
       }
       if (res.added.length > 0) toast.success(`Added to shopping list: ${res.added.join(", ")}`);
       if (res.cleared) toast.success("Shopping list cleared");

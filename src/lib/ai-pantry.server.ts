@@ -93,13 +93,15 @@ export function pantrySystemPrompt(ctx: PantryContext) {
     `VALUE: total ₹${ctx.value.toFixed(0)}, at risk in the next ${ctx.soonDays} days ₹${ctx.atRisk.toFixed(0)}, already expired ₹${ctx.wasted.toFixed(0)}.`,
     `REPEAT PURCHASES (name, times bought): ${JSON.stringify(ctx.repeatBuys)}`,
     "",
-    "You can also CHANGE the shopping list when the user asks. Return the right action arrays and describe what you did in `reply`:",
-    '- add items -> "shoppingAdds"',
+    "You can also CHANGE the user's data when they ask. Return the right action arrays and describe what you did in `reply`:",
+    '- add items to the SHOPPING LIST -> "shoppingAdds": [{"name":"","quantity":1,"unit":"pcs","category":""}]',
     '- remove specific items -> "shoppingRemoves": ["item name", ...] (use the exact names from the shopping list)',
     '- remove/clear/empty EVERYTHING on the list -> "clearShopping": true',
     '- mark items as bought/done -> "shoppingChecked": ["item name", ...]',
+    '- add items the user says they ALREADY HAVE / bought / want stored in the PANTRY -> "pantryAdds": [{"name":"","quantity":1,"unit":"pcs","category":"","storage":"Fridge|Freezer|Pantry","shelfLifeDays":7}]',
+    "IMPORTANT: whenever the user asks you to add something ('add milk', 'put eggs on my list', 'I bought 2 kg rice'), you MUST fill the matching array — never reply that you added something without returning it. Add to shoppingAdds even if a similar item already exists in the pantry.",
     "Never claim you removed or added something unless you returned it in the matching array.",
-    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[{"name":"","quantity":1,"unit":"pcs","category":""}],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
+    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[],"pantryAdds":[],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
     "All action fields default to empty/false — only fill them when the user actually asked for that change.",
 
   ].join("\n");
@@ -116,13 +118,15 @@ export function historyMessages(rows: { role: string; content: string }[]): AiMe
 }
 
 export const recipeRequest = [
-  "Suggest 4 realistic home recipes I can cook right now.",
+  "Suggest 4 realistic, COMPLETE home recipes I can cook right now — written so a beginner can follow them end to end with no other source.",
   "Every ingredient must already be in my pantry (salt, water, oil and common spices excepted).",
   "Prioritise the ingredients with the smallest days_left.",
   "If a classic version of the dish needs something I do not have, keep the dish and swap in a pantry item instead — list that as a substitution.",
-  'Reply with JSON only: {"recipes":[{"title":"","minutes":20,"uses":[""],"priority":[""],"steps":["",""],"substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
-  'uses: pantry item names used. priority: the expiring items this recipe rescues. steps: 3-6 short steps. substitutions: [] when nothing is missing. savesWaste: what this rescues, e.g. "uses 250 g spinach expiring in 1 day".',
+  "Each recipe MUST include: a one-line description, servings, prep and cook time, difficulty, cuisine, a FULL ingredient list with exact measurements (grams/ml/tbsp/tsp/pieces) including salt, oil and spices, the equipment needed, 6-12 numbered steps that state heat level, timings and visual cues, 2-4 practical tips, storage/leftover advice and a rough nutrition line per serving.",
+  'Reply with JSON only: {"recipes":[{"title":"","description":"","cuisine":"","difficulty":"Easy","servings":2,"prepMinutes":10,"cookMinutes":20,"minutes":30,"ingredients":[{"name":"","amount":"200 g","inPantry":true}],"equipment":[""],"uses":[""],"priority":[""],"steps":["",""],"tips":[""],"storageAdvice":"","nutrition":"","substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
+  'uses: pantry item names used. priority: the expiring items this recipe rescues. inPantry: false only for salt/oil/spice style basics. substitutions: [] when nothing is missing. savesWaste: what this rescues, e.g. "uses 250 g spinach expiring in 1 day".',
 ].join("\n");
+
 
 export const shoppingRequest = [
   "Build my next grocery shopping list.",
@@ -155,20 +159,79 @@ export function normalizeShoppingAdds(parsed: Record<string, unknown>, existing:
     .slice(0, 20);
 }
 
-export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
-  const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
+const STORAGES = ["Fridge", "Freezer", "Pantry"];
+
+/** Items the assistant should place directly into the pantry. */
+export function normalizePantryAdds(parsed: Record<string, unknown>) {
+  const raw = Array.isArray(parsed.pantryAdds) ? parsed.pantryAdds : [];
+  const seen = new Set<string>();
   return raw
     .map((entry) => {
+      const it = entry as Record<string, unknown>;
+      const name = String(it.name ?? "").trim();
+      if (!name || seen.has(name.toLowerCase())) return null;
+      seen.add(name.toLowerCase());
+      const qty = Number(it.quantity);
+      const shelf = Number(it.shelfLifeDays);
+      return {
+        name,
+        quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
+        unit: UNITS.includes(String(it.unit)) ? String(it.unit) : "pcs",
+        category: String(it.category ?? "Other"),
+        storage: STORAGES.includes(String(it.storage)) ? String(it.storage) : "Pantry",
+        shelfLifeDays: Number.isFinite(shelf) && shelf > 0 ? Math.round(shelf) : 7,
+      };
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null)
+    .slice(0, 20);
+}
+
+export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
+  const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
+  const strList = (v: unknown, max: number) =>
+    Array.isArray(v) ? v.map(String).filter((s) => s.trim().length > 0).slice(0, max) : [];
+  return raw
+    .map((entry): PantryRecipe | null => {
       const r = entry as Record<string, unknown>;
       const title = String(r.title ?? "").trim();
       if (!title) return null;
-      const minutes = Number(r.minutes);
+      const num = (v: unknown, fallback: number) => {
+        const n = Number(v);
+        return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
+      };
+      const prepMinutes = num(r.prepMinutes, 0);
+      const cookMinutes = num(r.cookMinutes, 0);
       return {
         title,
-        minutes: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 20,
-        uses: Array.isArray(r.uses) ? r.uses.map(String).slice(0, 12) : [],
-        priority: Array.isArray(r.priority) ? r.priority.map(String).slice(0, 6) : [],
-        steps: Array.isArray(r.steps) ? r.steps.map(String).slice(0, 8) : [],
+        description: r.description ? String(r.description) : undefined,
+        cuisine: r.cuisine ? String(r.cuisine) : undefined,
+        difficulty: r.difficulty ? String(r.difficulty) : undefined,
+        servings: num(r.servings, 2),
+        prepMinutes: prepMinutes || undefined,
+        cookMinutes: cookMinutes || undefined,
+        minutes: num(r.minutes, prepMinutes + cookMinutes || 20),
+        ingredients: Array.isArray(r.ingredients)
+          ? r.ingredients
+              .map((ing) => {
+                const o = ing as Record<string, unknown>;
+                const name = String(o.name ?? "").trim();
+                if (!name) return null;
+                return {
+                  name,
+                  amount: String(o.amount ?? "").trim(),
+                  inPantry: o.inPantry !== false,
+                };
+              })
+              .filter((v): v is { name: string; amount: string; inPantry: boolean } => v !== null)
+              .slice(0, 25)
+          : [],
+        equipment: strList(r.equipment, 8),
+        uses: strList(r.uses, 12),
+        priority: strList(r.priority, 6),
+        steps: strList(r.steps, 14),
+        tips: strList(r.tips, 6),
+        storageAdvice: r.storageAdvice ? String(r.storageAdvice) : null,
+        nutrition: r.nutrition ? String(r.nutrition) : null,
         substitutions: Array.isArray(r.substitutions)
           ? r.substitutions
               .map((sub) => {
@@ -182,11 +245,12 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
           : [],
         savesWaste: r.savesWaste ? String(r.savesWaste) : null,
         note: r.note ? String(r.note) : null,
-      } satisfies PantryRecipe;
+      };
     })
     .filter((v): v is PantryRecipe => v !== null)
     .slice(0, 6);
 }
+
 
 export function normalizeSuggestions(
   parsed: Record<string, unknown>,

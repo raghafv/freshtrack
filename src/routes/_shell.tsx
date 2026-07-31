@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Leaf, Loader2 } from "lucide-react";
 import { BottomNav } from "@/components/layout";
 import { PushPrompt } from "@/components/push-prompt";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { useAuth } from "@/lib/auth";
 import {useClearAssistant,useNotifications} from "@/lib/data";
 
@@ -56,6 +57,7 @@ function AuthedShell() {
   return (
     <div className="min-h-screen bg-background">
       <Outlet />
+      <OnboardingDialog />
       <PushPrompt />
       <BottomNav unread={unread} />
     </div>

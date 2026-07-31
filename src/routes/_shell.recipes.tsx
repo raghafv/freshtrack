@@ -356,23 +356,62 @@ function RecipeCard({
         </div>
       </div>
 
+      {recipe.description && (
+        <p className="mb-2 text-sm text-muted-foreground">{recipe.description}</p>
+      )}
+
+      <div className="mb-3 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
+        {recipe.servings ? (
+          <span className="rounded-full border border-border/60 px-2 py-0.5">
+            Serves {recipe.servings}
+          </span>
+        ) : null}
+        {recipe.prepMinutes ? (
+          <span className="rounded-full border border-border/60 px-2 py-0.5">
+            Prep {recipe.prepMinutes} min
+          </span>
+        ) : null}
+        {recipe.cookMinutes ? (
+          <span className="rounded-full border border-border/60 px-2 py-0.5">
+            Cook {recipe.cookMinutes} min
+          </span>
+        ) : null}
+        {recipe.difficulty && (
+          <span className="rounded-full border border-border/60 px-2 py-0.5">
+            {recipe.difficulty}
+          </span>
+        )}
+        {recipe.cuisine && (
+          <span className="rounded-full border border-border/60 px-2 py-0.5">{recipe.cuisine}</span>
+        )}
+      </div>
+
       {recipe.priority.length > 0 && (
-        <p className="mb-2 text-xs font-medium text-warning">
+        <p className="mb-3 text-xs font-medium text-warning">
           Rescues: {recipe.priority.join(", ")}
         </p>
       )}
 
-      {recipe.uses.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {recipe.uses.map((u) => (
-            <span
-              key={u}
-              className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
-            >
-              {u}
-            </span>
-          ))}
+      {recipe.ingredients && recipe.ingredients.length > 0 && (
+        <div className="mb-3">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Ingredients
+          </p>
+          <ul className="space-y-1">
+            {recipe.ingredients.map((ing) => (
+              <li key={ing.name} className="flex justify-between gap-3 text-sm">
+                <span>{ing.name}</span>
+                <span className="shrink-0 text-muted-foreground">{ing.amount}</span>
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
+
+      {recipe.equipment && recipe.equipment.length > 0 && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          <span className="font-semibold">Equipment:</span> {recipe.equipment.join(", ")}
+        </p>
       )}
 
       {recipe.substitutions.length > 0 && (
@@ -401,6 +440,33 @@ function RecipeCard({
           </li>
         ))}
       </ol>
+
+      {recipe.tips && recipe.tips.length > 0 && (
+        <div className="mt-3 rounded-2xl bg-muted/60 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Tips
+          </p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4">
+            {recipe.tips.map((t) => (
+              <li key={t} className="text-xs text-muted-foreground">
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recipe.storageAdvice && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-semibold">Leftovers:</span> {recipe.storageAdvice}
+        </p>
+      )}
+
+      {recipe.nutrition && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          <span className="font-semibold">Per serving:</span> {recipe.nutrition}
+        </p>
+      )}
 
       {recipe.savesWaste && (
         <p className="mt-3 rounded-xl bg-success/10 px-3 py-2 text-xs font-medium text-success">

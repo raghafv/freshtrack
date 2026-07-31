@@ -7,6 +7,7 @@ import {
   loadPantryContext,
   normalizeNameList,
   normalizeRecipes,
+  normalizePantryAdds,
   normalizeShoppingAdds,
   normalizeSuggestions,
   pantrySystemPrompt,
@@ -69,16 +70,47 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     let reply = String(parsed.reply ?? "").trim() || "I couldn't work that out — try rephrasing.";
 
-    const existing = new Set(
-      [...ctx.shoppingNames, ...ctx.items.map((i) => i.name)].map((n) => n.toLowerCase()),
-    );
+    // Only skip items already on the shopping list — owning something in the
+    // pantry must never block an explicit "add this to my list" request.
+    const existing = new Set(ctx.shoppingNames.map((n) => n.toLowerCase()));
     const adds = normalizeShoppingAdds(parsed, existing);
 
     if (adds.length > 0) {
       const { error } = await supabase
         .from("shopping_items")
         .insert(adds.map((a) => ({ ...a, user_id: context.userId })));
-      if (error) console.error("[assistant] shopping insert failed", error);
+      if (error) {
+        console.error("[assistant] shopping insert failed", error);
+        throw new Error("Could not add those items to your shopping list.");
+      }
+    }
+
+    // ---- pantry adds -------------------------------------------------------
+    const pantryAdds = normalizePantryAdds(parsed);
+    const pantryAdded: string[] = [];
+    if (pantryAdds.length > 0) {
+      const today = new Date();
+      const rows = pantryAdds.map((a) => {
+        const expiry = new Date(today);
+        expiry.setDate(expiry.getDate() + a.shelfLifeDays);
+        return {
+          user_id: context.userId,
+          name: a.name,
+          category: a.category,
+          quantity: a.quantity,
+          unit: a.unit,
+          storage: a.storage,
+          purchase_date: today.toISOString().slice(0, 10),
+          expiry_date: expiry.toISOString().slice(0, 10),
+          source: "assistant",
+        };
+      });
+      const { error } = await supabase.from("pantry_items").insert(rows);
+      if (error) {
+        console.error("[assistant] pantry insert failed", error);
+        throw new Error("Could not add those items to your pantry.");
+      }
+      pantryAdded.push(...pantryAdds.map((a) => a.name));
     }
 
     // ---- list actions (remove / clear / check off) -------------------------
@@ -147,7 +179,7 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     await logUsage("assistant", context.userId, data.question.length + reply.length);
 
-    return { reply, added: adds.map((a) => a.name), removed, checked, cleared };
+    return { reply, added: adds.map((a) => a.name), removed, checked, cleared, pantryAdded };
   });
 
 
