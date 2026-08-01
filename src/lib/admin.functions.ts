@@ -33,24 +33,7 @@ export interface AdminOverview {
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ admin: boolean }> => {
-    const { data: profile } = await context.supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", context.userId)
-      .maybeSingle();
-
-    if (profile?.email?.toLowerCase() === "raghav.goyal909@gmail.com") {
-      return { admin: true };
-    }
-
-    const { data } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    return { admin: Boolean(data) };
+    return { admin: await isOwnerOrAdmin(context) };
   });
 
 /** Owner-only cross-user analytics: AI usage, app usage and pantry sizes. */
