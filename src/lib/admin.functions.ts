@@ -188,16 +188,21 @@ export interface AdminUserDetail {
   aiCalls: number;
 }
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
+export const OWNER_EMAIL = "raghav.goyal909@gmail.com";
+
+async function isOwnerOrAdmin(context: { supabase: any; userId: string; claims?: any }) {
+  const claimEmail = (context.claims?.email ?? context.claims?.user_metadata?.email) as
+    | string
+    | undefined;
+  if (claimEmail?.toLowerCase() === OWNER_EMAIL) return true;
+
   const { data: profile } = await context.supabase
     .from("profiles")
     .select("email")
     .eq("id", context.userId)
     .maybeSingle();
 
-  if (profile?.email?.toLowerCase() === "raghav.goyal909@gmail.com") {
-    return;
-  }
+  if (profile?.email?.toLowerCase() === OWNER_EMAIL) return true;
 
   const { data } = await context.supabase
     .from("user_roles")
@@ -206,7 +211,11 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
     .eq("role", "admin")
     .maybeSingle();
 
-  if (!data) throw new Error("Forbidden");
+  return Boolean(data);
+}
+
+async function assertAdmin(context: { supabase: any; userId: string; claims?: any }) {
+  if (!(await isOwnerOrAdmin(context))) throw new Error("Forbidden");
 }
 
 /** Owner-only, read-only detail view of a single user's account and pantry. */
