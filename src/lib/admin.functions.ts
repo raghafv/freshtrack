@@ -427,3 +427,74 @@ export const rejectPendingProduct = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+export interface AdminProductInput {
+  id?: string | null;
+  barcode: string;
+  name: string;
+  brand?: string | null;
+  category?: string | null;
+  size?: string | null;
+  storage?: string | null;
+  shelfLifeDays?: number | null;
+}
+
+/** Owner-only: add a new barcode or edit an existing one in the global catalog. */
+export const saveAdminProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: AdminProductInput) => {
+    const barcode = (data?.barcode ?? "").replace(/\D/g, "");
+    if (!barcode) throw new Error("A numeric barcode is required");
+    if (!data?.name?.trim()) throw new Error("A product name is required");
+    return { ...data, barcode, name: data.name.trim() };
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true; id: string }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { brandForName, categoryForName, shelfDaysForCategory, storageForCategory } =
+      await import("@/lib/product-meta");
+
+    const category = data.category?.trim() || categoryForName(data.name);
+    const row = {
+      barcode: data.barcode,
+      name: data.name,
+      brand: data.brand?.trim() || brandForName(data.name),
+      category,
+      size: data.size?.trim() || null,
+      storage: data.storage?.trim() || storageForCategory(category, data.name),
+      shelf_life_days:
+        data.shelfLifeDays && data.shelfLifeDays > 0
+          ? Math.round(data.shelfLifeDays)
+          : shelfDaysForCategory(category, data.name),
+      source: "Admin",
+    };
+
+    if (data.id) {
+      const { error } = await supabaseAdmin.from("products").update(row).eq("id", data.id);
+      if (error) throw error;
+      return { ok: true, id: data.id };
+    }
+
+    const { data: saved, error } = await supabaseAdmin
+      .from("products")
+      .upsert({ ...row, created_by: context.userId }, { onConflict: "barcode" })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { ok: true, id: saved.id };
+  });
+
+/** Owner-only: delete a single barcode from the global catalog. */
+export const deleteAdminProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => {
+    if (!data?.id) throw new Error("id required");
+    return { id: data.id };
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("products").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
