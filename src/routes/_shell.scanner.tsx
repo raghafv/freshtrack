@@ -23,7 +23,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { friendlyMessage } from "@/lib/errors";
-import { lookupLearned } from "@/lib/custom-products";
+import { learnProduct, lookupLearned } from "@/lib/custom-products";
+import { findMyPendingProduct } from "@/lib/pending-products";
+import { categoryForName, shelfDaysForCategory, storageForCategory } from "@/lib/product-meta";
 import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
 
 import { useAuth } from "@/lib/auth";
@@ -103,6 +105,25 @@ function ScannerPage() {
   /** Shown instead of jumping straight into manual search when nothing was found. */
   const [noItemsOpen, setNoItemsOpen] = useState(false);
   const [addingAll, setAddingAll] = useState(false);
+
+  /** Remembers a barcode locally so the user is never asked to describe it twice. */
+  function rememberBarcode(code: string, name: string, quantity?: string | null) {
+    const category = categoryForName(name);
+    learnProduct(
+      {
+        barcode: code.replace(/\D/g, ""),
+        name,
+        brand: null,
+        category,
+        unit: settings?.default_unit ?? "pcs",
+        storage: storageForCategory(category, name) as StorageType,
+        shelfLifeDays: shelfDaysForCategory(category, name),
+        savedAt: new Date().toISOString(),
+      },
+      user?.id,
+    );
+    void quantity;
+  }
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
@@ -696,6 +717,7 @@ function ScannerPage() {
         onDone={(info) => {
           setLearnBarcode(null);
           if (!info?.name) return;
+          if (learnBarcode) rememberBarcode(learnBarcode, info.name, info.quantity);
           setPendingMethod("barcode");
           setConfirming(
             buildCandidate({
