@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { syncProfile } from "@/lib/profile.functions";
+
 
 interface AuthContextValue {
   session: Session | null;
@@ -36,21 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session?.user) return;
-    const u = session.user;
-    void supabase.from("profiles").upsert(
-      {
-        id: u.id,
-        email: u.email ?? null,
-        full_name:
-          (u.user_metadata?.full_name as string | undefined) ??
-          (u.user_metadata?.name as string | undefined) ??
-          u.email?.split("@")[0] ??
-          null,
-        avatar_url: (u.user_metadata?.avatar_url as string | undefined) ?? null,
-      },
-      { onConflict: "id" },
-    );
-  }, [session?.user]);
+    // Server-side sync: fills in email/avatar from the verified token and only
+    // ever sets the display name when the profile has none, so a name typed in
+    // onboarding is never overwritten on the next sign-in.
+    void syncProfile().catch(() => {});
+  }, [session?.user?.id]);
+
 
   const value = useMemo<AuthContextValue>(
     () => ({
