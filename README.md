@@ -22,7 +22,7 @@
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![Version](https://img.shields.io/badge/Version-v1.0-blue)
 ![License](https://img.shields.io/badge/License-Educational-orange)
-# 🥬 FreshTrack — AI Powered Household Inventory Platform
+#  FreshTrack — AI Household Operating System
 
 > **Stop wasting food. Stop buying duplicates. Stay organized. Save money.**
 
