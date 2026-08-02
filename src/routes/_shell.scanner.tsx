@@ -185,9 +185,26 @@ function ScannerPage() {
       // FreshTrack's own database first; Open Food Facts only when it misses.
       const { product, origin } = await lookupBarcodeDb(code, user?.id);
       if (!product) {
+        // Already described by this user and waiting on approval — don't ask again.
+        const pending = await findMyPendingProduct(code, user?.id);
+        if (pending) {
+          rememberBarcode(code, pending.name);
+          setPendingMethod("barcode");
+          setConfirming(
+            buildCandidate({
+              name: pending.name,
+              packageSize: pending.quantity,
+              packaged: true,
+              source: "barcode",
+            }),
+          );
+          toast.success(`${pending.name} — saved from your earlier scan`);
+          return;
+        }
         setLearnBarcode(code);
         return;
       }
+
       const known = findProduct(product.name);
 
       // Read any MFG / EXPIRY printed near the barcode from the same frame.
