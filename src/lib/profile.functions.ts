@@ -37,11 +37,15 @@ export const syncProfile = createServerFn({ method: "POST" })
       return { ok: true };
     }
 
-    const patch: Record<string, unknown> = {};
-    if (email && existing.email !== email) patch["email"] = email;
-    if (avatar && !existing.avatar_url) patch["avatar_url"] = avatar;
+    const patch: {
+      email?: string | null;
+      avatar_url?: string | null;
+      full_name?: string | null;
+    } = {};
+    if (email && existing.email !== email) patch.email = email;
+    if (avatar && !existing.avatar_url) patch.avatar_url = avatar;
     // Never overwrite a name the user chose themselves.
-    if (!existing.full_name && metaName) patch["full_name"] = metaName;
+    if (!existing.full_name && metaName) patch.full_name = metaName;
 
     if (Object.keys(patch).length > 0) {
       await supabaseAdmin.from("profiles").update(patch).eq("id", context.userId);
