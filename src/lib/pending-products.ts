@@ -44,3 +44,25 @@ export async function submitPendingProduct(input: {
   }
   return { status: "submitted" };
 }
+
+/**
+ * A barcode the signed-in user already described but that an admin hasn't
+ * approved yet. Used so the same product never re-opens the "new barcode"
+ * form after the user has taught it once.
+ */
+export async function findMyPendingProduct(
+  code: string,
+  userId?: string | null,
+): Promise<{ name: string; quantity: string | null } | null> {
+  const barcode = code.replace(/\D/g, "");
+  if (!barcode || !userId) return null;
+  const { data } = await supabase
+    .from("pending_products")
+    .select("name, quantity")
+    .eq("barcode", barcode)
+    .eq("submitted_by", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data ? { name: data.name, quantity: data.quantity } : null;
+}
