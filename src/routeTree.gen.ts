@@ -27,6 +27,7 @@ import { Route as ShellAdminBarcodesRouteImport } from './routes/_shell.admin-ba
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
 import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
 import { Route as ShellAdminUserUserIdRouteImport } from './routes/_shell.admin-user.$userId'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -117,6 +118,12 @@ const ShellAdminUserUserIdRoute = ShellAdminUserUserIdRouteImport.update({
   path: '/admin-user/$userId',
   getParentRoute: () => ShellRoute,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/shopping': typeof ShellShoppingRoute
   '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/': typeof ShellIndexRoute
   '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/_shell/': typeof ShellIndexRoute
   '/_shell/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/shopping'
     | '/admin-user/$userId'
     | '/api/public/push-digest'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-user/$userId'
     | '/api/public/push-digest'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/_shell'
@@ -236,6 +248,7 @@ export interface FileRouteTypes {
     | '/_shell/'
     | '/_shell/admin-user/$userId'
     | '/api/public/push-digest'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -243,6 +256,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicPushDigestRoute: typeof ApiPublicPushDigestRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -373,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAdminUserUserIdRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -417,6 +438,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicPushDigestRoute: ApiPublicPushDigestRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
