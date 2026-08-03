@@ -57,16 +57,19 @@ export async function submitPendingProduct(input: {
 export async function findMyPendingProduct(
   code: string,
   userId?: string | null,
-): Promise<{ name: string; quantity: string | null } | null> {
+): Promise<{ name: string; quantity: string | null; shelfLifeDays: number | null } | null> {
   const barcode = code.replace(/\D/g, "");
   if (!barcode || !userId) return null;
   const { data } = await supabase
     .from("pending_products")
-    .select("name, quantity")
+    .select("name, quantity, shelf_life_days")
     .eq("barcode", barcode)
     .eq("submitted_by", userId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return data ? { name: data.name, quantity: data.quantity } : null;
+  return data
+    ? { name: data.name, quantity: data.quantity, shelfLifeDays: data.shelf_life_days }
+    : null;
 }
+
