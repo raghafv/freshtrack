@@ -19,7 +19,7 @@ interface Props {
   imageUrl?: string | null;
   userId?: string | null;
   onOpenChange: (open: boolean) => void;
-  onDone?: (info: { name: string; quantity: string }) => void;
+  onDone?: (info: { name: string; quantity: string; shelfLifeDays: number }) => void;
 }
 
 /** Shown when a scanned barcode isn't in the global database yet. */
@@ -33,18 +33,28 @@ export function UnknownBarcodeDialog({
 }: Props) {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [years, setYears] = useState("");
+  const [months, setMonths] = useState("");
+  const [days, setDays] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName("");
       setQuantity("");
+      setYears("");
+      setMonths("");
+      setDays("");
     }
   }, [open, barcode]);
 
+  const shelfLifeDays =
+    (Number(years) || 0) * 365 + (Number(months) || 0) * 30 + (Number(days) || 0);
+  const canSubmit = Boolean(name.trim()) && Number(days) > 0 && shelfLifeDays > 0;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!barcode || !name.trim()) return;
+    if (!barcode || !canSubmit) return;
     setSaving(true);
     const result = await submitPendingProduct({
       barcode,
@@ -52,6 +62,7 @@ export function UnknownBarcodeDialog({
       quantity,
       imageUrl,
       userId,
+      shelfLifeDays,
     });
     setSaving(false);
 
@@ -64,8 +75,9 @@ export function UnknownBarcodeDialog({
       return;
     }
     onOpenChange(false);
-    onDone?.({ name: name.trim(), quantity: quantity.trim() });
+    onDone?.({ name: name.trim(), quantity: quantity.trim(), shelfLifeDays });
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
