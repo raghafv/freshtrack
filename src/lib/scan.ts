@@ -204,11 +204,14 @@ export function predictShelfLife(
     };
   }
 
-  const freshness = candidate.freshness ?? (candidate.packaged ? 0.95 : 0.8);
+  // A barcode scan never sees the food itself, so we must not pretend to judge
+  // how fresh it looks. Only photo-based scans carry a freshness reading.
+  const seenByCamera = candidate.freshness != null;
+  const freshness = candidate.freshness ?? 1;
   // Fresh produce loses most of its life to how it already looks; sealed packs
   // barely do, because the clock starts at packing.
   const sensitivity = candidate.packaged ? 0.25 : 0.7;
-  const factor = 1 - sensitivity * (1 - freshness);
+  const factor = seenByCamera ? 1 - sensitivity * (1 - freshness) : 1;
   const days = Math.max(0, Math.round(base * factor));
   const detection = candidate.confidence ?? 0.7;
   const confidence = Math.min(
@@ -218,12 +221,18 @@ export function predictShelfLife(
 
   const parts = [
     `${candidate.name} normally keeps ~${base} days in the ${storage.toLowerCase()}`,
-    freshness >= 0.85
-      ? "and it looks freshly bought"
-      : freshness >= 0.6
-        ? "and it looks partly through its life"
-        : "but it already looks well past its best",
   ];
+  if (seenByCamera) {
+    parts.push(
+      freshness >= 0.85
+        ? "and it looks freshly bought"
+        : freshness >= 0.6
+          ? "and it looks partly through its life"
+          : "but it already looks well past its best",
+    );
+  } else {
+    parts.push("and no expiry date was printed on the pack I could read");
+  }
   if (candidate.note) parts.push(`(${candidate.note})`);
 
   return {
@@ -233,6 +242,7 @@ export function predictShelfLife(
     source: "estimated",
     explanation: `${parts.join(" ")}, so I estimate ${days} day${days === 1 ? "" : "s"} left.`,
   };
+
 }
 
 export function candidateShelfDays(candidate: ScanCandidate, storage: string): number {
