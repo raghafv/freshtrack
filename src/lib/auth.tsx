@@ -23,7 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      // A refresh that momentarily returns no session must NOT sign the user
+      // out — only an explicit sign-out (or a deleted user) ends the session.
+      if (!next && event !== "SIGNED_OUT" && event !== "USER_UPDATED") {
+        setLoading(false);
+        return;
+      }
       setSession(next);
       setLoading(false);
     });
@@ -33,8 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    // Coming back to the tab/PWA after a while: make sure the token is fresh
+    // instead of letting the next request fail and bounce us to the login page.
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void supabase.auth.getSession().then(({ data }) => {
+        if (data.session) setSession(data.session);
+      });
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
+
 
   useEffect(() => {
     if (!session?.user) return;

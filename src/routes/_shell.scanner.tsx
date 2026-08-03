@@ -107,7 +107,12 @@ function ScannerPage() {
   const [addingAll, setAddingAll] = useState(false);
 
   /** Remembers a barcode locally so the user is never asked to describe it twice. */
-  function rememberBarcode(code: string, name: string, quantity?: string | null) {
+  function rememberBarcode(
+    code: string,
+    name: string,
+    quantity?: string | null,
+    shelfLifeDays?: number | null,
+  ) {
     const category = categoryForName(name);
     learnProduct(
       {
@@ -117,13 +122,17 @@ function ScannerPage() {
         category,
         unit: settings?.default_unit ?? "pcs",
         storage: storageForCategory(category, name) as StorageType,
-        shelfLifeDays: shelfDaysForCategory(category, name),
+        shelfLifeDays:
+          shelfLifeDays && shelfLifeDays > 0
+            ? Math.round(shelfLifeDays)
+            : shelfDaysForCategory(category, name),
         savedAt: new Date().toISOString(),
       },
       user?.id,
     );
     void quantity;
   }
+
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
@@ -209,7 +218,7 @@ function ScannerPage() {
         // Already described by this user and waiting on approval — don't ask again.
         const pending = await findMyPendingProduct(code, user?.id);
         if (pending) {
-          rememberBarcode(code, pending.name);
+          rememberBarcode(code, pending.name, pending.quantity, pending.shelfLifeDays);
           setPendingMethod("barcode");
           setConfirming(
             buildCandidate({
@@ -217,8 +226,11 @@ function ScannerPage() {
               packageSize: pending.quantity,
               packaged: true,
               source: "barcode",
+              shelfLifeDays: pending.shelfLifeDays ?? undefined,
+              exactShelf: Boolean(pending.shelfLifeDays),
             }),
           );
+
           toast.success(`${pending.name} — saved from your earlier scan`);
           return;
         }
@@ -717,7 +729,8 @@ function ScannerPage() {
         onDone={(info) => {
           setLearnBarcode(null);
           if (!info?.name) return;
-          if (learnBarcode) rememberBarcode(learnBarcode, info.name, info.quantity);
+          if (learnBarcode)
+            rememberBarcode(learnBarcode, info.name, info.quantity, info.shelfLifeDays);
           setPendingMethod("barcode");
           setConfirming(
             buildCandidate({
@@ -725,8 +738,11 @@ function ScannerPage() {
               packageSize: info.quantity || null,
               packaged: true,
               source: "barcode",
+              shelfLifeDays: info.shelfLifeDays || undefined,
+              exactShelf: info.shelfLifeDays > 0,
             }),
           );
+
           toast.info("Now add it to your own pantry.");
         }}
       />

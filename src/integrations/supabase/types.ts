@@ -202,6 +202,7 @@ export type Database = {
           quantity: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shelf_life_days: number | null
           status: string
           submitted_by: string | null
           updated_at: string
@@ -216,6 +217,7 @@ export type Database = {
           quantity?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shelf_life_days?: number | null
           status?: string
           submitted_by?: string | null
           updated_at?: string
@@ -230,6 +232,7 @@ export type Database = {
           quantity?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shelf_life_days?: number | null
           status?: string
           submitted_by?: string | null
           updated_at?: string
