@@ -17,6 +17,7 @@ export async function submitPendingProduct(input: {
   quantity: string;
   imageUrl?: string | null;
   userId?: string | null;
+  shelfLifeDays?: number | null;
 }): Promise<PendingSubmitResult> {
   const barcode = input.barcode.replace(/\D/g, "");
   if (!barcode) return { status: "error", message: "That barcode looks invalid." };
@@ -35,7 +36,10 @@ export async function submitPendingProduct(input: {
     quantity: input.quantity.trim() || null,
     image_url: input.imageUrl ?? null,
     submitted_by: input.userId ?? null,
+    shelf_life_days:
+      input.shelfLifeDays && input.shelfLifeDays > 0 ? Math.round(input.shelfLifeDays) : null,
   });
+
 
   if (error) {
     // Unique index on pending barcodes — someone submitted it a moment ago.
