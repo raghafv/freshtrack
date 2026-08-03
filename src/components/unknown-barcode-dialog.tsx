@@ -123,10 +123,44 @@ export function UnknownBarcodeDialog({
             />
           </div>
 
-          <Button type="submit" className="w-full rounded-2xl" disabled={saving || !name.trim()}>
+          <div className="space-y-1.5">
+            <Label>Time to expire (from the pack)</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: "yrs", label: "Years", value: years, set: setYears, max: 20 },
+                { id: "mos", label: "Months", value: months, set: setMonths, max: 11 },
+                { id: "dys", label: "Days", value: days, set: setDays, max: 365 },
+              ].map((f) => (
+                <div key={f.id} className="space-y-1">
+                  <Input
+                    id={`pending-${f.id}`}
+                    inputMode="numeric"
+                    type="number"
+                    min={0}
+                    max={f.max}
+                    value={f.value}
+                    onChange={(e) => f.set(e.target.value.replace(/\D/g, ""))}
+                    placeholder="0"
+                    className="rounded-2xl text-center"
+                  />
+                  <p className="text-center text-[11px] text-muted-foreground">
+                    {f.label}
+                    {f.id === "dys" ? " *" : ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Years and months are optional — days is required. Read it off the pack&apos;s
+              &quot;best before&quot; instead of letting us guess.
+            </p>
+          </div>
+
+          <Button type="submit" className="w-full rounded-2xl" disabled={saving || !canSubmit}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Submit for review
           </Button>
+
         </form>
       </DialogContent>
     </Dialog>
