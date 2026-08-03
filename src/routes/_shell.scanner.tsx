@@ -107,7 +107,12 @@ function ScannerPage() {
   const [addingAll, setAddingAll] = useState(false);
 
   /** Remembers a barcode locally so the user is never asked to describe it twice. */
-  function rememberBarcode(code: string, name: string, quantity?: string | null) {
+  function rememberBarcode(
+    code: string,
+    name: string,
+    quantity?: string | null,
+    shelfLifeDays?: number | null,
+  ) {
     const category = categoryForName(name);
     learnProduct(
       {
@@ -117,13 +122,17 @@ function ScannerPage() {
         category,
         unit: settings?.default_unit ?? "pcs",
         storage: storageForCategory(category, name) as StorageType,
-        shelfLifeDays: shelfDaysForCategory(category, name),
+        shelfLifeDays:
+          shelfLifeDays && shelfLifeDays > 0
+            ? Math.round(shelfLifeDays)
+            : shelfDaysForCategory(category, name),
         savedAt: new Date().toISOString(),
       },
       user?.id,
     );
     void quantity;
   }
+
 
   function openManual(reason?: string) {
     if (reason) toast.info(reason);
