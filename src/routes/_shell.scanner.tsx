@@ -218,7 +218,7 @@ function ScannerPage() {
         // Already described by this user and waiting on approval — don't ask again.
         const pending = await findMyPendingProduct(code, user?.id);
         if (pending) {
-          rememberBarcode(code, pending.name);
+          rememberBarcode(code, pending.name, pending.quantity, pending.shelfLifeDays);
           setPendingMethod("barcode");
           setConfirming(
             buildCandidate({
@@ -226,8 +226,11 @@ function ScannerPage() {
               packageSize: pending.quantity,
               packaged: true,
               source: "barcode",
+              shelfLifeDays: pending.shelfLifeDays ?? undefined,
+              exactShelf: Boolean(pending.shelfLifeDays),
             }),
           );
+
           toast.success(`${pending.name} — saved from your earlier scan`);
           return;
         }
