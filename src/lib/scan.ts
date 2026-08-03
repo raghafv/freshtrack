@@ -86,8 +86,11 @@ export function buildCandidate(input: {
   freshness?: number | null;
   packaged?: boolean;
   note?: string | null;
+  /** The shelf life was given by a human — never override it with catalog data. */
+  exactShelf?: boolean;
 }): ScanCandidate {
-  const match = findProduct(input.name);
+  const match = input.exactShelf ? null : findProduct(input.name);
+
   if (match) {
     return candidateFromProduct(match, {
       name: match.name,
