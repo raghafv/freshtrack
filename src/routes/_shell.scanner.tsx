@@ -729,7 +729,8 @@ function ScannerPage() {
         onDone={(info) => {
           setLearnBarcode(null);
           if (!info?.name) return;
-          if (learnBarcode) rememberBarcode(learnBarcode, info.name, info.quantity);
+          if (learnBarcode)
+            rememberBarcode(learnBarcode, info.name, info.quantity, info.shelfLifeDays);
           setPendingMethod("barcode");
           setConfirming(
             buildCandidate({
@@ -737,8 +738,11 @@ function ScannerPage() {
               packageSize: info.quantity || null,
               packaged: true,
               source: "barcode",
+              shelfLifeDays: info.shelfLifeDays || undefined,
+              exactShelf: info.shelfLifeDays > 0,
             }),
           );
+
           toast.info("Now add it to your own pantry.");
         }}
       />
