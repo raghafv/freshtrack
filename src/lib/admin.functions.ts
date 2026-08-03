@@ -368,8 +368,14 @@ export const approvePendingProduct = createServerFn({ method: "POST" })
     const category = data.category?.trim() || categoryForName(name);
     const brand = data.brand?.trim() || brandForName(name);
     const storage = data.storage?.trim() || storageForCategory(category, name);
+    const submittedShelf = (row as { shelf_life_days?: number | null }).shelf_life_days ?? null;
     const shelf =
-      data.shelfLifeDays && data.shelfLifeDays > 0 ? data.shelfLifeDays : shelfDaysForCategory(category, name);
+      data.shelfLifeDays && data.shelfLifeDays > 0
+        ? data.shelfLifeDays
+        : submittedShelf && submittedShelf > 0
+          ? submittedShelf
+          : shelfDaysForCategory(category, name);
+
 
     const { data: existing } = await supabaseAdmin
       .from("products")
