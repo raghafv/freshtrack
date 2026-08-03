@@ -70,7 +70,7 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
@@ -78,14 +78,39 @@ function AuthPage() {
             data: { full_name: name.trim() || email.split("@")[0] },
           },
         });
-        if (error) throw error;
+        if (error) {
+          if (/already registered|already exists|user_already_exists/i.test(error.message)) {
+            toast.error("An account with this email already exists — sign in instead.");
+            return;
+          }
+          throw error;
+        }
+        // Supabase hides duplicates by returning a user with no identities.
+        if (data.user && (data.user.identities?.length ?? 0) === 0) {
+          toast.error("An account with this email already exists — sign in instead.");
+          return;
+        }
+        if (!data.session) {
+          toast.success("Account created — sign in with your email and password.");
+          return;
+        }
         toast.success("Account created. You're all set!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
-        if (error) throw error;
+        if (error) {
+          if (/invalid login credentials/i.test(error.message)) {
+            toast.error("That email and password don't match an account. Check both and retry.");
+            return;
+          }
+          if (/email not confirmed/i.test(error.message)) {
+            toast.error("Please confirm your email from the link we sent, then sign in.");
+            return;
+          }
+          throw error;
+        }
       }
       navigate({ to: "/", replace: true });
     } catch (e) {
@@ -94,6 +119,7 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10">
