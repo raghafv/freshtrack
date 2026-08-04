@@ -68,6 +68,26 @@ const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 /**
+ * Photo for an item, but ONLY when we are confident it matches:
+ * a real scanned product image, or a specific keyword match on the name.
+ * Returns null when we'd otherwise show a misleading generic category photo —
+ * callers should render an emoji instead (see <FoodThumb />).
+ */
+export function foodPhoto(
+  name?: string | null,
+  _category?: string | null,
+  imageUrl?: string | null,
+): string | null {
+  if (imageUrl) return imageUrl;
+  const n = (name ?? "").toLowerCase();
+  if (!n) return null;
+  for (const [keys, src] of NAME_MATCHES) {
+    if (keys.some((k) => n.includes(k))) return src;
+  }
+  return null;
+}
+
+/**
  * Resolve the best thumbnail for a pantry/shopping/recipe item.
  * A real product photo from a scanned barcode always wins.
  */
@@ -76,14 +96,8 @@ export function foodImage(
   category?: string | null,
   imageUrl?: string | null,
 ): string {
-  if (imageUrl) return imageUrl;
-  const n = (name ?? "").toLowerCase();
-  if (n) {
-    for (const [keys, src] of NAME_MATCHES) {
-      if (keys.some((k) => n.includes(k))) return src;
-    }
-  }
-  return CATEGORY_IMAGES[category ?? ""] ?? other;
+  return foodPhoto(name, category, imageUrl) ?? CATEGORY_IMAGES[category ?? ""] ?? other;
 }
 
 export const FALLBACK_FOOD_IMAGE = other;
+
