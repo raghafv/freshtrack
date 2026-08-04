@@ -31,7 +31,7 @@ import {
 } from "@/lib/data";
 import { computeStats, expiryText, formatCurrency, formatQty, getStatus } from "@/lib/freshtrack";
 import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
-import { foodImage } from "@/lib/food-image";
+import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
 
 
