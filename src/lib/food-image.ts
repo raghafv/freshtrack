@@ -26,30 +26,29 @@ import other from "@/assets/food/other.jpg";
  * Presentation-only: nothing here touches data or business logic.
  */
 
-/** Keyword → photo. First match on the item name wins. */
+/**
+ * Keyword → photo. First match on the item name wins.
+ * Only exact, unambiguous matches live here: a generic "fruits" photo of apples
+ * shown for dates or mangoes is worse than no photo, so everything else falls
+ * back to an emoji (see <FoodThumb />).
+ */
 const NAME_MATCHES: Array<[string[], string]> = [
-  [["milk", "doodh", "cream", "lassi", "buttermilk"], milk],
+  [["milk", "doodh"], milk],
   [["egg", "anda"], eggs],
-  [["yogurt", "yoghurt", "curd", "dahi", "shrikhand"], yogurt],
-  [["cheese", "butter", "ghee", "mozzarella", "amul"], cheese],
-  [["paneer", "tofu"], paneer],
-  [["tomato", "tamatar", "ketchup"], tomato],
-  [["onion", "pyaz", "garlic", "shallot"], onion],
-  [["potato", "aloo", "yam", "sweet potato"], potato],
-  [["spinach", "palak", "lettuce", "kale", "methi", "coriander", "herb", "leaf"], spinach],
+  [["yogurt", "yoghurt", "curd", "dahi"], yogurt],
+  [["cheese", "mozzarella"], cheese],
+  [["paneer"], paneer],
+  [["tomato", "tamatar"], tomato],
+  [["onion", "pyaz"], onion],
+  [["potato", "aloo"], potato],
+  [["spinach", "palak"], spinach],
   [["banana", "kela"], banana],
-  [["apple", "mango", "orange", "grape", "berry", "papaya", "pear", "melon", "fruit"], fruits],
-  [["carrot", "broccoli", "pepper", "cabbage", "cauliflower", "cucumber", "peas", "beans", "brinjal", "gourd", "vegetable"], vegetables],
-  [["rice", "atta", "flour", "dal", "lentil", "pasta", "noodle", "maggi", "oats", "quinoa", "poha", "suji", "grain", "cereal"], grains],
-  [["bread", "bun", "pav", "roti", "cake", "croissant", "biscuit bread", "bakery"], bakery],
-  [["chicken", "mutton", "lamb", "beef", "pork", "sausage", "meat", "keema"], meat],
-  [["fish", "prawn", "shrimp", "seafood", "salmon", "tuna"], fish],
-  [["frozen", "ice cream", "kulfi"], frozen],
-  [["juice", "water", "soda", "cola", "tea", "coffee", "drink", "beverage", "shake"], beverages],
-  [["chips", "namkeen", "biscuit", "cookie", "chocolate", "snack", "nuts", "almond", "cashew", "wafer"], snacks],
-  [["oil", "sauce", "mayo", "jam", "honey", "vinegar", "pickle", "achar", "spread", "chutney"], condiments],
-  [["masala", "spice", "turmeric", "haldi", "chilli", "cumin", "jeera", "salt", "pepper powder"], spices],
+  [["apple"], fruits],
+  [["bread"], bakery],
+  [["chicken"], meat],
+  [["fish"], fish],
 ];
+
 
 const CATEGORY_IMAGES: Record<string, string> = {
   Dairy: milk,
@@ -68,6 +67,26 @@ const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 /**
+ * Photo for an item, but ONLY when we are confident it matches:
+ * a real scanned product image, or a specific keyword match on the name.
+ * Returns null when we'd otherwise show a misleading generic category photo —
+ * callers should render an emoji instead (see <FoodThumb />).
+ */
+export function foodPhoto(
+  name?: string | null,
+  _category?: string | null,
+  imageUrl?: string | null,
+): string | null {
+  if (imageUrl) return imageUrl;
+  const n = (name ?? "").toLowerCase();
+  if (!n) return null;
+  for (const [keys, src] of NAME_MATCHES) {
+    if (keys.some((k) => n.includes(k))) return src;
+  }
+  return null;
+}
+
+/**
  * Resolve the best thumbnail for a pantry/shopping/recipe item.
  * A real product photo from a scanned barcode always wins.
  */
@@ -76,14 +95,8 @@ export function foodImage(
   category?: string | null,
   imageUrl?: string | null,
 ): string {
-  if (imageUrl) return imageUrl;
-  const n = (name ?? "").toLowerCase();
-  if (n) {
-    for (const [keys, src] of NAME_MATCHES) {
-      if (keys.some((k) => n.includes(k))) return src;
-    }
-  }
-  return CATEGORY_IMAGES[category ?? ""] ?? other;
+  return foodPhoto(name, category, imageUrl) ?? CATEGORY_IMAGES[category ?? ""] ?? other;
 }
 
 export const FALLBACK_FOOD_IMAGE = other;
+

@@ -1,7 +1,7 @@
 import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Leaf, Loader2, Mail } from "lucide-react";
+import { Eye, EyeOff, Leaf, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,43 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  autoComplete,
+  placeholder,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete: string;
+  placeholder?: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="pr-11"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        aria-label={show ? "Hide password" : "Show password"}
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
@@ -38,6 +75,7 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/", replace: true });
@@ -59,6 +97,25 @@ function AuthPage() {
       toast.error("Google sign-in unavailable — use email and password below.");
     } finally {
       setGoogleBusy(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      toast.error("Enter your email above first, then tap “Forgot password”.");
+      return;
+    }
+    setResetBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Reset link sent — check your inbox (and spam).");
+    } catch (e) {
+      toast.error(friendlyMessage(e, "Could not send the reset email"));
+    } finally {
+      setResetBusy(false);
     }
   }
 
@@ -91,7 +148,7 @@ function AuthPage() {
           return;
         }
         if (!data.session) {
-          toast.success("Account created — sign in with your email and password.");
+          toast.success("Check your inbox — we sent a link to verify your email.");
           return;
         }
         toast.success("Account created. You're all set!");
@@ -119,7 +176,6 @@ function AuthPage() {
       setBusy(false);
     }
   }
-
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10">
@@ -181,12 +237,11 @@ function AuthPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="si-pass">Password</Label>
-                <Input
+                <PasswordInput
                   id="si-pass"
-                  type="password"
                   autoComplete="current-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={setPassword}
                   placeholder="••••••••"
                 />
               </div>
@@ -198,6 +253,14 @@ function AuthPage() {
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 Sign in
               </Button>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetBusy}
+                className="mx-auto mt-1 text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground disabled:opacity-50"
+              >
+                {resetBusy ? "Sending reset link…" : "Forgot password?"}
+              </button>
             </TabsContent>
 
             <TabsContent value="signup" className="mt-4 grid gap-3">
@@ -224,12 +287,11 @@ function AuthPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="su-pass">Password</Label>
-                <Input
+                <PasswordInput
                   id="su-pass"
-                  type="password"
                   autoComplete="new-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={setPassword}
                   placeholder="At least 6 characters"
                 />
               </div>
@@ -241,6 +303,9 @@ function AuthPage() {
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 Create account
               </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                We'll email you a verification link to confirm your address.
+              </p>
             </TabsContent>
           </Tabs>
         </div>

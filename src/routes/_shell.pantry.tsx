@@ -37,7 +37,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { useAdjustQuantity, useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
-import { foodImage } from "@/lib/food-image";
+import { FoodThumb } from "@/components/food-thumb";
 import { friendlyMessage } from "@/lib/errors";
 import { smartFilter } from "@/lib/pantry-search";
 import { stepForUnit } from "@/lib/grocery-catalog";
@@ -335,14 +335,13 @@ function PantryPage() {
                   </button>
                 )}
 
-                <img
-                  src={foodImage(item.name, item.category, item.image_url)}
-                  alt={item.name}
-                  loading="lazy"
-                  width={512}
-                  height={512}
-                  className="h-16 w-16 shrink-0 rounded-2xl bg-muted object-cover"
+                <FoodThumb
+                  name={item.name}
+                  category={item.category}
+                  imageUrl={item.image_url}
+                  className="h-16 w-16"
                 />
+
 
 
                 <div className="min-w-0 flex-1">
