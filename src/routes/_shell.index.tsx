@@ -176,14 +176,14 @@ function Dashboard() {
           <ul className="space-y-3">
             {alerts.map((item) => (
               <li key={item.id} className="flex items-center gap-3">
-                <img
-                  src={foodImage(item.name, item.category, item.image_url)}
-                  alt={item.name}
-                  loading="lazy"
-                  width={512}
-                  height={512}
-                  className="h-12 w-12 shrink-0 rounded-2xl bg-muted object-cover"
+                <FoodThumb
+                  name={item.name}
+                  category={item.category}
+                  imageUrl={item.image_url}
+                  className="h-12 w-12"
+                  emojiClassName="text-xl"
                 />
+
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-muted-foreground">

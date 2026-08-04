@@ -335,14 +335,13 @@ function PantryPage() {
                   </button>
                 )}
 
-                <img
-                  src={foodImage(item.name, item.category, item.image_url)}
-                  alt={item.name}
-                  loading="lazy"
-                  width={512}
-                  height={512}
-                  className="h-16 w-16 shrink-0 rounded-2xl bg-muted object-cover"
+                <FoodThumb
+                  name={item.name}
+                  category={item.category}
+                  imageUrl={item.image_url}
+                  className="h-16 w-16"
                 />
+
 
 
                 <div className="min-w-0 flex-1">
