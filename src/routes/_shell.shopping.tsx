@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Check, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
+import { FoodThumb } from "@/components/food-thumb";
 import { useShoppingItems, useShoppingMutations } from "@/lib/data";
 import { CATEGORIES, UNITS, formatQty, guessCategory, type ShoppingItem } from "@/lib/freshtrack";
 import { cn } from "@/lib/utils";
