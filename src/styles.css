@@ -204,11 +204,32 @@
   box-shadow: var(--shadow-lift);
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility add-fab {
+  background: var(--gradient-hero);
+  box-shadow:
+    0 8px 24px color-mix(in oklch, var(--color-primary) 32%, transparent),
+    0 0 0 6px color-mix(in oklch, var(--color-primary) 8%, transparent);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
 @utility press {
   transition:
-    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 0.22s ease,
-    background-color 0.22s ease;
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.28s ease,
+    background-color 0.28s ease;
   &:active {
     transform: scale(0.96);
   }
