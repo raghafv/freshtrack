@@ -18,7 +18,7 @@ import {
   usePantryItems,
   useProfile,
   useSavedRecipes,
-  useScanHistory,
+  
   useSettings,
   useShoppingItems,
   useShoppingMutations,
