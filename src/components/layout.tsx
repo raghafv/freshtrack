@@ -6,10 +6,13 @@ import { cn } from "@/lib/utils";
 
 const LEFT = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/recipes", label: "Recipes", icon: ChefHat },
+  { to: "/pantry", label: "Pantry", icon: Refrigerator },
 ] as const;
 
-const RIGHT = [{ to: "/assistant", label: "Assistant", icon: Sparkles }] as const;
+const RIGHT = [
+  { to: "/assistant", label: "Assistant", icon: Sparkles },
+  { to: "/recipes", label: "Recipes", icon: ChefHat },
+] as const;
 
 function NavLink({
   to,
