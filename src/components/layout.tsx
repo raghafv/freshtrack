@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, ChefHat, Home, Plus, Sparkles } from "lucide-react";
+import { Bell, ChefHat, Home, Plus, Refrigerator, Sparkles } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { AddSheet } from "@/components/add-sheet";
 import { cn } from "@/lib/utils";
