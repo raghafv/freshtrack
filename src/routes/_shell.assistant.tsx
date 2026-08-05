@@ -107,7 +107,7 @@ function AssistantPage() {
     <PageContainer>
       <AiTabs active="assistant" />
       <PageHeader
-        title="Ask FreshTrack"
+        title="Assistant"
         subtitle="This chat clears when you close FreshTrack — shopping list changes are saved, and recipes you save stay on the Recipes page."
         action={
           messages.length > 0 ? (

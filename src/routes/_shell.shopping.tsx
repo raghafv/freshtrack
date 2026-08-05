@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Check, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
+import { FoodThumb } from "@/components/food-thumb";
 import { useShoppingItems, useShoppingMutations } from "@/lib/data";
 import { CATEGORIES, UNITS, formatQty, guessCategory, type ShoppingItem } from "@/lib/freshtrack";
 import { cn } from "@/lib/utils";
@@ -172,45 +172,64 @@ function ShoppingPage() {
           description="Add the groceries you plan to buy. Automatic suggestions from your pantry are coming soon."
         />
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-8">
           {grouped.map(([cat, list]) => (
             <section key={cat}>
-              <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h2 className="mb-3.5 px-1 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {cat}
               </h2>
-              <ul className="space-y-2">
+              <ul className="flex flex-wrap gap-2.5">
                 {list.map((item) => (
-                  <li
-                    key={item.id}
-                    className="surface-card animate-pop flex items-center gap-3 px-4 py-3"
-                  >
-                    <Checkbox
-                      checked={item.checked}
-                      aria-label={`Mark ${item.name} as bought`}
-                      onCheckedChange={(v) => toggle.mutate({ id: item.id, checked: v === true })}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "truncate text-sm font-medium",
-                          item.checked && "text-muted-foreground line-through",
-                        )}
-                      >
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatQty(Number(item.quantity), item.unit)}
-                      </p>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Remove ${item.name}`}
-                      className="h-8 w-8 rounded-xl text-destructive"
-                      onClick={() => remove.mutate([item.id])}
+                  <li key={item.id} className="animate-pop">
+                    <div
+                      className={cn(
+                        "surface-card press flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-2",
+                        item.checked && "opacity-55",
+                      )}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <button
+                        type="button"
+                        aria-label={`Mark ${item.name} as bought`}
+                        aria-pressed={item.checked}
+                        onClick={() => toggle.mutate({ id: item.id, checked: !item.checked })}
+                        className="flex items-center gap-2.5"
+                      >
+                        <span className="relative">
+                          <FoodThumb
+                            name={item.name}
+                            category={item.category}
+                            className="h-9 w-9 rounded-full"
+                            emojiClassName="text-base"
+                          />
+                          {item.checked && (
+                            <span className="animate-pop absolute inset-0 flex items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <Check className="h-4 w-4" />
+                            </span>
+                          )}
+                        </span>
+                        <span className="pr-1 text-left">
+                          <span
+                            className={cn(
+                              "block text-[14px] font-medium leading-tight",
+                              item.checked && "line-through",
+                            )}
+                          >
+                            {item.name}
+                          </span>
+                          <span className="block text-[11.5px] text-muted-foreground">
+                            {formatQty(Number(item.quantity), item.unit)}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${item.name}`}
+                        onClick={() => remove.mutate([item.id])}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -218,6 +237,7 @@ function ShoppingPage() {
           ))}
         </div>
       )}
+
     </PageContainer>
   );
 }

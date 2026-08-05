@@ -199,12 +199,12 @@ export const suggestRecipes = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ recipes: PantryRecipe[] }> => {
     const supabase = context.supabase as unknown as SupabaseLike;
     const ctx = await loadPantryContext(supabase);
-    if (ctx.items.length === 0) return { recipes: [] };
-
     const chosen = data.mode === "selected" ? data.ingredients.filter(Boolean) : [];
+    if (ctx.items.length === 0 && chosen.length === 0) return { recipes: [] };
+
     const focus =
       chosen.length > 0
-        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Every recipe must centre on these ingredients.`
+        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Every recipe must centre on these ingredients, even if some are not currently in the pantry — mark those as missing.`
         : "\nSurprise the user with a varied mix of dishes.";
 
     const parsed = await generateAIResponse("recipes", [
