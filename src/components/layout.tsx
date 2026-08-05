@@ -1,49 +1,75 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, Home, Refrigerator, ScanLine, Sparkles } from "lucide-react";
-import type { ReactNode } from "react";
+import { Bell, ChefHat, Home, Plus, Sparkles } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { AddSheet } from "@/components/add-sheet";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+const LEFT = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/pantry", label: "Pantry", icon: Refrigerator },
-  { to: "/scanner", label: "Scan", icon: ScanLine },
-  { to: "/assistant", label: "AI", icon: Sparkles },
+  { to: "/recipes", label: "Recipes", icon: ChefHat },
 ] as const;
+
+const RIGHT = [{ to: "/assistant", label: "Assistant", icon: Sparkles }] as const;
+
+function NavLink({
+  to,
+  label,
+  icon: Icon,
+  pathname,
+}: {
+  to: string;
+  label: string;
+  icon: typeof Home;
+  pathname: string;
+}) {
+  const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+  return (
+    <Link
+      to={to}
+      aria-label={label}
+      className={cn(
+        "press flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-[10.5px] font-medium tracking-[-0.01em] transition-colors duration-300",
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.2 : 1.7} />
+      {label}
+    </Link>
+  );
+}
 
 export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <nav className="nav-surface fixed inset-x-0 bottom-0 z-40 safe-bottom">
-      <ul className="mx-auto flex max-w-2xl items-stretch justify-between px-1 py-1.5">
-        {NAV.map(({ to, label, icon: Icon }) => {
-          const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
-          return (
-            <li key={to} className="flex-1">
-              <Link
-                to={to}
-                aria-label={label}
-                className={cn(
-                  "press relative flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium tracking-tight transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex h-8 w-full max-w-12 items-center justify-center rounded-full transition-all duration-300",
-                    active ? "bg-primary-soft" : "bg-transparent",
-                  )}
-                >
-                  <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
-                </span>
+    <>
+      <nav className="nav-surface fixed inset-x-0 bottom-0 z-40 safe-bottom">
+        <div className="mx-auto flex max-w-2xl items-center gap-1 px-4 py-2.5">
+          {LEFT.map((n) => (
+            <NavLink key={n.to} {...n} pathname={pathname} />
+          ))}
 
-                {label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+          <div className="flex flex-1 justify-center">
+            <button
+              type="button"
+              aria-label="Add to pantry"
+              onClick={() => setAddOpen(true)}
+              className="add-fab press flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground"
+            >
+              <Plus className="h-6 w-6" strokeWidth={2.4} />
+            </button>
+          </div>
+
+          {RIGHT.map((n) => (
+            <NavLink key={n.to} {...n} pathname={pathname} />
+          ))}
+          <NavLink to="/pantry" label="Pantry" icon={Bell as typeof Home} pathname={pathname} />
+        </div>
+      </nav>
+
+      <AddSheet open={addOpen} onOpenChange={setAddOpen} />
+    </>
   );
 }
 
@@ -57,10 +83,12 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <header className="mb-5 flex items-start justify-between gap-3">
-      <div>
-        <h1 className="text-[26px] font-bold tracking-[-0.03em]">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+    <header className="mb-7 flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-[30px] font-bold leading-tight tracking-[-0.035em]">{title}</h1>
+        {subtitle && (
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">{subtitle}</p>
+        )}
       </div>
       {action}
     </header>
@@ -68,7 +96,9 @@ export function PageHeader({
 }
 
 export function PageContainer({ children }: { children: ReactNode }) {
-  return <div className="mx-auto w-full max-w-2xl animate-fade-up px-5 pb-32 pt-7">{children}</div>;
+  return (
+    <div className="mx-auto w-full max-w-2xl animate-fade-up px-6 pb-40 pt-9">{children}</div>
+  );
 }
 
 export function EmptyState({
@@ -83,12 +113,12 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="surface-card animate-pop flex flex-col items-center gap-3 px-6 py-14 text-center">
+    <div className="surface-card animate-pop flex flex-col items-center gap-3.5 px-7 py-16 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft text-primary">
-        <Icon className="h-7 w-7" />
+        <Icon className="h-7 w-7" strokeWidth={1.7} />
       </span>
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="max-w-xs text-sm text-muted-foreground">{description}</p>
+      <h3 className="text-[19px] font-semibold tracking-[-0.02em]">{title}</h3>
+      <p className="max-w-xs text-[13.5px] leading-relaxed text-muted-foreground">{description}</p>
       {action}
     </div>
   );
