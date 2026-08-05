@@ -116,7 +116,7 @@ function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
   const { data: fullActivity = [] } = useActivity(200);
   const { data: shopping = [] } = useShoppingItems();
-  const { data: scans = [] } = useScanHistory();
+  
   const { data: savedRecipes = [] } = useSavedRecipes(5);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
