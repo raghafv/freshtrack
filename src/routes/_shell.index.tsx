@@ -133,6 +133,10 @@ function Dashboard() {
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
   const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 2);
+  const recentlyAdded = fullActivity
+    .filter((a) => a.action === "added" && a.item_name)
+    .slice(0, 8)
+    .map((a) => ({ id: a.id, name: a.item_name as string }));
   const openShopping = shopping.filter((i) => !i.checked).slice(0, 8);
   const featured = savedRecipes[0];
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
