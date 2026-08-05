@@ -412,7 +412,7 @@ function ScannerPage() {
         subtitle="Point, scan, confirm — AI recognition, barcodes and receipts in one place."
       />
 
-      <Tabs defaultValue="camera">
+      <Tabs defaultValue={Route.useSearch().tab ?? "camera"}>
         <TabsList className="grid w-full grid-cols-4 rounded-2xl">
           <TabsTrigger value="camera" className="rounded-xl text-xs sm:text-sm">
             <Camera className="mr-1 h-4 w-4" /> Scan
