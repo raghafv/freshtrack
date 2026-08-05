@@ -309,27 +309,28 @@ function Dashboard() {
         )}
       </section>
 
-      {/* Recently scanned chips */}
-      {scans.length > 0 && (
+      {/* Recently added chips */}
+      {recentlyAdded.length > 0 && (
         <section className="animate-fade-up mb-10" style={{ animationDelay: "200ms" }}>
-          <SectionHeading title="Recently scanned" />
+          <SectionHeading title="Recently added" />
           <div className="-mx-6 flex gap-3 overflow-x-auto px-6 pb-1 no-scrollbar">
-            {scans.slice(0, 8).map((s) => (
+            {recentlyAdded.map((s) => (
               <div
                 key={s.id}
                 className="surface-card flex shrink-0 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4"
               >
                 <FoodThumb
-                  name={s.item_name}
+                  name={s.name}
                   className="h-8 w-8 rounded-full"
                   emojiClassName="text-base"
                 />
-                <span className="whitespace-nowrap text-[13px] font-medium">{s.item_name}</span>
+                <span className="whitespace-nowrap text-[13px] font-medium">{s.name}</span>
               </div>
             ))}
           </div>
         </section>
       )}
+
 
       {/* Quiet suggestions */}
       {suggestions.length > 0 && (
