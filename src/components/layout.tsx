@@ -67,7 +67,7 @@ export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
           {RIGHT.map((n) => (
             <NavLink key={n.to} {...n} pathname={pathname} />
           ))}
-          <NavLink to="/pantry" label="Pantry" icon={Bell as typeof Home} pathname={pathname} />
+          
         </div>
       </nav>
 
