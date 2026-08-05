@@ -15,7 +15,7 @@ export function AiTabs({ active }: { active: "assistant" | "recipes" }) {
           active === "assistant" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
         )}
       >
-        <Sparkles className="h-4 w-4" /> Chat
+        <Sparkles className="h-4 w-4" /> Assistant
       </Link>
       <Link
         to="/recipes"
