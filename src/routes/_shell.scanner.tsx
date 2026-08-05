@@ -56,6 +56,12 @@ import {
 } from "@/lib/vision.functions";
 
 export const Route = createFileRoute("/_shell/scanner")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab:
+      search.tab === "barcode" || search.tab === "receipt" || search.tab === "device"
+        ? (search.tab as "barcode" | "receipt" | "device")
+        : ("camera" as const),
+  }),
   head: () => ({
     meta: [
       { title: "Scanner — AI Camera, Barcode & Receipt Scan | FreshTrack" },
