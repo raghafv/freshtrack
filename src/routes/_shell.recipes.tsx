@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageContainer, PageHeader } from "@/components/layout";
-import { AiTabs } from "@/components/ai-tabs";
+import { RecipeTabs, type RecipeTab } from "@/components/recipe-tabs";
 import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
 import {
