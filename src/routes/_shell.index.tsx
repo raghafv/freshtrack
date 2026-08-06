@@ -109,14 +109,11 @@ function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
   const { data: fullActivity = [] } = useActivity(200);
   const { data: shopping = [] } = useShoppingItems();
-  
-  const { data: savedRecipes = [] } = useSavedRecipes(5);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
   const { toggle } = useShoppingMutations();
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
-  const stats = computeStats(items, soonDays);
   const insights = useMemo(
     () => generateInsights(items, fullActivity, soonDays),
     [items, fullActivity, soonDays],
@@ -126,12 +123,7 @@ function Dashboard() {
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
   const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 2);
-  const recentlyAdded = fullActivity
-    .filter((a) => a.action === "added" && a.item_name)
-    .slice(0, 8)
-    .map((a) => ({ id: a.id, name: a.item_name as string }));
   const openShopping = shopping.filter((i) => !i.checked).slice(0, 8);
-  const featured = savedRecipes[0];
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
   const now = new Date();
 
