@@ -158,31 +158,6 @@ function Dashboard() {
         {moodLine(attention.length, items.length, now)}
       </p>
 
-      {/* Freshness hero */}
-      <section
-        className="gradient-hero animate-fade-up mb-10 rounded-[2rem] px-7 py-8 text-primary-foreground shadow-lift"
-        style={{ animationDelay: "40ms" }}
-      >
-        <div className="flex items-center gap-7">
-          <FreshRing score={stats.healthScore} />
-          <div className="min-w-0">
-            <p className="text-[11.5px] font-medium uppercase tracking-[0.16em] opacity-70">
-              Fresh score
-            </p>
-            <p className="mt-1.5 text-[27px] font-bold leading-none tracking-[-0.03em]">
-              {scoreLabel(stats.healthScore)}
-            </p>
-            <p className="mt-2.5 text-[13.5px] leading-relaxed opacity-85">
-              {items.length === 0
-                ? "Add your first groceries to start tracking."
-                : attention.length === 0
-                  ? `All ${items.length} items are comfortably fresh.`
-                  : `${attention.length} item${attention.length === 1 ? "" : "s"} should be used soon.`}
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Needs attention — Wallet-style horizontal cards */}
       <section className="animate-fade-up mb-10" style={{ animationDelay: "80ms" }}>
         <SectionHeading
@@ -242,103 +217,15 @@ function Dashboard() {
         )}
       </section>
 
-      {/* Tonight's recommendation */}
+      {/* Tonight's recommendation — generated for you */}
       <section className="animate-fade-up mb-10" style={{ animationDelay: "120ms" }}>
         <SectionHeading title="Tonight's recommendation" href="/recipes" hrefLabel="Recipes" />
-        {featured ? (
-          <Link
-            to="/recipes"
-            className="surface-card press block overflow-hidden p-6 shadow-lift"
-          >
-            <p className="text-[11.5px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              From your saved recipes
-            </p>
-            <h3 className="mt-2 text-[22px] font-semibold leading-snug tracking-[-0.025em]">
-              {featured.title}
-            </h3>
-            {featured.uses.length > 0 && (
-              <ul className="mt-4 space-y-1.5">
-                {featured.uses.slice(0, 3).map((u) => (
-                  <li key={u} className="flex items-center gap-2 text-[13.5px] text-muted-foreground">
-                    <span className="text-primary">✓</span> {u}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <span className="press mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-[13.5px] font-semibold text-primary-foreground">
-              Cook <ArrowRight className="h-4 w-4" />
-            </span>
-          </Link>
-        ) : (
-          <Link to="/recipes" className="surface-card press flex items-center gap-4 p-6">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-              <ChefHat className="h-5 w-5" strokeWidth={1.8} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[15px] font-semibold">Let AI plan tonight's meal</span>
-              <span className="block text-[13px] text-muted-foreground">
-                Built from what you already own.
-              </span>
-            </span>
-          </Link>
-        )}
+        <TonightCard hasPantry={items.length > 0} />
       </section>
-
-      {/* Shopping chips */}
-      <section className="animate-fade-up mb-10" style={{ animationDelay: "160ms" }}>
-        <SectionHeading title="Shopping" href="/shopping" hrefLabel="View all" />
-        {openShopping.length === 0 ? (
-          <div className="surface-card px-7 py-8 text-center text-[13.5px] text-muted-foreground">
-            Nothing left to buy.
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2.5">
-            {openShopping.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => toggle.mutate({ id: s.id, checked: true })}
-                className="press surface-card flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4"
-              >
-                <FoodThumb
-                  name={s.name}
-                  category={s.category}
-                  className="h-8 w-8 rounded-full"
-                  emojiClassName="text-base"
-                />
-                <span className="text-[13.5px] font-medium">{s.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Recently added chips */}
-      {recentlyAdded.length > 0 && (
-        <section className="animate-fade-up mb-10" style={{ animationDelay: "200ms" }}>
-          <SectionHeading title="Recently added" />
-          <div className="-mx-6 flex gap-3 overflow-x-auto px-6 pb-1 no-scrollbar">
-            {recentlyAdded.map((s) => (
-              <div
-                key={s.id}
-                className="surface-card flex shrink-0 items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4"
-              >
-                <FoodThumb
-                  name={s.name}
-                  className="h-8 w-8 rounded-full"
-                  emojiClassName="text-base"
-                />
-                <span className="whitespace-nowrap text-[13px] font-medium">{s.name}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
 
       {/* Quiet suggestions */}
       {suggestions.length > 0 && (
-        <section className="animate-fade-up mb-10" style={{ animationDelay: "240ms" }}>
+        <section className="animate-fade-up mb-10" style={{ animationDelay: "160ms" }}>
           <SectionHeading title="Suggestions" />
           <div className="surface-card space-y-4 p-6">
             {suggestions.map((s) => (
@@ -368,13 +255,35 @@ function Dashboard() {
         </section>
       )}
 
-      {/* Quiet footer links */}
-      <section className="grid gap-3">
-        <QuietLink to="/pantry" icon={Clock3} label={`${stats.total} items tracked`} />
-        <QuietLink to="/scanner" icon={ScanLine} label="Open scanner" />
-        <QuietLink to="/shopping" icon={ShoppingCart} label="Shopping list" />
-        <QuietLink to="/analytics" icon={BarChart3} label="Full analytics" />
+      {/* Shopping chips */}
+      <section className="animate-fade-up mb-4" style={{ animationDelay: "200ms" }}>
+        <SectionHeading title="Shopping" href="/shopping" hrefLabel="View all" />
+        {openShopping.length === 0 ? (
+          <div className="surface-card px-7 py-8 text-center text-[13.5px] text-muted-foreground">
+            Nothing left to buy.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2.5">
+            {openShopping.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => toggle.mutate({ id: s.id, checked: true })}
+                className="press surface-card flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4"
+              >
+                <FoodThumb
+                  name={s.name}
+                  category={s.category}
+                  className="h-8 w-8 rounded-full"
+                  emojiClassName="text-base"
+                />
+                <span className="text-[13.5px] font-medium">{s.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
+
     </PageContainer>
   );
 }
