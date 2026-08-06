@@ -116,6 +116,7 @@ function RecipesPage() {
   const [chosen, setChosen] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [filter, setFilter] = useState("All");
+  const [tab, setTab] = useState<RecipeTab>("cook");
 
   const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
   const pantryNames = useMemo(() => new Set(items.map((i) => i.name.toLowerCase())), [items]);
