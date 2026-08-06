@@ -309,58 +309,110 @@ function SectionHeading({
   );
 }
 
-function FreshRing({ score }: { score: number }) {
-  const r = 34;
-  const c = 2 * Math.PI * r;
-  const offset = c - (Math.max(0, Math.min(100, score)) / 100) * c;
+/**
+ * Ready-made AI dinner idea, generated once per day from the live pantry and
+ * shown with a beautiful dish photo. Tap to reveal the full method.
+ */
+function TonightCard({ hasPantry }: { hasPantry: boolean }) {
+  const generate = useServerFn(suggestRecipes);
+  const [open, setOpen] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["tonight-recipe", today],
+    queryFn: () => generate({ data: { mode: "surprise", ingredients: [] } }),
+    enabled: hasPantry,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+  });
+
+  const recipe = data?.recipes?.[0];
+
+  if (!hasPantry) {
+    return (
+      <Link to="/recipes" className="surface-card press flex items-center gap-4 p-6">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+          <ChefHat className="h-5 w-5" strokeWidth={1.8} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[15px] font-semibold">Let AI plan tonight's meal</span>
+          <span className="block text-[13px] text-muted-foreground">
+            Add a few items and we'll cook something up.
+          </span>
+        </span>
+      </Link>
+    );
+  }
+
+  if (isLoading || !recipe) {
+    return (
+      <div className="surface-card h-56 animate-pulse overflow-hidden">
+        <div className="h-full w-full bg-muted/60" />
+      </div>
+    );
+  }
+
   return (
-    <div className="relative h-[86px] w-[86px] shrink-0">
-      <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
-        <circle
-          cx="40"
-          cy="40"
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="6"
-          className="opacity-20"
+    <article className="surface-card overflow-hidden shadow-lift">
+      <div className="relative">
+        <img
+          src={recipePhoto(recipe.title)}
+          alt={recipe.title}
+          loading="lazy"
+          width={1024}
+          height={768}
+          className="h-48 w-full object-cover"
         />
-        <circle
-          cx="40"
-          cy="40"
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.2,0.8,0.2,1)" }}
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[22px] font-bold tracking-[-0.03em]">
-        {score}
-      </span>
-    </div>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-6 pb-5 pt-12">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/70">
+            Made from your pantry
+          </p>
+          <h3 className="mt-1 text-[21px] font-semibold leading-snug tracking-[-0.025em] text-white">
+            {recipe.title}
+          </h3>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {recipe.description && (
+          <p className="text-[13.5px] leading-relaxed text-muted-foreground">
+            {recipe.description}
+          </p>
+        )}
+        <p className="mt-3 flex items-center gap-2 text-[12.5px] text-muted-foreground">
+          <Clock3 className="h-4 w-4" strokeWidth={1.8} /> {recipe.minutes} min
+          {recipe.uses.length > 0 && <span>· uses {recipe.uses.slice(0, 3).join(", ")}</span>}
+        </p>
+
+        {open && (
+          <ol className="mt-5 space-y-3">
+            {recipe.steps.map((s, i) => (
+              <li key={i} className="flex gap-3 text-[13.5px] leading-relaxed">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[12px] font-semibold text-primary">
+                  {i + 1}
+                </span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="press inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-[13.5px] font-semibold text-primary-foreground"
+          >
+            {open ? "Hide method" : "Cook this"} <ArrowRight className="h-4 w-4" />
+          </button>
+          <Link to="/recipes" className="text-[13px] font-medium text-primary">
+            More ideas
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }
 
-function QuietLink({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: typeof Clock3;
-  label: string;
-}) {
-  return (
-    <Link to={to} className="surface-card press flex items-center justify-between px-5 py-4">
-      <span className="flex items-center gap-3.5">
-        <Icon className="h-[18px] w-[18px] text-muted-foreground" strokeWidth={1.7} />
-        <span className="text-[14px] font-medium">{label}</span>
-      </span>
-      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-    </Link>
-  );
 }
