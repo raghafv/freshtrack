@@ -204,15 +204,15 @@ export const suggestRecipes = createServerFn({ method: "POST" })
 
     const focus =
       chosen.length > 0
-        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Every recipe must centre on these ingredients, even if some are not currently in the pantry — mark those as missing.`
-        : "\nSurprise the user with a varied mix of dishes.";
+        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. Centre it on these ingredients, even if some are not currently in the pantry — mark those as missing.`
+        : "\nSurprise the user with 4-5 varied dishes.";
 
     const parsed = await generateAIResponse("recipes", [
       { role: "system", content: pantrySystemPrompt(ctx) },
       { role: "user", content: recipeRequest + focus },
     ]);
 
-    const recipes = normalizeRecipes(parsed);
+    const recipes = normalizeRecipes(parsed).slice(0, chosen.length > 0 ? 1 : 5);
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
 
     // Recipes are not auto-saved — the user explicitly saves the ones they like.

@@ -36,6 +36,7 @@ import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
+import { AddSheet } from "@/components/add-sheet";
 import { useAdjustQuantity, useDeletePantryItems, usePantryItems, useSettings } from "@/lib/data";
 import { FoodThumb } from "@/components/food-thumb";
 import { friendlyMessage } from "@/lib/errors";
@@ -90,6 +91,7 @@ function PantryPage() {
   const [quickOpen, setQuickOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
 
   const soonDays = settings?.expiry_reminder_days ?? 3;
 
@@ -141,7 +143,7 @@ function PantryPage() {
             className="press rounded-2xl"
             onClick={() => {
               setEditing(null);
-              setQuickOpen(true);
+              setAddSheetOpen(true);
             }}
           >
             <Plus className="h-4 w-4" /> Add
@@ -436,6 +438,8 @@ function PantryPage() {
           })}
         </ul>
       )}
+
+      <AddSheet open={addSheetOpen} onOpenChange={setAddSheetOpen} />
 
       <QuickAddDialog
         open={quickOpen}

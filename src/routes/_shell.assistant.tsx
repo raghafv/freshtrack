@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PageContainer, PageHeader } from "@/components/layout";
-import { AiTabs } from "@/components/ai-tabs";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useAssistantMessages, useClearAssistant, type AssistantMessage } from "@/lib/data";
@@ -105,7 +104,6 @@ function AssistantPage() {
 
   return (
     <PageContainer>
-      <AiTabs active="assistant" />
       <PageHeader
         title="Assistant"
         subtitle="This chat clears when you close FreshTrack — shopping list changes are saved, and recipes you save stay on the Recipes page."

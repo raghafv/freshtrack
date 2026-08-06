@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageContainer, PageHeader } from "@/components/layout";
-import { AiTabs } from "@/components/ai-tabs";
+import { RecipeTabs, type RecipeTab } from "@/components/recipe-tabs";
 import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
 import {
@@ -116,6 +116,7 @@ function RecipesPage() {
   const [chosen, setChosen] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [filter, setFilter] = useState("All");
+  const [tab, setTab] = useState<RecipeTab>("cook");
 
   const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
   const pantryNames = useMemo(() => new Set(items.map((i) => i.name.toLowerCase())), [items]);
@@ -146,12 +147,16 @@ function RecipesPage() {
 
   return (
     <PageContainer>
-      <AiTabs active="recipes" />
+      <RecipeTabs active={tab} onChange={setTab} />
       <PageHeader
-        title="Recipes"
-        subtitle="Type anything you feel like cooking with — FreshTrack writes the full recipe and keeps the ones you save."
+        title={tab === "cook" ? "Cook" : "Saved recipes"}
+        subtitle={
+          tab === "cook"
+            ? "Pick your ingredients for one deeply detailed recipe, or hit Surprise me for a spread of ideas."
+            : "Everything you saved, kept forever."
+        }
         action={
-          saved.length > 0 ? (
+          tab === "saved" && saved.length > 0 ? (
             <Button
               variant="ghost"
               size="sm"
@@ -165,6 +170,8 @@ function RecipesPage() {
         }
       />
 
+      {tab === "cook" && (
+       <>
       {/* Ingredient composer */}
       <section className="surface-card animate-fade-up mb-9 p-6">
         <h2 className="text-[17px] font-semibold tracking-[-0.02em]">What are we cooking with?</h2>
@@ -359,10 +366,29 @@ function RecipesPage() {
         </section>
       )}
 
-      {/* Saved recipe book */}
-      <section>
-        <h2 className="mb-4 text-[19px] font-semibold tracking-[-0.025em]">Saved recipes</h2>
+      <div className="surface-card mt-9 flex items-start gap-3.5 p-5">
+        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+          Recipes prioritise the ingredients closest to expiry. Missing something? Ask the assistant
+          to add it to your shopping list.
+        </p>
+      </div>
 
+      {items.length === 0 && recipes.length === 0 && (
+        <div className="mt-6 text-center">
+          <Button asChild variant="secondary" className="rounded-2xl">
+            <Link to="/pantry">
+              <ChefHat className="h-4 w-4" /> Go to my pantry
+            </Link>
+          </Button>
+        </div>
+      )}
+       </>
+      )}
+
+      {/* Saved recipe book */}
+      {tab === "saved" && (
+      <section>
         {saved.length > 0 && (
           <div className="-mx-6 mb-5 flex gap-2 overflow-x-auto px-6 pb-1 no-scrollbar">
             {MEAL_FILTERS.map((f) => (
@@ -383,7 +409,7 @@ function RecipesPage() {
 
         {saved.length === 0 ? (
           <div className="surface-card px-7 py-12 text-center text-[13.5px] leading-relaxed text-muted-foreground">
-            Nothing saved yet. Generate a recipe above and tap Save — it stays here permanently.
+            Nothing saved yet. Generate a recipe in Cook and tap Save — it stays here permanently.
           </div>
         ) : filteredSaved.length === 0 ? (
           <div className="surface-card px-7 py-10 text-center text-[13.5px] text-muted-foreground">
@@ -403,23 +429,6 @@ function RecipesPage() {
           </ul>
         )}
       </section>
-
-      <div className="surface-card mt-9 flex items-start gap-3.5 p-5">
-        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          Recipes prioritise the ingredients closest to expiry. Missing something? Ask the assistant
-          to add it to your shopping list.
-        </p>
-      </div>
-
-      {items.length === 0 && saved.length === 0 && recipes.length === 0 && (
-        <div className="mt-6 text-center">
-          <Button asChild variant="secondary" className="rounded-2xl">
-            <Link to="/pantry">
-              <ChefHat className="h-4 w-4" /> Go to my pantry
-            </Link>
-          </Button>
-        </div>
       )}
     </PageContainer>
   );

@@ -88,7 +88,16 @@ function ProfilePage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Profile" />
+      <PageHeader
+        title="Profile"
+        action={
+          <Button asChild variant="secondary" className="press rounded-2xl">
+            <Link to="/analytics">
+              <BarChart3 className="h-4 w-4" /> Full analytics
+            </Link>
+          </Button>
+        }
+      />
 
       <section className="surface-card mb-5 flex items-center gap-4 p-5">
         {profile?.avatar_url ? (
@@ -145,18 +154,6 @@ function ProfilePage() {
       </section>
 
 
-      <Link
-        to="/analytics"
-        className="surface-card press mb-3 flex items-center justify-between p-4"
-      >
-        <span className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-            <BarChart3 className="h-5 w-5" />
-          </span>
-          <span className="text-sm font-semibold">Analytics</span>
-        </span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </Link>
 
       <Link
         to="/settings"
