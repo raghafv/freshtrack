@@ -147,12 +147,16 @@ function RecipesPage() {
 
   return (
     <PageContainer>
-      <AiTabs active="recipes" />
+      <RecipeTabs active={tab} onChange={setTab} />
       <PageHeader
-        title="Recipes"
-        subtitle="Type anything you feel like cooking with — FreshTrack writes the full recipe and keeps the ones you save."
+        title={tab === "cook" ? "Cook" : "Saved recipes"}
+        subtitle={
+          tab === "cook"
+            ? "Pick your ingredients for one deeply detailed recipe, or hit Surprise me for a spread of ideas."
+            : "Everything you saved, kept forever."
+        }
         action={
-          saved.length > 0 ? (
+          tab === "saved" && saved.length > 0 ? (
             <Button
               variant="ghost"
               size="sm"
@@ -166,6 +170,8 @@ function RecipesPage() {
         }
       />
 
+      {tab === "cook" && (
+       <>
       {/* Ingredient composer */}
       <section className="surface-card animate-fade-up mb-9 p-6">
         <h2 className="text-[17px] font-semibold tracking-[-0.02em]">What are we cooking with?</h2>
