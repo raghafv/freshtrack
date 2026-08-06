@@ -362,7 +362,7 @@ export function generateInsights(
     insights.push({
       id: "consume-first",
       kind: "consume-first",
-      title: `Eat ${expiring[0].name} first`,
+      title: `Finish ${expiring[0].name} first`,
       detail: `It has the least life left of everything you own — plan today's meal around it.`,
       tone: "info",
     });
