@@ -1,15 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  BarChart3,
-  ChefHat,
-  Clock3,
-  Lightbulb,
-  ScanLine,
-  ShoppingCart,
-  Sparkles,
-} from "lucide-react";
-import { useMemo } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
 import { AppBar } from "@/components/app-bar";
@@ -17,13 +10,13 @@ import {
   useActivity,
   usePantryItems,
   useProfile,
-  useSavedRecipes,
-  
   useSettings,
   useShoppingItems,
   useShoppingMutations,
 } from "@/lib/data";
-import { computeStats, daysUntil, getStatus } from "@/lib/freshtrack";
+import { suggestRecipes } from "@/lib/ai.functions";
+import { recipePhoto } from "@/lib/recipe-image";
+import { daysUntil, getStatus } from "@/lib/freshtrack";
 import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
@@ -413,6 +406,4 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
       </div>
     </article>
   );
-}
-
 }
