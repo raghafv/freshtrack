@@ -439,6 +439,8 @@ function PantryPage() {
         </ul>
       )}
 
+      <AddSheet open={addSheetOpen} onOpenChange={setAddSheetOpen} />
+
       <QuickAddDialog
         open={quickOpen}
         onOpenChange={setQuickOpen}
