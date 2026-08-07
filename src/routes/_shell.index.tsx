@@ -218,38 +218,69 @@ function Dashboard() {
         </section>
       )}
 
-      {/* Shopping chips */}
+      {/* Shopping list — check items off without losing them */}
       <section className="animate-fade-up mb-4" style={{ animationDelay: "200ms" }}>
-        <SectionHeading title="Shopping" href="/shopping" hrefLabel="View all" />
-        {openShopping.length === 0 ? (
+        <SectionHeading title="Shopping list" href="/shopping" hrefLabel="View all" />
+        {shoppingPreview.length === 0 ? (
           <div className="surface-card px-7 py-8 text-center text-[13.5px] text-muted-foreground">
-            Nothing left to buy.
+            Nothing on your list yet.
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2.5">
-            {openShopping.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => toggle.mutate({ id: s.id, checked: true })}
-                className="press surface-card flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4"
-              >
-                <FoodThumb
-                  name={s.name}
-                  category={s.category}
-                  className="h-8 w-8 rounded-full"
-                  emojiClassName="text-base"
-                />
-                <span className="text-[13.5px] font-medium">{s.name}</span>
-              </button>
+          <ul className="surface-card divide-y divide-border/50 overflow-hidden">
+            {shoppingPreview.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => toggle.mutate({ id: s.id, checked: !s.checked })}
+                  aria-pressed={s.checked}
+                  className={cn(
+                    "press flex w-full items-center gap-3.5 px-5 py-3.5 text-left transition-opacity",
+                    s.checked && "opacity-45",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                      s.checked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border",
+                    )}
+                  >
+                    {s.checked && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                  </span>
+                  <FoodThumb
+                    name={s.name}
+                    category={s.category}
+                    className="h-9 w-9 rounded-full"
+                    emojiClassName="text-base"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        "block truncate text-[14.5px] font-medium",
+                        s.checked && "line-through",
+                      )}
+                    >
+                      {s.name}
+                    </span>
+                    <span className="block text-[12px] text-muted-foreground">{s.category}</span>
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </section>
 
+      <ItemDetailSheet
+        item={detail}
+        soonDays={soonDays}
+        onOpenChange={(o) => !o && setDetail(null)}
+      />
     </PageContainer>
   );
 }
+
 
 function SectionHeading({
   title,
