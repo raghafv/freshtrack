@@ -143,12 +143,13 @@ function Dashboard() {
         ) : (
           <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 no-scrollbar">
             {attention.slice(0, 8).map((item) => {
-              const days = daysUntil(item.expiry_date);
               const status = getStatus(item, soonDays);
               return (
-                <article
+                <button
                   key={item.id}
-                  className="surface-card w-[78%] max-w-[19rem] shrink-0 snap-center overflow-hidden p-5 shadow-lift"
+                  type="button"
+                  onClick={() => setDetail(item)}
+                  className="press surface-card w-[78%] max-w-[19rem] shrink-0 snap-center overflow-hidden p-5 text-left shadow-lift"
                 >
                   <FoodThumb
                     name={item.name}
@@ -171,15 +172,10 @@ function Dashboard() {
                   <h3 className="mt-1 truncate text-[19px] font-semibold tracking-[-0.02em]">
                     {item.name}
                   </h3>
-                  <Link
-                    to="/recipes"
-                    className="press mt-4 inline-flex text-[13.5px] font-semibold text-primary"
-                  >
-                    {suggestedAction(item.name, item.category, days)}
-                  </Link>
-                </article>
+                </button>
               );
             })}
+
           </div>
         )}
       </section>
