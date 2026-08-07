@@ -70,20 +70,12 @@ function moodLine(attention: number, total: number, now: Date) {
     ];
     return calm[now.getDate() % calm.length];
   }
-  if (attention === 1) return "Just one item needs you today.";
   const busy = [
-    `Only ${attention} items need attention today.`,
-    `${attention} items would love to be used soon.`,
+    "A few things would love to be used soon.",
     "Let's reduce food waste today.",
+    "Here's what to cook through first.",
   ];
   return busy[now.getDate() % busy.length];
-}
-
-function scoreLabel(score: number) {
-  if (score >= 85) return "Excellent";
-  if (score >= 70) return "Good";
-  if (score >= 50) return "Steady";
-  return "Needs care";
 }
 
 function countdown(iso: string) {
@@ -94,16 +86,6 @@ function countdown(iso: string) {
   return `${d} days left`;
 }
 
-/** Gentle, actionable next step for an at-risk item. */
-function suggestedAction(name: string, category: string | null, days: number) {
-  const n = name.toLowerCase();
-  if (days < 0) return "Review →";
-  if (/milk|cream|yog|curd|paneer/.test(n)) return "Use tonight →";
-  if (/spinach|lettuce|herb|coriander|greens|methi/.test(n)) return "Freeze →";
-  if (/berry|banana|mango|apple|fruit/.test(n) || category === "Fruits") return "Make smoothie →";
-  if (category === "Vegetables") return "Cook tonight →";
-  return "Use soon →";
-}
 
 function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
