@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowRight, Check, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
@@ -16,9 +16,10 @@ import {
 } from "@/lib/data";
 import { suggestRecipes } from "@/lib/ai.functions";
 import { recipePhoto } from "@/lib/recipe-image";
-import { daysUntil, getStatus } from "@/lib/freshtrack";
+import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
 import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
+import { ItemDetailSheet } from "@/components/item-detail-sheet";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/")({
@@ -105,7 +106,8 @@ function Dashboard() {
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
   const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 2);
-  const openShopping = shopping.filter((i) => !i.checked).slice(0, 8);
+  const shoppingPreview = shopping.slice(0, 6);
+  const [detail, setDetail] = useState<PantryItem | null>(null);
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
   const now = new Date();
 
