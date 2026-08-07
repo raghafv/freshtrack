@@ -397,15 +397,47 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
         <div className="mt-5 flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => {
+              setTonightRecipe(recipe);
+              navigate({ to: "/recipes" });
+            }}
             className="press inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-[13.5px] font-semibold text-primary-foreground"
           >
-            {open ? "Hide method" : "Cook this"} <ArrowRight className="h-4 w-4" />
+            Cook this <ArrowRight className="h-4 w-4" />
           </button>
-          <Link to="/recipes" className="text-[13px] font-medium text-primary">
-            More ideas
-          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="press rounded-full bg-secondary px-4 py-2.5 text-[13px] font-semibold"
+          >
+            {open ? "Hide method" : "Method"}
+          </button>
+          <button
+            type="button"
+            aria-label="Save recipe"
+            disabled={save.isPending}
+            onClick={() =>
+              save.mutate(
+                {
+                  title: recipe.title,
+                  minutes: recipe.minutes,
+                  uses: recipe.uses,
+                  missing: recipe.substitutions?.map((s) => s.missing).filter(Boolean) ?? [],
+                  steps: recipe.steps,
+                  mode: "surprise",
+                },
+                {
+                  onSuccess: () => toast.success("Saved to your recipe book"),
+                  onError: (e) => toast.error(friendlyMessage(e, "Could not save recipe")),
+                },
+              )
+            }
+            className="press ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-primary"
+          >
+            <Bookmark className="h-4 w-4" strokeWidth={2} />
+          </button>
         </div>
+
       </div>
     </article>
   );
