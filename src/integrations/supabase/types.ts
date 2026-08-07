@@ -193,6 +193,7 @@ export type Database = {
       }
       pending_products: {
         Row: {
+          back_image_url: string | null
           barcode: string
           created_at: string
           id: string
@@ -203,11 +204,13 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           shelf_life_days: number | null
+          standard_image_url: string | null
           status: string
           submitted_by: string | null
           updated_at: string
         }
         Insert: {
+          back_image_url?: string | null
           barcode: string
           created_at?: string
           id?: string
@@ -218,11 +221,13 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           shelf_life_days?: number | null
+          standard_image_url?: string | null
           status?: string
           submitted_by?: string | null
           updated_at?: string
         }
         Update: {
+          back_image_url?: string | null
           barcode?: string
           created_at?: string
           id?: string
@@ -233,6 +238,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           shelf_life_days?: number | null
+          standard_image_url?: string | null
           status?: string
           submitted_by?: string | null
           updated_at?: string
@@ -241,6 +247,7 @@ export type Database = {
       }
       products: {
         Row: {
+          back_image_url: string | null
           barcode: string
           brand: string | null
           category: string
@@ -252,10 +259,12 @@ export type Database = {
           shelf_life_days: number
           size: string | null
           source: string
+          standard_image_url: string | null
           storage: string
           updated_at: string
         }
         Insert: {
+          back_image_url?: string | null
           barcode: string
           brand?: string | null
           category?: string
@@ -267,10 +276,12 @@ export type Database = {
           shelf_life_days?: number
           size?: string | null
           source?: string
+          standard_image_url?: string | null
           storage?: string
           updated_at?: string
         }
         Update: {
+          back_image_url?: string | null
           barcode?: string
           brand?: string | null
           category?: string
@@ -282,6 +293,7 @@ export type Database = {
           shelf_life_days?: number
           size?: string | null
           source?: string
+          standard_image_url?: string | null
           storage?: string
           updated_at?: string
         }
@@ -483,6 +495,11 @@ export type Database = {
           default_unit: string
           expiry_reminder_days: number
           notifications_enabled: boolean
+          notify_added: boolean
+          notify_expiry: boolean
+          notify_merged: boolean
+          notify_shopping: boolean
+          notify_system: boolean
           theme: string
           updated_at: string
           user_id: string
@@ -493,6 +510,11 @@ export type Database = {
           default_unit?: string
           expiry_reminder_days?: number
           notifications_enabled?: boolean
+          notify_added?: boolean
+          notify_expiry?: boolean
+          notify_merged?: boolean
+          notify_shopping?: boolean
+          notify_system?: boolean
           theme?: string
           updated_at?: string
           user_id: string
@@ -503,6 +525,11 @@ export type Database = {
           default_unit?: string
           expiry_reminder_days?: number
           notifications_enabled?: boolean
+          notify_added?: boolean
+          notify_expiry?: boolean
+          notify_merged?: boolean
+          notify_shopping?: boolean
+          notify_system?: boolean
           theme?: string
           updated_at?: string
           user_id?: string
