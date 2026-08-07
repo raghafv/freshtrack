@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowRight, Bookmark, Check, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
@@ -16,10 +16,15 @@ import {
 } from "@/lib/data";
 import { suggestRecipes } from "@/lib/ai.functions";
 import { recipePhoto } from "@/lib/recipe-image";
-import { daysUntil, getStatus } from "@/lib/freshtrack";
+import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
 import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
+import { ItemDetailSheet } from "@/components/item-detail-sheet";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { friendlyMessage } from "@/lib/errors";
+import { setTonightRecipe } from "@/lib/tonight-store";
+import { useRecipeMutations } from "@/lib/data";
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
@@ -70,20 +75,12 @@ function moodLine(attention: number, total: number, now: Date) {
     ];
     return calm[now.getDate() % calm.length];
   }
-  if (attention === 1) return "Just one item needs you today.";
   const busy = [
-    `Only ${attention} items need attention today.`,
-    `${attention} items would love to be used soon.`,
+    "A few things would love to be used soon.",
     "Let's reduce food waste today.",
+    "Here's what to cook through first.",
   ];
   return busy[now.getDate() % busy.length];
-}
-
-function scoreLabel(score: number) {
-  if (score >= 85) return "Excellent";
-  if (score >= 70) return "Good";
-  if (score >= 50) return "Steady";
-  return "Needs care";
 }
 
 function countdown(iso: string) {
@@ -94,16 +91,6 @@ function countdown(iso: string) {
   return `${d} days left`;
 }
 
-/** Gentle, actionable next step for an at-risk item. */
-function suggestedAction(name: string, category: string | null, days: number) {
-  const n = name.toLowerCase();
-  if (days < 0) return "Review →";
-  if (/milk|cream|yog|curd|paneer/.test(n)) return "Use tonight →";
-  if (/spinach|lettuce|herb|coriander|greens|methi/.test(n)) return "Freeze →";
-  if (/berry|banana|mango|apple|fruit/.test(n) || category === "Fruits") return "Make smoothie →";
-  if (category === "Vegetables") return "Cook tonight →";
-  return "Use soon →";
-}
 
 function Dashboard() {
   const { data: items = [], isLoading } = usePantryItems();
@@ -123,7 +110,8 @@ function Dashboard() {
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
   const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 2);
-  const openShopping = shopping.filter((i) => !i.checked).slice(0, 8);
+  const shoppingPreview = shopping.slice(0, 6);
+  const [detail, setDetail] = useState<PantryItem | null>(null);
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
   const now = new Date();
 
@@ -161,12 +149,13 @@ function Dashboard() {
         ) : (
           <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 no-scrollbar">
             {attention.slice(0, 8).map((item) => {
-              const days = daysUntil(item.expiry_date);
               const status = getStatus(item, soonDays);
               return (
-                <article
+                <button
                   key={item.id}
-                  className="surface-card w-[78%] max-w-[19rem] shrink-0 snap-center overflow-hidden p-5 shadow-lift"
+                  type="button"
+                  onClick={() => setDetail(item)}
+                  className="press surface-card w-[78%] max-w-[19rem] shrink-0 snap-center overflow-hidden p-5 text-left shadow-lift"
                 >
                   <FoodThumb
                     name={item.name}
@@ -189,15 +178,10 @@ function Dashboard() {
                   <h3 className="mt-1 truncate text-[19px] font-semibold tracking-[-0.02em]">
                     {item.name}
                   </h3>
-                  <Link
-                    to="/recipes"
-                    className="press mt-4 inline-flex text-[13.5px] font-semibold text-primary"
-                  >
-                    {suggestedAction(item.name, item.category, days)}
-                  </Link>
-                </article>
+                </button>
               );
             })}
+
           </div>
         )}
       </section>
@@ -240,38 +224,69 @@ function Dashboard() {
         </section>
       )}
 
-      {/* Shopping chips */}
+      {/* Shopping list — check items off without losing them */}
       <section className="animate-fade-up mb-4" style={{ animationDelay: "200ms" }}>
-        <SectionHeading title="Shopping" href="/shopping" hrefLabel="View all" />
-        {openShopping.length === 0 ? (
+        <SectionHeading title="Shopping list" href="/shopping" hrefLabel="View all" />
+        {shoppingPreview.length === 0 ? (
           <div className="surface-card px-7 py-8 text-center text-[13.5px] text-muted-foreground">
-            Nothing left to buy.
+            Nothing on your list yet.
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2.5">
-            {openShopping.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => toggle.mutate({ id: s.id, checked: true })}
-                className="press surface-card flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4"
-              >
-                <FoodThumb
-                  name={s.name}
-                  category={s.category}
-                  className="h-8 w-8 rounded-full"
-                  emojiClassName="text-base"
-                />
-                <span className="text-[13.5px] font-medium">{s.name}</span>
-              </button>
+          <ul className="surface-card divide-y divide-border/50 overflow-hidden">
+            {shoppingPreview.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => toggle.mutate({ id: s.id, checked: !s.checked })}
+                  aria-pressed={s.checked}
+                  className={cn(
+                    "press flex w-full items-center gap-3.5 px-5 py-3.5 text-left transition-opacity",
+                    s.checked && "opacity-45",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                      s.checked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border",
+                    )}
+                  >
+                    {s.checked && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                  </span>
+                  <FoodThumb
+                    name={s.name}
+                    category={s.category}
+                    className="h-9 w-9 rounded-full"
+                    emojiClassName="text-base"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        "block truncate text-[14.5px] font-medium",
+                        s.checked && "line-through",
+                      )}
+                    >
+                      {s.name}
+                    </span>
+                    <span className="block text-[12px] text-muted-foreground">{s.category}</span>
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </section>
 
+      <ItemDetailSheet
+        item={detail}
+        soonDays={soonDays}
+        onOpenChange={(o) => !o && setDetail(null)}
+      />
     </PageContainer>
   );
 }
+
 
 function SectionHeading({
   title,
@@ -300,6 +315,8 @@ function SectionHeading({
  */
 function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   const generate = useServerFn(suggestRecipes);
+  const navigate = useNavigate();
+  const { save } = useRecipeMutations();
   const [open, setOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -386,15 +403,47 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
         <div className="mt-5 flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => {
+              setTonightRecipe(recipe);
+              navigate({ to: "/recipes" });
+            }}
             className="press inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-[13.5px] font-semibold text-primary-foreground"
           >
-            {open ? "Hide method" : "Cook this"} <ArrowRight className="h-4 w-4" />
+            Cook this <ArrowRight className="h-4 w-4" />
           </button>
-          <Link to="/recipes" className="text-[13px] font-medium text-primary">
-            More ideas
-          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="press rounded-full bg-secondary px-4 py-2.5 text-[13px] font-semibold"
+          >
+            {open ? "Hide method" : "Method"}
+          </button>
+          <button
+            type="button"
+            aria-label="Save recipe"
+            disabled={save.isPending}
+            onClick={() =>
+              save.mutate(
+                {
+                  title: recipe.title,
+                  minutes: recipe.minutes,
+                  uses: recipe.uses,
+                  missing: recipe.substitutions?.map((s) => s.missing).filter(Boolean) ?? [],
+                  steps: recipe.steps,
+                  mode: "surprise",
+                },
+                {
+                  onSuccess: () => toast.success("Saved to your recipe book"),
+                  onError: (e) => toast.error(friendlyMessage(e, "Could not save recipe")),
+                },
+              )
+            }
+            className="press ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-primary"
+          >
+            <Bookmark className="h-4 w-4" strokeWidth={2} />
+          </button>
         </div>
+
       </div>
     </article>
   );

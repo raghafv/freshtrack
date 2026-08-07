@@ -58,10 +58,11 @@ export function BottomNav({ unread: _unread = 0 }: { unread?: number }) {
               type="button"
               aria-label="Add to pantry"
               onClick={() => setAddOpen(true)}
-              className="add-fab press flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground"
+              className="add-fab press flex h-[62px] w-[62px] items-center justify-center rounded-full text-primary-foreground"
             >
-              <Plus className="h-6 w-6" strokeWidth={2.4} />
+              <Plus className="h-8 w-8" strokeWidth={3.25} />
             </button>
+
           </div>
 
           {RIGHT.map((n) => (

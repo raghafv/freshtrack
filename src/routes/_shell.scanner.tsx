@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { PageContainer } from "@/components/layout";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ScanCamera } from "@/components/scan-camera";
@@ -411,28 +411,56 @@ function ScannerPage() {
 
   /* ----------------------------------- ui ------------------------------------ */
 
+  const activeTab: "camera" | "barcode" | "receipt" | "device" = Route.useSearch().tab ?? "camera";
+  const TOOL_META = {
+    camera: {
+      icon: Camera,
+      title: "Scan with Camera",
+      subtitle: "Point at your groceries — FreshTrack recognises them instantly.",
+    },
+    barcode: {
+      icon: Barcode,
+      title: "Scan Barcode",
+      subtitle: "Hold a packaged product's barcode inside the frame.",
+    },
+    receipt: {
+      icon: Receipt,
+      title: "Scan Receipt",
+      subtitle: "Photograph your grocery bill and import every line.",
+    },
+    device: {
+      icon: Cpu,
+      title: "Fridge Device",
+      subtitle: "Intake from your paired FreshTrack camera.",
+    },
+  } as const;
+  const meta = TOOL_META[activeTab];
+
   return (
     <PageContainer>
-      <PageHeader
-        title="Scanner"
-        subtitle="Point, scan, confirm — AI recognition, barcodes and receipts in one place."
-      />
+      <div className="mb-6 flex items-start gap-3">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="mt-1 rounded-xl"
+          aria-label="Back to pantry"
+          onClick={() => window.history.back()}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-[28px] font-bold leading-tight tracking-[-0.035em]">
+            <meta.icon className="h-6 w-6 text-primary" strokeWidth={1.9} />
+            {meta.title}
+          </h1>
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+            {meta.subtitle}
+          </p>
+        </div>
+      </div>
 
-      <Tabs defaultValue={Route.useSearch().tab ?? "camera"}>
-        <TabsList className="grid w-full grid-cols-4 rounded-2xl">
-          <TabsTrigger value="camera" className="rounded-xl text-xs sm:text-sm">
-            <Camera className="mr-1 h-4 w-4" /> Scan
-          </TabsTrigger>
-          <TabsTrigger value="barcode" className="rounded-xl text-xs sm:text-sm">
-            <Barcode className="mr-1 h-4 w-4" /> Barcode
-          </TabsTrigger>
-          <TabsTrigger value="receipt" className="rounded-xl text-xs sm:text-sm">
-            <Receipt className="mr-1 h-4 w-4" /> Receipt
-          </TabsTrigger>
-          <TabsTrigger value="device" className="rounded-xl text-xs sm:text-sm">
-            <Cpu className="mr-1 h-4 w-4" /> Device
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab}>
+
 
         {/* -------------------------------- AI scan ------------------------------- */}
         <TabsContent value="camera" className="mt-4">

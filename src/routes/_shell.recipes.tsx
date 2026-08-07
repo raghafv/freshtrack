@@ -1,4 +1,5 @@
 import { friendlyMessage } from "@/lib/errors";
+import { takeTonightRecipe } from "@/lib/tonight-store";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -128,7 +129,19 @@ function RecipesPage() {
     onError: (e) => toast.error(friendlyMessage(e, "Could not generate recipes")),
   });
 
-  const recipes = gen.data?.recipes ?? [];
+  const [handoff, setHandoff] = useState<PantryRecipe | null>(null);
+  useEffect(() => {
+    const r = takeTonightRecipe();
+    if (r) {
+      setHandoff(r);
+      setTab("cook");
+    }
+  }, []);
+
+  const generated = gen.data?.recipes ?? [];
+  const recipes = handoff
+    ? [handoff, ...generated.filter((r) => r.title !== handoff.title)]
+    : generated;
   const featured = recipes[0];
 
   function addIngredient(raw: string) {
