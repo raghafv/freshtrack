@@ -242,6 +242,16 @@ function AdminBarcodesPage() {
               }}
             >
               <div className="space-y-1.5">
+                <Label htmlFor="nm">Name</Label>
+                <Input
+                  id="nm"
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  required
+                  className="rounded-2xl"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="bc">Barcode</Label>
                 <Input
                   id="bc"
@@ -252,16 +262,7 @@ function AdminBarcodesPage() {
                   className="rounded-2xl font-mono"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="nm">Name</Label>
-                <Input
-                  id="nm"
-                  value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                  required
-                  className="rounded-2xl"
-                />
-              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="br">Brand</Label>
