@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Check, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowRight, Bookmark, Check, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
@@ -21,6 +21,10 @@ import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
 import { ItemDetailSheet } from "@/components/item-detail-sheet";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { friendlyMessage } from "@/lib/errors";
+import { setTonightRecipe } from "@/lib/tonight-store";
+import { useRecipeMutations } from "@/lib/data";
 
 export const Route = createFileRoute("/_shell/")({
   head: () => ({
@@ -311,6 +315,8 @@ function SectionHeading({
  */
 function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   const generate = useServerFn(suggestRecipes);
+  const navigate = useNavigate();
+  const { save } = useRecipeMutations();
   const [open, setOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
 
