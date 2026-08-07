@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ScanCamera } from "@/components/scan-camera";
@@ -411,7 +411,7 @@ function ScannerPage() {
 
   /* ----------------------------------- ui ------------------------------------ */
 
-  const activeTab = Route.useSearch().tab ?? "camera";
+  const activeTab: "camera" | "barcode" | "receipt" | "device" = Route.useSearch().tab ?? "camera";
   const TOOL_META = {
     camera: {
       icon: Camera,
