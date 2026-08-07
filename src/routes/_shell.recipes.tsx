@@ -1,6 +1,5 @@
 import { friendlyMessage } from "@/lib/errors";
 import { takeTonightRecipe } from "@/lib/tonight-store";
-import type { PantryRecipe } from "@/lib/ai-types";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
