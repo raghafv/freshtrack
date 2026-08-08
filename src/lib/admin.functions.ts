@@ -298,6 +298,8 @@ export interface PendingProductRow {
   name: string;
   quantity: string | null;
   image_url: string | null;
+  back_image_url: string | null;
+  shelf_life_days: number | null;
   submitted_by: string | null;
   submitter_email: string | null;
   status: string;
@@ -314,7 +316,9 @@ export const getPendingProducts = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await supabaseAdmin
       .from("pending_products")
-      .select("id, barcode, name, quantity, image_url, submitted_by, status, created_at")
+      .select(
+        "id, barcode, name, quantity, image_url, back_image_url, shelf_life_days, submitted_by, status, created_at",
+      )
       .eq("status", data.status)
       .order("created_at", { ascending: false })
       .limit(200);
