@@ -5,7 +5,7 @@ import { AddSheet } from "@/components/add-sheet";
 import { cn } from "@/lib/utils";
 
 const LEFT = [
-  { to: "/", label: "Home", icon: Home },
+  { to: "/home", label: "Home", icon: Home },
   { to: "/pantry", label: "Pantry", icon: Refrigerator },
 ] as const;
 
@@ -25,7 +25,7 @@ function NavLink({
   icon: typeof Home;
   pathname: string;
 }) {
-  const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+  const active = pathname === to || pathname.startsWith(`${to}/`);
   return (
     <Link
       to={to}
@@ -121,7 +121,7 @@ export function EmptyState({
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft text-primary">
         <Icon className="h-7 w-7" strokeWidth={1.7} />
       </span>
-      <h3 className="text-[19px] font-semibold tracking-[-0.02em]">{title}</h3>
+      <h2 className="text-[19px] font-semibold tracking-[-0.02em]">{title}</h2>
       <p className="max-w-xs text-[13.5px] leading-relaxed text-muted-foreground">{description}</p>
       {action}
     </div>

@@ -186,7 +186,7 @@ function AuthPage() {
           <span className="gradient-hero mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl text-primary-foreground shadow-lift">
             <Leaf className="h-8 w-8" />
           </span>
-          <h1 className="text-3xl font-bold">FreshTrack</h1>
+          <h1 className="text-3xl font-bold">Sign in to FreshTrack</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Your smart pantry. Know what you own, use it before it spoils.
           </p>
