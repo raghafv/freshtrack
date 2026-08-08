@@ -108,8 +108,15 @@ export function QuickAddDialog({
     [activeCategory],
   );
 
-  const expiry = selected ? expiryForProduct(selected, storage, purchaseDate) : "";
+  const suggestedExpiry = selected ? expiryForProduct(selected, storage, purchaseDate) : "";
   const unusual = selected ? isUnusualStorage(selected, storage) : false;
+
+  // The suggested date is only a starting point — the user can override it, and
+  // it re-syncs whenever the product, storage or purchase date changes.
+  const [expiry, setExpiry] = useState("");
+  useEffect(() => {
+    setExpiry(suggestedExpiry);
+  }, [suggestedExpiry]);
 
   async function handleSave() {
     if (!selected) return;
