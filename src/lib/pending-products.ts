@@ -16,6 +16,7 @@ export async function submitPendingProduct(input: {
   name: string;
   quantity: string;
   imageUrl?: string | null;
+  backImageUrl?: string | null;
   userId?: string | null;
   shelfLifeDays?: number | null;
 }): Promise<PendingSubmitResult> {
@@ -35,6 +36,7 @@ export async function submitPendingProduct(input: {
     name: input.name.trim(),
     quantity: input.quantity.trim() || null,
     image_url: input.imageUrl ?? null,
+    back_image_url: input.backImageUrl ?? null,
     submitted_by: input.userId ?? null,
     shelf_life_days:
       input.shelfLifeDays && input.shelfLifeDays > 0 ? Math.round(input.shelfLifeDays) : null,
