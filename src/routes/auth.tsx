@@ -78,7 +78,7 @@ function AuthPage() {
   const [resetBusy, setResetBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/", replace: true });
+    if (!loading && session) navigate({ to: "/home", replace: true });
   }, [loading, session, navigate]);
 
   async function signInWithGoogle() {
@@ -92,7 +92,7 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/", replace: true });
+      navigate({ to: "/home", replace: true });
     } catch {
       toast.error("Google sign-in unavailable — use email and password below.");
     } finally {
@@ -169,7 +169,7 @@ function AuthPage() {
           throw error;
         }
       }
-      navigate({ to: "/", replace: true });
+      navigate({ to: "/home", replace: true });
     } catch (e) {
       toast.error(friendlyMessage(e, "Authentication failed"));
     } finally {

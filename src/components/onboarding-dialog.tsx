@@ -91,7 +91,7 @@ export function OnboardingDialog() {
     setClosed(true);
     setOpen(false);
     updateProfile.mutate({ onboarded_at: new Date().toISOString() });
-    void navigate({ to: "/" });
+    void navigate({ to: "/home" });
   }
 
   function goToStep(next: number) {

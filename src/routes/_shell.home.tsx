@@ -26,7 +26,7 @@ import { friendlyMessage } from "@/lib/errors";
 import { setTonightRecipe } from "@/lib/tonight-store";
 import { useRecipeMutations } from "@/lib/data";
 
-export const Route = createFileRoute("/_shell/")({
+export const Route = createFileRoute("/_shell/home")({
   head: () => ({
     meta: [
       { title: "FreshTrack Home — What Needs Your Attention Today" },
