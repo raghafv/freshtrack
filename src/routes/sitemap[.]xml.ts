@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-// Update BASE_URL to your production site URL (e.g., https://app.freshtrack.example) before publishing.
-const BASE_URL = "";
+const BASE_URL = "https://fresh-track.in";
 
 interface SitemapEntry {
   path: string;
@@ -16,6 +15,7 @@ export const Route = createFileRoute("/sitemap.xml")({
       GET: async () => {
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
+          { path: "/home", changefreq: "daily", priority: "0.8" },
           { path: "/auth", changefreq: "monthly", priority: "0.6" },
         ];
 
