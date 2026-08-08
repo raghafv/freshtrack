@@ -106,11 +106,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content: "https://storage.googleapis.com/gpt-engineer-file-uploads/aXOZxQQ7miX5ldTlgZDgOkiI3cA3/social-images/social-1785501722832-9e712fdc-486c-4a61-ba5f-1b81f018bf09.webp",
+        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ba64feb18fdf600ecedca8b4090e45ce/id-preview-5081e28c--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786163002241.png",
       },
       {
         name: "twitter:image",
-        content: "https://storage.googleapis.com/gpt-engineer-file-uploads/aXOZxQQ7miX5ldTlgZDgOkiI3cA3/social-images/social-1785501722832-9e712fdc-486c-4a61-ba5f-1b81f018bf09.webp",
+        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ba64feb18fdf600ecedca8b4090e45ce/id-preview-5081e28c--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786163002241.png",
       },
     ],
     links: [
@@ -123,6 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap",
       },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
     ],
   }),
   shellComponent: RootShell,
