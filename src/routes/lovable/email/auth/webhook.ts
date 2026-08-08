@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "freshtrackmvp1"
+const SITE_NAME = "FreshTrack"
 const SENDER_DOMAIN = "notify.fresh-track.in"
 const ROOT_DOMAIN = "fresh-track.in"
 const FROM_DOMAIN = "fresh-track.in"

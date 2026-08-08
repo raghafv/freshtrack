@@ -13,7 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ShellRouteImport } from './routes/_shell'
-import { Route as ShellIndexRouteImport } from './routes/_shell.index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
 import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
@@ -21,6 +21,7 @@ import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
 import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
 import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
+import { Route as ShellHomeRouteImport } from './routes/_shell.home'
 import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
 import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
 import { Route as ShellAdminPendingRouteImport } from './routes/_shell.admin-pending'
@@ -51,10 +52,10 @@ const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShellIndexRoute = ShellIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ShellRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ShellShoppingRoute = ShellShoppingRouteImport.update({
   id: '/shopping',
@@ -89,6 +90,11 @@ const ShellPantryRoute = ShellPantryRouteImport.update({
 const ShellNotificationsRoute = ShellNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellHomeRoute = ShellHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellAssistantRoute = ShellAssistantRouteImport.update({
@@ -144,7 +150,7 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof ShellIndexRoute
+  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin-pending': typeof ShellAdminPendingRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
+  '/home': typeof ShellHomeRoute
   '/notifications': typeof ShellNotificationsRoute
   '/pantry': typeof ShellPantryRoute
   '/profile': typeof ShellProfileRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -175,6 +183,7 @@ export interface FileRoutesByTo {
   '/admin-pending': typeof ShellAdminPendingRoute
   '/analytics': typeof ShellAnalyticsRoute
   '/assistant': typeof ShellAssistantRoute
+  '/home': typeof ShellHomeRoute
   '/notifications': typeof ShellNotificationsRoute
   '/pantry': typeof ShellPantryRoute
   '/profile': typeof ShellProfileRoute
@@ -182,7 +191,6 @@ export interface FileRoutesByTo {
   '/scanner': typeof ShellScannerRoute
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
-  '/': typeof ShellIndexRoute
   '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_shell': typeof ShellRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -200,6 +209,7 @@ export interface FileRoutesById {
   '/_shell/admin-pending': typeof ShellAdminPendingRoute
   '/_shell/analytics': typeof ShellAnalyticsRoute
   '/_shell/assistant': typeof ShellAssistantRoute
+  '/_shell/home': typeof ShellHomeRoute
   '/_shell/notifications': typeof ShellNotificationsRoute
   '/_shell/pantry': typeof ShellPantryRoute
   '/_shell/profile': typeof ShellProfileRoute
@@ -207,7 +217,6 @@ export interface FileRoutesById {
   '/_shell/scanner': typeof ShellScannerRoute
   '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
-  '/_shell/': typeof ShellIndexRoute
   '/_shell/admin-user/$userId': typeof ShellAdminUserUserIdRoute
   '/api/public/push-digest': typeof ApiPublicPushDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/admin-pending'
     | '/analytics'
     | '/assistant'
+    | '/home'
     | '/notifications'
     | '/pantry'
     | '/profile'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/reset-password'
     | '/sitemap.xml'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin-pending'
     | '/analytics'
     | '/assistant'
+    | '/home'
     | '/notifications'
     | '/pantry'
     | '/profile'
@@ -255,7 +267,6 @@ export interface FileRouteTypes {
     | '/scanner'
     | '/settings'
     | '/shopping'
-    | '/'
     | '/admin-user/$userId'
     | '/api/public/push-digest'
     | '/lovable/email/auth/preview'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
+    | '/'
     | '/_shell'
     | '/auth'
     | '/reset-password'
@@ -272,6 +284,7 @@ export interface FileRouteTypes {
     | '/_shell/admin-pending'
     | '/_shell/analytics'
     | '/_shell/assistant'
+    | '/_shell/home'
     | '/_shell/notifications'
     | '/_shell/pantry'
     | '/_shell/profile'
@@ -279,7 +292,6 @@ export interface FileRouteTypes {
     | '/_shell/scanner'
     | '/_shell/settings'
     | '/_shell/shopping'
-    | '/_shell/'
     | '/_shell/admin-user/$userId'
     | '/api/public/push-digest'
     | '/lovable/email/auth/preview'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   ShellRoute: typeof ShellRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -328,12 +341,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_shell/': {
-      id: '/_shell/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof ShellIndexRouteImport
-      parentRoute: typeof ShellRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_shell/shopping': {
       id: '/_shell/shopping'
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof ShellNotificationsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/home': {
+      id: '/_shell/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof ShellHomeRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/assistant': {
@@ -463,6 +483,7 @@ interface ShellRouteChildren {
   ShellAdminPendingRoute: typeof ShellAdminPendingRoute
   ShellAnalyticsRoute: typeof ShellAnalyticsRoute
   ShellAssistantRoute: typeof ShellAssistantRoute
+  ShellHomeRoute: typeof ShellHomeRoute
   ShellNotificationsRoute: typeof ShellNotificationsRoute
   ShellPantryRoute: typeof ShellPantryRoute
   ShellProfileRoute: typeof ShellProfileRoute
@@ -470,7 +491,6 @@ interface ShellRouteChildren {
   ShellScannerRoute: typeof ShellScannerRoute
   ShellSettingsRoute: typeof ShellSettingsRoute
   ShellShoppingRoute: typeof ShellShoppingRoute
-  ShellIndexRoute: typeof ShellIndexRoute
   ShellAdminUserUserIdRoute: typeof ShellAdminUserUserIdRoute
 }
 
@@ -480,6 +500,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminPendingRoute: ShellAdminPendingRoute,
   ShellAnalyticsRoute: ShellAnalyticsRoute,
   ShellAssistantRoute: ShellAssistantRoute,
+  ShellHomeRoute: ShellHomeRoute,
   ShellNotificationsRoute: ShellNotificationsRoute,
   ShellPantryRoute: ShellPantryRoute,
   ShellProfileRoute: ShellProfileRoute,
@@ -487,13 +508,13 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellScannerRoute: ShellScannerRoute,
   ShellSettingsRoute: ShellSettingsRoute,
   ShellShoppingRoute: ShellShoppingRoute,
-  ShellIndexRoute: ShellIndexRoute,
   ShellAdminUserUserIdRoute: ShellAdminUserUserIdRoute,
 }
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   ShellRoute: ShellRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -506,13 +527,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

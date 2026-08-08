@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Loader2, ScanBarcode } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Camera, Loader2, RefreshCw, ScanBarcode } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { submitPendingProduct } from "@/lib/pending-products";
+import { uploadPantryImage } from "@/lib/data";
+import { friendlyMessage } from "@/lib/errors";
 
 interface Props {
   open: boolean;
@@ -19,8 +21,15 @@ interface Props {
   imageUrl?: string | null;
   userId?: string | null;
   onOpenChange: (open: boolean) => void;
-  onDone?: (info: { name: string; quantity: string; shelfLifeDays: number }) => void;
+  onDone?: (info: {
+    name: string;
+    quantity: string;
+    shelfLifeDays: number;
+    imageUrl: string | null;
+  }) => void;
 }
+
+type Shot = { file: File; preview: string } | null;
 
 /** Shown when a scanned barcode isn't in the global database yet. */
 export function UnknownBarcodeDialog({
@@ -36,7 +45,12 @@ export function UnknownBarcodeDialog({
   const [years, setYears] = useState("");
   const [months, setMonths] = useState("");
   const [days, setDays] = useState("");
+  const [front, setFront] = useState<Shot>(null);
+  const [back, setBack] = useState<Shot>(null);
   const [saving, setSaving] = useState(false);
+
+  const frontInput = useRef<HTMLInputElement>(null);
+  const backInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -45,43 +59,116 @@ export function UnknownBarcodeDialog({
       setYears("");
       setMonths("");
       setDays("");
+      setFront(null);
+      setBack(null);
     }
   }, [open, barcode]);
 
   const shelfLifeDays =
     (Number(years) || 0) * 365 + (Number(months) || 0) * 30 + (Number(days) || 0);
-  const canSubmit = Boolean(name.trim()) && Number(days) > 0 && shelfLifeDays > 0;
+  const canSubmit = Boolean(name.trim()) && shelfLifeDays > 0 && Boolean(front) && Boolean(back);
+
+  function capture(side: "front" | "back", file?: File | null) {
+    if (!file) return;
+    const shot = { file, preview: URL.createObjectURL(file) };
+    if (side === "front") setFront(shot);
+    else setBack(shot);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!barcode || !canSubmit) return;
+    if (!barcode || !canSubmit || !front || !back) return;
     setSaving(true);
-    const result = await submitPendingProduct({
-      barcode,
-      name,
-      quantity,
-      imageUrl,
-      userId,
-      shelfLifeDays,
-    });
-    setSaving(false);
+    try {
+      let frontUrl: string | null = imageUrl ?? null;
+      let backUrl: string | null = null;
+      if (userId) {
+        frontUrl = await uploadPantryImage(userId, front.file);
+        backUrl = await uploadPantryImage(userId, back.file);
+      }
 
-    if (result.status === "submitted") {
-      toast.success("Thanks! Sent for review — it'll help every FreshTrack user.");
-    } else if (result.status === "duplicate") {
-      toast.info("This product is already awaiting approval.");
-    } else {
-      toast.error(result.message);
-      return;
+      const result = await submitPendingProduct({
+        barcode,
+        name,
+        quantity,
+        imageUrl: frontUrl,
+        backImageUrl: backUrl,
+        userId,
+        shelfLifeDays,
+      });
+
+      if (result.status === "submitted") {
+        toast.success("Thanks! Sent for review — it'll help every FreshTrack user.");
+      } else if (result.status === "duplicate") {
+        toast.info("This product is already awaiting approval.");
+      } else {
+        toast.error(result.message);
+        return;
+      }
+      onOpenChange(false);
+      onDone?.({
+        name: name.trim(),
+        quantity: quantity.trim(),
+        shelfLifeDays,
+        imageUrl: frontUrl,
+      });
+    } catch (err) {
+      toast.error(friendlyMessage(err, "Could not upload the product photos"));
+    } finally {
+      setSaving(false);
     }
-    onOpenChange(false);
-    onDone?.({ name: name.trim(), quantity: quantity.trim(), shelfLifeDays });
   }
 
+  function PhotoSlot({
+    side,
+    shot,
+    inputRef,
+    label,
+    hint,
+  }: {
+    side: "front" | "back";
+    shot: Shot;
+    inputRef: React.RefObject<HTMLInputElement | null>;
+    label: string;
+    hint: string;
+  }) {
+    return (
+      <div className="space-y-1.5">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => capture(side, e.target.files?.[0])}
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="press relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/40"
+        >
+          {shot ? (
+            <>
+              <img src={shot.preview} alt={`${label} of the product`} className="h-full w-full object-cover" />
+              <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-background/85 px-2 py-1 text-[10px] font-medium">
+                <RefreshCw className="h-3 w-3" /> Retake
+              </span>
+            </>
+          ) : (
+            <span className="flex flex-col items-center gap-1 text-muted-foreground">
+              <Camera className="h-5 w-5" strokeWidth={1.8} />
+              <span className="text-[11px] font-medium">{label}</span>
+            </span>
+          )}
+        </button>
+        <p className="text-center text-[10.5px] text-muted-foreground">{hint}</p>
+      </div>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-3xl">
+      <DialogContent className="max-h-[92vh] max-w-sm overflow-y-auto rounded-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <ScanBarcode className="h-5 w-5 text-primary" /> New barcode detected!
@@ -123,6 +210,26 @@ export function UnknownBarcodeDialog({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label>Product photos (both required)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <PhotoSlot
+                side="front"
+                shot={front}
+                inputRef={frontInput}
+                label="Front"
+                hint="Used as the pantry thumbnail"
+              />
+              <PhotoSlot
+                side="back"
+                shot={back}
+                inputRef={backInput}
+                label="Back"
+                hint="Barcode, dates and details"
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label>Time to expire (from the pack)</Label>
             <div className="grid grid-cols-3 gap-2">
@@ -143,16 +250,13 @@ export function UnknownBarcodeDialog({
                     placeholder="0"
                     className="rounded-2xl text-center"
                   />
-                  <p className="text-center text-[11px] text-muted-foreground">
-                    {f.label}
-                    {f.id === "dys" ? " *" : ""}
-                  </p>
+                  <p className="text-center text-[11px] text-muted-foreground">{f.label}</p>
                 </div>
               ))}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Years and months are optional — days is required. Read it off the pack&apos;s
-              &quot;best before&quot; instead of letting us guess.
+              Fill any of years, months or days — read it off the pack&apos;s &quot;best
+              before&quot; instead of letting us guess.
             </p>
           </div>
 
@@ -160,7 +264,6 @@ export function UnknownBarcodeDialog({
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Submit for review
           </Button>
-
         </form>
       </DialogContent>
     </Dialog>

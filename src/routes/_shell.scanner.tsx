@@ -772,6 +772,7 @@ function ScannerPage() {
               packageSize: info.quantity || null,
               packaged: true,
               source: "barcode",
+              image_url: info.imageUrl ?? null,
               shelfLifeDays: info.shelfLifeDays || undefined,
               exactShelf: info.shelfLifeDays > 0,
             }),

@@ -107,13 +107,29 @@ function AdminPendingPage() {
                   </span>
                 </div>
 
-                {row.image_url ? (
-                  <img
-                    src={row.image_url}
-                    alt={`${row.name} submitted photo`}
-                    className="h-28 w-full rounded-2xl object-cover"
-                    loading="lazy"
-                  />
+                {row.image_url || row.back_image_url ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { src: row.image_url, label: "Front" },
+                      { src: row.back_image_url, label: "Back" },
+                    ].map((p) => (
+                      <div key={p.label} className="space-y-1">
+                        {p.src ? (
+                          <img
+                            src={p.src}
+                            alt={`${row.name} ${p.label.toLowerCase()} photo`}
+                            className="aspect-square w-full rounded-2xl object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-muted/50 text-[11px] text-muted-foreground">
+                            No photo
+                          </div>
+                        )}
+                        <p className="text-center text-[10.5px] text-muted-foreground">{p.label}</p>
+                      </div>
+                    ))}
+                  </div>
                 ) : null}
 
                 <Input
@@ -135,8 +151,11 @@ function AdminPendingPage() {
                 />
 
                 <p className="text-[11px] text-muted-foreground">
-                  Submitted by {row.submitter_email ?? "unknown user"} · brand, category, storage and
-                  shelf life are filled in automatically on approval.
+                  Submitted by {row.submitter_email ?? "unknown user"}
+                  {row.shelf_life_days
+                    ? ` · shelf life ${row.shelf_life_days} days (from the pack)`
+                    : " · no shelf life given"}
+                  {" · brand, category and storage are filled in automatically on approval."}
                 </p>
 
                 <div className="flex gap-2">

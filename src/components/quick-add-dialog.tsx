@@ -108,14 +108,25 @@ export function QuickAddDialog({
     [activeCategory],
   );
 
-  const expiry = selected ? expiryForProduct(selected, storage, purchaseDate) : "";
+  const suggestedExpiry = selected ? expiryForProduct(selected, storage, purchaseDate) : "";
   const unusual = selected ? isUnusualStorage(selected, storage) : false;
+
+  // The suggested date is only a starting point — the user can override it, and
+  // it re-syncs whenever the product, storage or purchase date changes.
+  const [expiry, setExpiry] = useState("");
+  useEffect(() => {
+    setExpiry(suggestedExpiry);
+  }, [suggestedExpiry]);
 
   async function handleSave() {
     if (!selected) return;
     const qty = Number(quantity);
     if (!Number.isFinite(qty) || qty <= 0) {
       toast.error("Enter a valid quantity");
+      return;
+    }
+    if (!expiry) {
+      toast.error("Pick an expiry date");
       return;
     }
     try {
@@ -269,10 +280,20 @@ export function QuickAddDialog({
                 />
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-card/60 px-4 py-3">
-                <p className="text-xs text-muted-foreground">Expires on</p>
-                <p className="text-base font-semibold">
-                  {expiry} <span className="text-muted-foreground">· {expiryText(expiry)}</span>
+              <div className="grid gap-2">
+                <Label htmlFor="qa-expiry">Expires on</Label>
+                <Input
+                  id="qa-expiry"
+                  type="date"
+                  className="h-11"
+                  value={expiry}
+                  min={purchaseDate}
+                  onChange={(e) => setExpiry(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {expiry
+                    ? `${expiryText(expiry)} — edit it if the pack says otherwise.`
+                    : "Pick the best-before date from the pack."}
                 </p>
               </div>
 
@@ -284,24 +305,7 @@ export function QuickAddDialog({
               )}
             </div>
 
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <Button
-                variant="ghost"
-                className="rounded-xl"
-                onClick={() => {
-                  onOpenChange(false);
-                  onDetails({
-                    name: selected.name,
-                    category: selected.category,
-                    storage,
-                    unit,
-                    quantity: Number(quantity) || 1,
-                    source: "quick-add",
-                  });
-                }}
-              >
-                More details
-              </Button>
+            <div className="mt-2 flex items-center justify-end gap-2">
               <Button
                 className="press rounded-xl"
                 onClick={handleSave}
