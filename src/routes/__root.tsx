@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste.",
       },
-      { name: "theme-color", content: "#f2f4f3" },
+      { name: "theme-color", content: "#fafafa" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "FreshTrack" },
       { property: "og:type", content: "website" },
@@ -104,14 +104,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste.",
       },
-      {
-        property: "og:image",
-        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ba64feb18fdf600ecedca8b4090e45ce/id-preview-5081e28c--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786163002241.png",
-      },
-      {
-        name: "twitter:image",
-        content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ba64feb18fdf600ecedca8b4090e45ce/id-preview-5081e28c--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786163002241.png",
-      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -123,7 +115,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap",
       },
-      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
     ],
   }),
   shellComponent: RootShell,
