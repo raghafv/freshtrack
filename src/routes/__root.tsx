@@ -104,8 +104,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste, combined with an AI chef that cooks from what you own!",
       },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7a65e8386a5a00e24d9445ec5413983e/id-preview-ac8c8baa--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786251495920.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7a65e8386a5a00e24d9445ec5413983e/id-preview-ac8c8baa--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786251495920.png" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/035b0f534ab2fe4eecfa2d19038d0387/id-preview-e84c0996--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786253016237.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/035b0f534ab2fe4eecfa2d19038d0387/id-preview-e84c0996--0c0892ab-045f-4ea6-84d9-499a9811a433.lovable.app-1786253016237.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
