@@ -2,7 +2,7 @@ import { friendlyMessage } from "@/lib/errors";
 import { takeTonightRecipe } from "@/lib/tonight-store";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -130,13 +130,21 @@ function RecipesPage() {
   });
 
   const [handoff, setHandoff] = useState<PantryRecipe | null>(null);
+  const featuredRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const r = takeTonightRecipe();
     if (r) {
       setHandoff(r);
       setTab("cook");
+      // Land straight on tonight's recommendation rather than the composer.
+      requestAnimationFrame(() =>
+        featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
     }
   }, []);
+
+  /** Arrived via "Cook this" — show only that one recipe, no browsing chrome. */
+  const focusMode = Boolean(handoff);
 
   const generated = gen.data?.recipes ?? [];
   const recipes = handoff
@@ -297,7 +305,7 @@ function RecipesPage() {
 
       {/* Featured recommendation */}
       {featured && (
-        <section className="animate-fade-up mb-9">
+        <section ref={featuredRef} className="animate-fade-up mb-9 scroll-mt-4">
           <div className="gradient-hero rounded-[2rem] p-7 text-primary-foreground shadow-lift">
             <p className="text-[11.5px] font-medium uppercase tracking-[0.16em] opacity-70">
               Tonight's recommendation
@@ -314,17 +322,19 @@ function RecipesPage() {
                 ))}
               </ul>
             )}
-            <a
-              href="#new-ideas"
-              className="press mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground px-5 py-2.5 text-[13.5px] font-semibold text-primary"
-            >
-              Cook <ArrowRight className="h-4 w-4" />
-            </a>
+            {!focusMode && (
+              <a
+                href="#new-ideas"
+                className="press mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground px-5 py-2.5 text-[13.5px] font-semibold text-primary"
+              >
+                Cook <ArrowRight className="h-4 w-4" />
+              </a>
+            )}
           </div>
         </section>
       )}
 
-      {priority.length > 0 && (
+      {!focusMode && priority.length > 0 && (
         <section className="surface-card mb-9 p-6">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -347,9 +357,11 @@ function RecipesPage() {
 
       {recipes.length > 0 && (
         <section id="new-ideas" className="mb-10">
-          <h2 className="mb-4 text-[19px] font-semibold tracking-[-0.025em]">
-            New ideas — save the ones you love
-          </h2>
+          {!focusMode && (
+            <h2 className="mb-4 text-[19px] font-semibold tracking-[-0.025em]">
+              New ideas — save the ones you love
+            </h2>
+          )}
           <ul className="space-y-5">
             {recipes.map((r) => (
               <RecipeCard
