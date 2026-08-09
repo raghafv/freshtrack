@@ -37,7 +37,7 @@ export function LandingNav() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 lg:px-12">
         <Link to="/" className="flex items-center gap-2">
-          <BrandMark className={`h-6 w-6 ${light ? "bg-white/90 p-0.5" : ""}`} />
+          <BrandMark className="h-7 w-7" />
           <span
             className={`text-sm font-semibold tracking-[-0.01em] ${light ? "text-white" : "text-foreground"}`}
           >

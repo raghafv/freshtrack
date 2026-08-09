@@ -8,7 +8,7 @@ export function LandingFooter() {
         <div className="grid gap-10 md:grid-cols-3">
           <div>
             <div className="mb-4 flex items-center gap-2">
-              <BrandMark className="h-6 w-6 bg-background/90 p-0.5" />
+              <BrandMark className="h-7 w-7" />
               <span className="text-sm font-semibold tracking-[-0.01em]">FreshTrack</span>
             </div>
             <p className="max-w-xs text-[12.5px] leading-relaxed text-background/70">

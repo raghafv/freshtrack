@@ -9,7 +9,7 @@ export function BrandMark({ className }: { className?: string }) {
       alt="FreshTrack logo"
       width={128}
       height={128}
-      className={cn("h-6 w-6 rounded-full object-contain", className)}
+      className={cn("h-6 w-6 rounded-full bg-white object-contain p-0.5", className)}
     />
   );
 }
