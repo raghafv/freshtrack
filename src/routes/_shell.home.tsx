@@ -15,7 +15,6 @@ import {
   useShoppingMutations,
 } from "@/lib/data";
 import { suggestRecipes } from "@/lib/ai.functions";
-import { recipePhoto } from "@/lib/recipe-image";
 import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
 import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
@@ -318,7 +317,8 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   const navigate = useNavigate();
   const { save } = useRecipeMutations();
   const [open, setOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
+  // One recipe per calendar day in IST — it stays put until midnight India time.
+  const today = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const { data, isLoading } = useQuery({
     queryKey: ["tonight-recipe", today],
@@ -357,23 +357,16 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
 
   return (
     <article className="surface-card overflow-hidden shadow-lift">
-      <div className="relative">
-        <img
-          src={recipePhoto(recipe.title)}
-          alt={recipe.title}
-          loading="lazy"
-          width={1024}
-          height={768}
-          className="h-48 w-full object-cover"
-        />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-6 pb-5 pt-12">
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/70">
-            Made from your pantry
-          </p>
-          <h3 className="mt-1 text-[21px] font-semibold leading-snug tracking-[-0.025em] text-white">
-            {recipe.title}
-          </h3>
-        </div>
+      <div className="gradient-hero relative px-6 pb-5 pt-8 text-primary-foreground">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12">
+          <ChefHat className="h-5 w-5" strokeWidth={1.8} />
+        </span>
+        <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.16em] opacity-70">
+          Tonight&apos;s recipe · made from your pantry
+        </p>
+        <h3 className="mt-1 text-[21px] font-semibold leading-snug tracking-[-0.025em]">
+          {recipe.title}
+        </h3>
       </div>
 
       <div className="p-6">
