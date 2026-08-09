@@ -81,28 +81,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "FreshTrack — Smart Pantry & Expiry Tracker" },
+      { title: "FreshTrack — Your pantry, Smarter" },
       {
         name: "description",
         content:
-          "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste, combined with an AI chef that cooks from what you own!",
+          "Track items, beat expiry dates, and let AI turn what you already have into delicious recipes.",
       },
       { name: "theme-color", content: "#fafafa" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "FreshTrack" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "FreshTrack — Smart Pantry & Expiry Tracker" },
-      { name: "twitter:title", content: "FreshTrack — Smart Pantry & Expiry Tracker" },
+      { property: "og:title", content: "FreshTrack — Your pantry, Smarter" },
+      { name: "twitter:title", content: "FreshTrack — Your pantry, Smarter" },
       {
         property: "og:description",
         content:
-          "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste, combined with an AI chef that cooks from what you own!",
+          "Track items, beat expiry dates, and let AI turn what you already have into delicious recipes.",
       },
       {
         name: "twitter:description",
         content:
-          "FreshTrack helps households track groceries, expiry dates and shopping lists so nothing goes to waste, combined with an AI chef that cooks from what you own!",
+          "Track items, beat expiry dates, and let AI turn what you already have into delicious recipes.",
       },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/aXOZxQQ7miX5ldTlgZDgOkiI3cA3/social-images/social-1786261281953-social-image.webp" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/aXOZxQQ7miX5ldTlgZDgOkiI3cA3/social-images/social-1786261281953-social-image.webp" },
