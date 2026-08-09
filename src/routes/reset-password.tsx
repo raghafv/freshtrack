@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Leaf, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { BrandMark } from "@/components/landing/brand-mark";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,9 +66,7 @@ function ResetPasswordPage() {
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <span className="gradient-hero mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl text-primary-foreground shadow-lift">
-            <Leaf className="h-8 w-8" />
-          </span>
+          <BrandMark className="mx-auto mb-4 h-16 w-16" />
           <h1 className="text-2xl font-bold">Set a new password</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {ready
