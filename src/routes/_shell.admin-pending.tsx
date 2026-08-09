@@ -115,12 +115,14 @@ function AdminPendingPage() {
                     ].map((p) => (
                       <div key={p.label} className="space-y-1">
                         {p.src ? (
+                          <a href={p.src} target="_blank" rel="noreferrer">
                           <img
                             src={p.src}
                             alt={`${row.name} ${p.label.toLowerCase()} photo`}
                             className="aspect-square w-full rounded-2xl object-cover"
                             loading="lazy"
                           />
+                          </a>
                         ) : (
                           <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-muted/50 text-[11px] text-muted-foreground">
                             No photo
@@ -150,12 +152,22 @@ function AdminPendingPage() {
                   }
                 />
 
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-2xl bg-muted/40 px-3.5 py-3 text-[11.5px]">
+                  <dt className="text-muted-foreground">Barcode</dt>
+                  <dd className="font-mono">{row.barcode}</dd>
+                  <dt className="text-muted-foreground">Submitted by</dt>
+                  <dd className="break-all">{row.submitter_email ?? "unknown user"}</dd>
+                  <dt className="text-muted-foreground">User ID</dt>
+                  <dd className="break-all font-mono text-[10.5px]">{row.submitted_by ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Date added</dt>
+                  <dd>{new Date(row.created_at).toLocaleString()}</dd>
+                  <dt className="text-muted-foreground">Pack shelf life</dt>
+                  <dd>{row.shelf_life_days ? `${row.shelf_life_days} days` : "not given"}</dd>
+                  <dt className="text-muted-foreground">Status</dt>
+                  <dd className="capitalize">{row.status}</dd>
+                </dl>
                 <p className="text-[11px] text-muted-foreground">
-                  Submitted by {row.submitter_email ?? "unknown user"}
-                  {row.shelf_life_days
-                    ? ` · shelf life ${row.shelf_life_days} days (from the pack)`
-                    : " · no shelf life given"}
-                  {" · brand, category and storage are filled in automatically on approval."}
+                  Brand, category and storage are filled in automatically on approval.
                 </p>
 
                 <div className="flex gap-2">
