@@ -31,6 +31,66 @@ interface Props {
 
 type Shot = { file: File; preview: string } | null;
 
+
+/**
+ * Defined at module scope on purpose — declaring it inside the dialog gave it a
+ * new identity on every keystroke, which remounted the file input and threw
+ * away the captured photo.
+ */
+function PhotoSlot({
+  shot,
+  inputRef,
+  label,
+  hint,
+  onPick,
+}: {
+  shot: Shot;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  label: string;
+  hint: string;
+  onPick: (file?: File | null) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          onPick(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="press relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/40"
+      >
+        {shot ? (
+          <>
+            <img
+              src={shot.preview}
+              alt={`${label} of the product`}
+              className="h-full w-full object-cover"
+            />
+            <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-background/85 px-2 py-1 text-[10px] font-medium">
+              <RefreshCw className="h-3 w-3" /> Retake
+            </span>
+          </>
+        ) : (
+          <span className="flex flex-col items-center gap-1 text-muted-foreground">
+            <Camera className="h-5 w-5" strokeWidth={1.8} />
+            <span className="text-[11px] font-medium">{label}</span>
+          </span>
+        )}
+      </button>
+      <p className="text-center text-[10.5px] text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
 /** Shown when a scanned barcode isn't in the global database yet. */
 export function UnknownBarcodeDialog({
   open,
@@ -119,52 +179,8 @@ export function UnknownBarcodeDialog({
     }
   }
 
-  function PhotoSlot({
-    side,
-    shot,
-    inputRef,
-    label,
-    hint,
-  }: {
-    side: "front" | "back";
-    shot: Shot;
-    inputRef: React.RefObject<HTMLInputElement | null>;
-    label: string;
-    hint: string;
-  }) {
-    return (
-      <div className="space-y-1.5">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => capture(side, e.target.files?.[0])}
-        />
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="press relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/40"
-        >
-          {shot ? (
-            <>
-              <img src={shot.preview} alt={`${label} of the product`} className="h-full w-full object-cover" />
-              <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-background/85 px-2 py-1 text-[10px] font-medium">
-                <RefreshCw className="h-3 w-3" /> Retake
-              </span>
-            </>
-          ) : (
-            <span className="flex flex-col items-center gap-1 text-muted-foreground">
-              <Camera className="h-5 w-5" strokeWidth={1.8} />
-              <span className="text-[11px] font-medium">{label}</span>
-            </span>
-          )}
-        </button>
-        <p className="text-center text-[10.5px] text-muted-foreground">{hint}</p>
-      </div>
-    );
-  }
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -214,18 +230,18 @@ export function UnknownBarcodeDialog({
             <Label>Product photos (both required)</Label>
             <div className="grid grid-cols-2 gap-3">
               <PhotoSlot
-                side="front"
                 shot={front}
                 inputRef={frontInput}
                 label="Front"
                 hint="Used as the pantry thumbnail"
+                onPick={(f) => capture("front", f)}
               />
               <PhotoSlot
-                side="back"
                 shot={back}
                 inputRef={backInput}
                 label="Back"
                 hint="Barcode, dates and details"
+                onPick={(f) => capture("back", f)}
               />
             </div>
           </div>

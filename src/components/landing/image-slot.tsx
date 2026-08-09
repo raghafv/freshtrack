@@ -1,10 +1,13 @@
-import { ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import hero1 from "@/assets/hero1.jpg.asset.json";
+import hero2 from "@/assets/hero2.png.asset.json";
+import hero3 from "@/assets/hero3.jpg.asset.json";
+
+const PHOTOS = [hero2.url, hero3.url, hero1.url];
 
 /**
- * Placeholder for landing photography. Real images drop in later — each slot
- * keeps its aspect ratio and is tagged with `data-image-slot` so the correct
- * file can be swapped in without touching layout.
+ * Landing photography. Each slot picks one of the FreshTrack photos
+ * deterministically from its name so the page stays stable between renders.
  */
 export function ImageSlot({
   name,
@@ -15,22 +18,16 @@ export function ImageSlot({
   label: string;
   className?: string;
 }) {
+  let hash = 0;
+  for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const src = PHOTOS[hash % PHOTOS.length];
+
   return (
-    <div
-      data-image-slot={name}
-      role="img"
-      aria-label={`Placeholder for ${label}`}
-      className={cn(
-        "relative flex items-center justify-center overflow-hidden bg-secondary",
-        className,
-      )}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-foreground/20" />
-      <div className="relative flex flex-col items-center gap-2 px-6 text-center">
-        <ImageIcon className="h-6 w-6 text-foreground/40" strokeWidth={1.5} />
-        <span className="text-[11px] uppercase tracking-[0.18em] text-foreground/50">{label}</span>
-        <span className="text-[10px] tracking-wide text-foreground/30">{name}</span>
-      </div>
-    </div>
+    <img
+      src={src}
+      alt={label}
+      loading="lazy"
+      className={cn("overflow-hidden bg-secondary object-cover", className)}
+    />
   );
 }

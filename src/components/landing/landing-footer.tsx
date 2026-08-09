@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
-import { Leaf, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { BrandMark } from "@/components/landing/brand-mark";
 
 export function LandingFooter() {
   return (
@@ -8,7 +8,7 @@ export function LandingFooter() {
         <div className="grid gap-10 md:grid-cols-3">
           <div>
             <div className="mb-4 flex items-center gap-2">
-              <Leaf className="h-4 w-4" strokeWidth={2} />
+              <BrandMark className="h-7 w-7" />
               <span className="text-sm font-semibold tracking-[-0.01em]">FreshTrack</span>
             </div>
             <p className="max-w-xs text-[12.5px] leading-relaxed text-background/70">
@@ -36,9 +36,9 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <Link to="/auth" className="hover:text-background">
+                <a href="#signin" className="hover:text-background">
                   Sign in
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

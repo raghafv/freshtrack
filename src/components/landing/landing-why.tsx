@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, IndianRupee, Sparkles, Smartphone } from "lucide-react";
 
 const POINTS = [
@@ -75,13 +74,13 @@ export function LandingWhy() {
           <p className="mx-auto mt-4 max-w-md text-[14.5px] leading-relaxed text-background/70">
             Create your free FreshTrack account and add your first item in under a minute.
           </p>
-          <Link
-            to="/auth"
+          <a
+            href="#signin"
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-7 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-90"
           >
             Get started free
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </a>
         </motion.div>
       </div>
     </section>

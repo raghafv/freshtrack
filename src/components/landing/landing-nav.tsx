@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { Leaf, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { BrandMark } from "@/components/landing/brand-mark";
 
 const NAV_ITEMS = [
   { label: "Features", href: "#features" },
@@ -36,7 +37,7 @@ export function LandingNav() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 lg:px-12">
         <Link to="/" className="flex items-center gap-2">
-          <Leaf className={`h-4 w-4 ${light ? "text-white" : "text-primary"}`} strokeWidth={2} />
+          <BrandMark className="h-7 w-7" />
           <span
             className={`text-sm font-semibold tracking-[-0.01em] ${light ? "text-white" : "text-foreground"}`}
           >
@@ -56,8 +57,8 @@ export function LandingNav() {
               {item.label}
             </a>
           ))}
-          <Link
-            to="/auth"
+          <a
+            href="#signin"
             className={`rounded-full border px-5 py-2 text-[11px] uppercase tracking-[0.16em] backdrop-blur-md transition-colors ${
               light
                 ? "border-white/30 bg-white/10 text-white hover:bg-white hover:text-foreground"
@@ -65,7 +66,7 @@ export function LandingNav() {
             }`}
           >
             Try FreshTrack
-          </Link>
+          </a>
         </div>
 
         <button
@@ -97,13 +98,13 @@ export function LandingNav() {
                 {item.label}
               </a>
             ))}
-            <Link
-              to="/auth"
+            <a
+              href="#signin"
               onClick={() => setMenuOpen(false)}
               className="mt-3 block rounded-full border border-white/30 bg-white/10 py-3 text-center text-[11px] uppercase tracking-[0.16em] text-white"
             >
               Try FreshTrack
-            </Link>
+            </a>
           </motion.div>
         )}
       </AnimatePresence>

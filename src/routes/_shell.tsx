@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Leaf, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { BrandMark } from "@/components/landing/brand-mark";
 import { BottomNav } from "@/components/layout";
 import { PushPrompt } from "@/components/push-prompt";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
@@ -23,9 +24,7 @@ function ShellLayout() {
   if (loading || !session) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
-        <span className="gradient-hero flex h-14 w-14 items-center justify-center rounded-2xl text-primary-foreground">
-          <Leaf className="h-7 w-7" />
-        </span>
+        <BrandMark className="h-14 w-14" />
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );

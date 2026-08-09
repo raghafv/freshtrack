@@ -4,11 +4,14 @@ import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingFeatures } from "@/components/landing/landing-features";
 import { LandingHowItWorks } from "@/components/landing/landing-how-it-works";
 import { LandingWhy } from "@/components/landing/landing-why";
+import { LandingSignIn } from "@/components/landing/landing-signin";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import socialImage from "@/assets/social_image.png.asset.json";
 
 const TITLE = "FreshTrack — Smart Pantry & Expiry Tracker for Indian Kitchens";
 const DESCRIPTION =
-  "Scan groceries, track every expiry date and cook recipes from what you already own. FreshTrack is the AI pantry assistant that helps households waste less food.";
+  "FreshTrack's AI cook writes a delicious recipe every day from the groceries you already own, while tracking every expiry date so nothing goes to waste.";
+const SOCIAL_IMAGE = `https://fresh-track.in${socialImage.url}`;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,6 +25,8 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: DESCRIPTION },
+      { property: "og:image", content: SOCIAL_IMAGE },
+      { name: "twitter:image", content: SOCIAL_IMAGE },
     ],
     links: [{ rel: "canonical", href: "https://fresh-track.in/" }],
     scripts: [
@@ -49,6 +54,7 @@ function LandingPage() {
         <LandingFeatures />
         <LandingHowItWorks />
         <LandingWhy />
+        <LandingSignIn />
       </main>
       <LandingFooter />
     </div>

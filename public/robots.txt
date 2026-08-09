@@ -12,5 +12,18 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /home
+Disallow: /pantry
+Disallow: /scanner
+Disallow: /recipes
+Disallow: /shopping
+Disallow: /assistant
+Disallow: /profile
+Disallow: /settings
+Disallow: /notifications
+Disallow: /analytics
+Disallow: /admin
+Disallow: /reset-password
+Disallow: /lovable/
 
 Sitemap: https://fresh-track.in/sitemap.xml
