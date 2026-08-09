@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "FreshTrack — Your pantry, Smarter" },
+      { title: "FreshTrack — Your Pantry, Smarter." },
       {
         name: "description",
         content:
@@ -92,8 +92,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "FreshTrack" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "FreshTrack — Your pantry, Smarter" },
-      { name: "twitter:title", content: "FreshTrack — Your pantry, Smarter" },
+      { property: "og:title", content: "FreshTrack — Your Pantry, Smarter." },
+      { name: "twitter:title", content: "FreshTrack — Your Pantry, Smarter." },
       {
         property: "og:description",
         content:
