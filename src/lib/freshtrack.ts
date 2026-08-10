@@ -82,7 +82,13 @@ export interface UserSettings {
   expiry_reminder_days: number;
   default_storage: string;
   default_unit: string;
+  /** Independent notification switches, all on by default. */
+  notify_expiry: boolean;
+  notify_expired: boolean;
+  notify_low_stock: boolean;
+  notify_recipe: boolean;
 }
+
 
 /** Typical shelf life in days by category and storage location. */
 const SHELF_LIFE: Record<string, Record<StorageType, number>> = {
