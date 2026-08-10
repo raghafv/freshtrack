@@ -18,7 +18,7 @@ function ShellLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", replace: true });
+    if (!loading && !session) navigate({ to: "/", replace: true });
   }, [loading, session, navigate]);
 
   if (loading || !session) {
