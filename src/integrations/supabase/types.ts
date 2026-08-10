@@ -104,6 +104,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_recipes: {
+        Row: {
+          created_at: string
+          id: string
+          recipe: Json
+          recipe_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipe: Json
+          recipe_date: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipe?: Json
+          recipe_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -490,14 +517,19 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          assistant_blocked_until: string | null
+          assistant_offtopic_count: number
           created_at: string
           default_storage: string
           default_unit: string
           expiry_reminder_days: number
           notifications_enabled: boolean
           notify_added: boolean
+          notify_expired: boolean
           notify_expiry: boolean
+          notify_low_stock: boolean
           notify_merged: boolean
+          notify_recipe: boolean
           notify_shopping: boolean
           notify_system: boolean
           theme: string
@@ -505,14 +537,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assistant_blocked_until?: string | null
+          assistant_offtopic_count?: number
           created_at?: string
           default_storage?: string
           default_unit?: string
           expiry_reminder_days?: number
           notifications_enabled?: boolean
           notify_added?: boolean
+          notify_expired?: boolean
           notify_expiry?: boolean
+          notify_low_stock?: boolean
           notify_merged?: boolean
+          notify_recipe?: boolean
           notify_shopping?: boolean
           notify_system?: boolean
           theme?: string
@@ -520,14 +557,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assistant_blocked_until?: string | null
+          assistant_offtopic_count?: number
           created_at?: string
           default_storage?: string
           default_unit?: string
           expiry_reminder_days?: number
           notifications_enabled?: boolean
           notify_added?: boolean
+          notify_expired?: boolean
           notify_expiry?: boolean
+          notify_low_stock?: boolean
           notify_merged?: boolean
+          notify_recipe?: boolean
           notify_shopping?: boolean
           notify_system?: boolean
           theme?: string
