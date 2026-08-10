@@ -204,7 +204,7 @@ export const suggestRecipes = createServerFn({ method: "POST" })
 
     const focus =
       chosen.length > 0
-        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. Centre it on these ingredients, even if some are not currently in the pantry — mark those as missing.`
+        ? `\nThe user chose these ingredients: ${chosen.join(", ")}. Build the dish STRICTLY around them — use ONLY these ingredients plus salt, water, oil and common spices, and do NOT pull in any other pantry item. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. If something essential is genuinely missing, keep the dish and list it as a substitution rather than adding unrelated pantry items.`
         : "\nSurprise the user with 4-5 varied dishes.";
 
     const parsed = await generateAIResponse("recipes", [
