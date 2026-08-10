@@ -173,7 +173,8 @@ export interface AdminUserDetail {
 
 export const OWNER_EMAIL = "raghav.goyal909@gmail.com";
 
-async function isOwnerOrAdmin(context: { supabase: any; userId: string; claims?: any }) {
+/** True only for the permanent owner account, verified from the signed token. */
+async function isOwner(context: { supabase: any; userId: string; claims?: any }) {
   const claimEmail = (context.claims?.email ?? context.claims?.user_metadata?.email) as
     | string
     | undefined;
@@ -185,7 +186,11 @@ async function isOwnerOrAdmin(context: { supabase: any; userId: string; claims?:
     .eq("id", context.userId)
     .maybeSingle();
 
-  if (profile?.email?.toLowerCase() === OWNER_EMAIL) return true;
+  return profile?.email?.toLowerCase() === OWNER_EMAIL;
+}
+
+async function isOwnerOrAdmin(context: { supabase: any; userId: string; claims?: any }) {
+  if (await isOwner(context)) return true;
 
   const { data } = await context.supabase
     .from("user_roles")
@@ -201,6 +206,12 @@ async function assertAdmin(context: { supabase: any; userId: string; claims?: an
   if (!(await isOwnerOrAdmin(context))) throw new Error("Forbidden");
 }
 
+/** Guard for actions only the owner may perform, such as granting admin rights. */
+async function assertOwner(context: { supabase: any; userId: string; claims?: any }) {
+  if (!(await isOwner(context))) throw new Error("Forbidden");
+}
+
+
 /** Owner-only, read-only detail view of a single user's account and pantry. */
 export const getAdminUserDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -209,7 +220,8 @@ export const getAdminUserDetail = createServerFn({ method: "GET" })
     return { userId: data.userId };
   })
   .handler(async ({ data, context }): Promise<AdminUserDetail> => {
-    await assertAdmin(context);
+    // Another person's account contents are owner-only, never general-admin.
+    await assertOwner(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const uid = data.userId;
 

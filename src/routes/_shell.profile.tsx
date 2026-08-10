@@ -187,7 +187,7 @@ function ProfilePage() {
         className="press h-12 w-full rounded-2xl text-destructive"
         onClick={async () => {
           await signOut();
-          navigate({ to: "/auth", replace: true });
+          navigate({ to: "/", replace: true });
         }}
       >
         <LogOut className="h-4 w-4" /> Log out

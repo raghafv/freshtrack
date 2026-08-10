@@ -204,7 +204,7 @@ export const suggestRecipes = createServerFn({ method: "POST" })
 
     const focus =
       chosen.length > 0
-        ? `\nThe user specifically wants to cook with: ${chosen.join(", ")}. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. Centre it on these ingredients, even if some are not currently in the pantry — mark those as missing.`
+        ? `\nThe user chose these ingredients: ${chosen.join(", ")}. Build the dish STRICTLY around them — use ONLY these ingredients plus salt, water, oil and common spices, and do NOT pull in any other pantry item. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. If something essential is genuinely missing, keep the dish and list it as a substitution rather than adding unrelated pantry items.`
         : "\nSurprise the user with 4-5 varied dishes.";
 
     const parsed = await generateAIResponse("recipes", [
@@ -219,6 +219,59 @@ export const suggestRecipes = createServerFn({ method: "POST" })
 
     return { recipes };
   });
+
+/** Calendar date in India Standard Time — the daily recipe rolls over at 00:00 IST. */
+function istDate(): string {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/**
+ * Tonight's recommendation. Generated once per IST day and stored, so it is the
+ * same dish on every device and after the app is closed — until midnight India
+ * time, when a new one is produced.
+ */
+export const getDailyRecipe = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ recipe: PantryRecipe | null }> => {
+    const supabase = context.supabase as unknown as SupabaseLike;
+    const day = istDate();
+
+    const existing = await supabase
+      .from("daily_recipes")
+      .select("recipe")
+      .eq("recipe_date", day)
+      .maybeSingle();
+    const stored = (existing as { data?: { recipe?: unknown } | null }).data?.recipe;
+    if (stored) return { recipe: stored as PantryRecipe };
+
+    const ctx = await loadPantryContext(supabase);
+    if (ctx.items.length === 0) return { recipe: null };
+
+    const parsed = await generateAIResponse("recipes", [
+      { role: "system", content: pantrySystemPrompt(ctx) },
+      {
+        role: "user",
+        content:
+          recipeRequest +
+          "\nReturn EXACTLY ONE outstanding dinner recipe for tonight, prioritising the ingredients closest to expiry. Make it richly detailed with exact measurements and numbered steps.",
+      },
+    ]);
+
+    const recipe = normalizeRecipes(parsed)[0] ?? null;
+    await logUsage("recipes", context.userId, JSON.stringify(recipe ?? {}).length);
+    if (!recipe) return { recipe: null };
+
+    await supabase
+      .from("daily_recipes")
+      .upsert(
+        { user_id: context.userId, recipe_date: day, recipe: recipe as unknown as never },
+        { onConflict: "user_id,recipe_date" },
+      );
+
+    return { recipe };
+  });
+
+
 
 
 /** Auto-generate a shopping list from pantry gaps, without duplicating what you own. */

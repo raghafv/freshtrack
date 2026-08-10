@@ -14,7 +14,7 @@ import {
   useShoppingItems,
   useShoppingMutations,
 } from "@/lib/data";
-import { suggestRecipes } from "@/lib/ai.functions";
+import { getDailyRecipe } from "@/lib/ai.functions";
 import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
 import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
@@ -313,7 +313,7 @@ function SectionHeading({
  * shown with a beautiful dish photo. Tap to reveal the full method.
  */
 function TonightCard({ hasPantry }: { hasPantry: boolean }) {
-  const generate = useServerFn(suggestRecipes);
+  const generate = useServerFn(getDailyRecipe);
   const navigate = useNavigate();
   const { save } = useRecipeMutations();
   const [open, setOpen] = useState(false);
@@ -322,14 +322,15 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
 
   const { data, isLoading } = useQuery({
     queryKey: ["tonight-recipe", today],
-    queryFn: () => generate({ data: { mode: "surprise", ingredients: [] } }),
+    queryFn: () => generate({}),
     enabled: hasPantry,
     staleTime: Infinity,
     gcTime: Infinity,
     retry: false,
   });
 
-  const recipe = data?.recipes?.[0];
+  const recipe = data?.recipe;
+
 
   if (!hasPantry) {
     return (

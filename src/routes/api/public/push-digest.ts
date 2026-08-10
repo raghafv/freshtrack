@@ -44,18 +44,23 @@ export const Route = createFileRoute("/api/public/push-digest")({
               .order("expiry_date", { ascending: true }),
             supabaseAdmin
               .from("user_settings")
-              .select("expiry_reminder_days, notifications_enabled")
+              .select(
+                "expiry_reminder_days, notifications_enabled, notify_expiry, notify_expired",
+              )
               .eq("user_id", userId)
               .maybeSingle(),
           ]);
 
           if (settings && settings.notifications_enabled === false) continue;
           const window = settings?.expiry_reminder_days ?? 3;
+          const wantsSoon = settings?.notify_expiry ?? true;
+          const wantsExpired = settings?.notify_expired ?? true;
 
           const rows = (items ?? []).map((i) => ({ ...i, left: daysUntil(i.expiry_date) }));
-          const expired = rows.filter((r) => r.left < 0);
-          const soon = rows.filter((r) => r.left >= 0 && r.left <= window);
+          const expired = wantsExpired ? rows.filter((r) => r.left < 0) : [];
+          const soon = wantsSoon ? rows.filter((r) => r.left >= 0 && r.left <= window) : [];
           if (expired.length === 0 && soon.length === 0) continue;
+
 
           const headline = soon[0] ?? expired[0];
           const body =
