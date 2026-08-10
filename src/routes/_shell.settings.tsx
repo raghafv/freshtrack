@@ -92,7 +92,7 @@ function SettingsPage() {
       <Section icon={Bell} title="Notifications">
         <div className="flex items-center justify-between">
           <Label htmlFor="notif" className="text-sm">
-            Expiry reminders
+            Notifications
           </Label>
           <Switch
             id="notif"
@@ -100,6 +100,30 @@ function SettingsPage() {
             onCheckedChange={(v) => update.mutate({ notifications_enabled: v })}
           />
         </div>
+
+        <div className="mt-4 grid gap-3 border-t border-border/60 pt-4">
+          {(
+            [
+              { key: "notify_expiry", label: "Expiring soon" },
+              { key: "notify_expired", label: "Already expired" },
+              { key: "notify_low_stock", label: "Running low" },
+              { key: "notify_recipe", label: "Daily recipe idea" },
+            ] as const
+          ).map((row) => (
+            <div key={row.key} className="flex items-center justify-between">
+              <Label htmlFor={row.key} className="text-sm font-normal text-muted-foreground">
+                {row.label}
+              </Label>
+              <Switch
+                id={row.key}
+                disabled={settings?.notifications_enabled === false}
+                checked={settings?.[row.key] ?? true}
+                onCheckedChange={(v) => update.mutate({ [row.key]: v })}
+              />
+            </div>
+          ))}
+        </div>
+
         <div className="mt-4 grid gap-2">
           <Label className="text-sm">Remind me before expiry</Label>
           <Select
