@@ -66,7 +66,7 @@ function SettingsPage() {
       await removeAccount({ data: undefined });
       await signOut();
       toast.success("Account deleted");
-      navigate({ to: "/auth", replace: true });
+      navigate({ to: "/", replace: true });
     } catch (e) {
       toast.error(friendlyMessage(e, "Could not delete account"));
     } finally {
