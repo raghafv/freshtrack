@@ -14,7 +14,7 @@ import {
   useShoppingItems,
   useShoppingMutations,
 } from "@/lib/data";
-import { suggestRecipes } from "@/lib/ai.functions";
+import { getDailyRecipe } from "@/lib/ai.functions";
 import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
 import { generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
