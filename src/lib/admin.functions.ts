@@ -220,7 +220,8 @@ export const getAdminUserDetail = createServerFn({ method: "GET" })
     return { userId: data.userId };
   })
   .handler(async ({ data, context }): Promise<AdminUserDetail> => {
-    await assertAdmin(context);
+    // Another person's account contents are owner-only, never general-admin.
+    await assertOwner(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const uid = data.userId;
 
