@@ -153,20 +153,7 @@ The long-term vision for FreshTrack isn't just an app you remember to open — i
   <img src="docs/freshtrack-device-concept.jpg" alt="FreshTrack fridge camera device concept" width="800">
 </p>
 
-**See. Track. Save.** A small magnetic camera mounts to the inside of your fridge door. Bring an item in front of it — add or remove, your call — and it scans and updates your inventory automatically. No phone, no manual entry, no forgetting to log what you just used.
 
-| | |
-|---|---|
-| **Camera** | 2MP, 120° FOV |
-| **Night Vision** | IR LEDs |
-| **Processor** | Raspberry Pi Zero 2 W |
-| **Connectivity** | Wi-Fi 2.4GHz |
-| **Power** | 5V / 2A (USB-C), ~2.5W |
-| **Dimensions** | 90 × 60 × 28 mm |
-| **Mounting** | Magnetic |
-| **Storage** | Cloud sync via the FreshTrack app |
-
-This isn't just a concept sitting in a deck — the groundwork is already in the app today. Open the scanner and you'll find a **"Fridge Device"** tab that simulates exactly this flow: intake arriving from a paired camera, writing straight into the same pantry as every other scan method. When the hardware ships, it plugs into infrastructure that already exists.
 
 ---
 
