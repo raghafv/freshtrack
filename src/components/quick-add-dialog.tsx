@@ -114,6 +114,8 @@ export function QuickAddDialog({
   // The suggested date is only a starting point — the user can override it, and
   // it re-syncs whenever the product, storage or purchase date changes.
   const [expiry, setExpiry] = useState("");
+  /** Optional rupee value of the item, used for waste-cost insights. */
+  const [price, setPrice] = useState("");
   useEffect(() => {
     setExpiry(suggestedExpiry);
   }, [suggestedExpiry]);
