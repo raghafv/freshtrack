@@ -287,6 +287,7 @@ function AdminPage() {
             </div>
           </section>
 
+          {ownerData?.owner ? <AdminRolesPanel /> : null}
         </div>
       ) : null}
     </PageContainer>
