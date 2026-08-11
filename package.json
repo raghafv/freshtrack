@@ -12,7 +12,6 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.20.0",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/email-js": "0.1.0",
     "@lovable.dev/webhooks-js": "^0.0.1",
