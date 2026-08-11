@@ -119,11 +119,13 @@ export default function ScanWithModel() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-xl font-semibold">Scan with My Model</h1>
-          <p className="text-sm text-muted-foreground">
-            Uses our own trained freshness model — point at a fruit or vegetable.
-          </p>
-        </div>
+          <h1 className="text-xl font-semibold">Add using My AI Model</h1>
+  <p className="text-sm text-muted-foreground">
+    Uses our self-trained AI model to detect freshness.
+  </p>
+  <p className="mt-1 text-xs text-muted-foreground">
+    Works with: Apple, Banana, Bellpepper, Carrot, Cucumber, Grape, Guava, Jujube, Mango, Orange, Pomegranate, Potato, Strawberry, Tomato (healthy or rotten).
+  </p>
       </div>
 
       <ScanCamera
