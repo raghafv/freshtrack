@@ -127,6 +127,7 @@ export default function ScanWithModel() {
     Works with: Apple, Banana, Bellpepper, Carrot, Cucumber, Grape, Guava, Jujube, Mango, Orange, Pomegranate, Potato, Strawberry, Tomato (healthy or rotten).
   </p>
       </div>
+    </div>    
 
       <ScanCamera
         mode="photo"
