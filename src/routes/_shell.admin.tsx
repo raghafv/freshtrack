@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { ArrowLeft, Loader2, ShieldCheck, UserMinus, UserPlus } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -12,8 +14,10 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/layout";
-import { getAdminOverview } from "@/lib/admin.functions";
+import { friendlyMessage } from "@/lib/errors";
+import { amIOwner, getAdminOverview, listAdmins, setAdminByEmail } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_shell/admin")({
   head: () => ({
@@ -43,9 +47,100 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
   );
 }
 
+/** Owner-only: hand out or take back the admin role by email address. */
+function AdminRolesPanel() {
+  const qc = useQueryClient();
+  const fetchAdmins = useServerFn(listAdmins);
+  const setAdmin = useServerFn(setAdminByEmail);
+  const [email, setEmail] = useState("");
+
+  const { data } = useQuery({
+    queryKey: ["admin-roles"],
+    queryFn: () => fetchAdmins({}),
+  });
+
+  const mutate = useMutation({
+    mutationFn: (vars: { email: string; grant: boolean }) => setAdmin({ data: vars }),
+    onSuccess: (res) => {
+      toast.success(res.message);
+      setEmail("");
+      qc.invalidateQueries({ queryKey: ["admin-roles"] });
+    },
+    onError: (e) => toast.error(friendlyMessage(e, "Could not update admin access")),
+  });
+
+  return (
+    <section className="surface-card p-5">
+      <h2 className="mb-1 text-sm font-semibold tracking-tight">Admin access</h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Owner only — grant or remove the admin role for any FreshTrack account.
+      </p>
+
+      <div className="flex gap-2">
+        <Input
+          type="email"
+          value={email}
+          placeholder="person@example.com"
+          className="h-11 rounded-xl"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Button
+          className="h-11 shrink-0 rounded-xl"
+          disabled={!email.trim() || mutate.isPending}
+          onClick={() => mutate.mutate({ email, grant: true })}
+        >
+          {mutate.isPending && mutate.variables?.grant ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <UserPlus className="h-4 w-4" />
+          )}
+          Grant
+        </Button>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {(data?.admins ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground">No admins yet.</p>
+        ) : (
+          data?.admins.map((a) => (
+            <div
+              key={a.user_id}
+              className="flex items-center justify-between gap-3 rounded-2xl bg-muted/40 px-4 py-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {a.full_name || a.email || a.user_id.slice(0, 8)}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {a.email}
+                  {a.is_owner ? " · owner" : ""}
+                </p>
+              </div>
+              {!a.is_owner && a.email ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0 rounded-xl text-destructive"
+                  disabled={mutate.isPending}
+                  onClick={() => mutate.mutate({ email: a.email as string, grant: false })}
+                >
+                  <UserMinus className="h-4 w-4" /> Remove
+                </Button>
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+
 function AdminPage() {
   const navigate = useNavigate();
   const fetchOverview = useServerFn(getAdminOverview);
+  const fetchOwner = useServerFn(amIOwner);
+  const { data: ownerData } = useQuery({ queryKey: ["am-i-owner"], queryFn: () => fetchOwner({}) });
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-overview"],
     queryFn: () => fetchOverview({}),
@@ -192,6 +287,7 @@ function AdminPage() {
             </div>
           </section>
 
+          {ownerData?.owner ? <AdminRolesPanel /> : null}
         </div>
       ) : null}
     </PageContainer>

@@ -104,7 +104,8 @@ export function pantrySystemPrompt(ctx: PantryContext) {
     '- add items the user says they ALREADY HAVE / bought / want stored in the PANTRY -> "pantryAdds": [{"name":"","quantity":1,"unit":"pcs","category":"","storage":"Fridge|Freezer|Pantry","shelfLifeDays":7}]',
     "IMPORTANT: whenever the user asks you to add something ('add milk', 'put eggs on my list', 'I bought 2 kg rice'), you MUST fill the matching array — never reply that you added something without returning it. Add to shoppingAdds even if a similar item already exists in the pantry.",
     "Never claim you removed or added something unless you returned it in the matching array.",
-    'Reply with JSON only: {"reply":"markdown answer","shoppingAdds":[],"pantryAdds":[],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
+    'Reply with JSON only: {"reply":"markdown answer","offTopic":false,"shoppingAdds":[],"pantryAdds":[],"shoppingRemoves":[],"clearShopping":false,"shoppingChecked":[]}.',
+    'offTopic: set it to true ONLY when you had to decline because the question was outside the food/pantry/cooking scope. Otherwise always false.',
     "All action fields default to empty/false — only fill them when the user actually asked for that change.",
 
   ].join("\n");
@@ -129,6 +130,44 @@ export const recipeRequest = [
   'Reply with JSON only: {"recipes":[{"title":"","description":"","cuisine":"","difficulty":"Easy","servings":2,"prepMinutes":10,"cookMinutes":20,"minutes":30,"ingredients":[{"name":"","amount":"200 g","inPantry":true}],"equipment":[""],"uses":[""],"priority":[""],"steps":["",""],"tips":[""],"storageAdvice":"","nutrition":"","substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
   'uses: pantry item names used. priority: the expiring items this recipe rescues. inPantry: false only for salt/oil/spice style basics. substitutions: [] when nothing is missing. savesWaste: what this rescues, e.g. "uses 250 g spinach expiring in 1 day".',
 ].join("\n");
+
+
+/** Cheap "Surprise me" call: dish names + a one-liner, no recipe body. */
+export const ideasRequest = [
+  "Suggest 5 dishes I could cook right now from my pantry, prioritising the ingredients with the smallest days_left.",
+  "Do NOT write the recipe, steps, measurements or ingredient lists — only the dish name and one short appetising line.",
+  'Reply with JSON only: {"ideas":[{"title":"","oneLiner":"","uses":["pantry item"]}]}, exactly 4-5 entries.',
+].join("\n");
+
+/** Detailed prompt for one specific dish the user picked from the ideas list. */
+export function dishRecipeRequest(dish: string) {
+  return `\nWrite EXACTLY ONE recipe (the "recipes" array must contain a single object) for this dish: "${dish}". Make it insanely detailed: rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition.`;
+}
+
+export interface DishIdea {
+  title: string;
+  oneLiner: string;
+  uses: string[];
+}
+
+export function normalizeIdeas(parsed: Record<string, unknown>): DishIdea[] {
+  const raw = Array.isArray(parsed.ideas) ? parsed.ideas : [];
+  const seen = new Set<string>();
+  return raw
+    .map((entry) => {
+      const o = entry as Record<string, unknown>;
+      const title = String(o.title ?? "").trim();
+      if (!title || seen.has(title.toLowerCase())) return null;
+      seen.add(title.toLowerCase());
+      return {
+        title,
+        oneLiner: String(o.oneLiner ?? o.description ?? "").trim(),
+        uses: Array.isArray(o.uses) ? o.uses.map(String).slice(0, 5) : [],
+      };
+    })
+    .filter((v): v is DishIdea => v !== null)
+    .slice(0, 5);
+}
 
 
 export const shoppingRequest = [

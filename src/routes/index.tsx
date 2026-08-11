@@ -10,9 +10,9 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 import { useAuth } from "@/lib/auth";
 import socialImage from "@/assets/social_image.png.asset.json";
 
-const TITLE = "FreshTrack — AI Pantry Tracker & Recipe Cook for Indian Kitchens";
+const TITLE = "FreshTrack — AI Pantry & Recipe Tracker for India";
 const DESCRIPTION =
-  "FreshTrack tracks every grocery expiry date and its AI cook writes a fresh, step-by-step recipe each day from the food you already own — so nothing goes to waste.";
+  "FreshTrack tracks grocery expiry and its AI cook writes fresh recipes from the food you already own — so nothing goes to waste.";
 const SOCIAL_IMAGE = `https://fresh-track.in${socialImage.url}`;
 
 export const Route = createFileRoute("/")({

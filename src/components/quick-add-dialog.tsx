@@ -114,6 +114,8 @@ export function QuickAddDialog({
   // The suggested date is only a starting point — the user can override it, and
   // it re-syncs whenever the product, storage or purchase date changes.
   const [expiry, setExpiry] = useState("");
+  /** Optional rupee value of the item, used for waste-cost insights. */
+  const [price, setPrice] = useState("");
   useEffect(() => {
     setExpiry(suggestedExpiry);
   }, [suggestedExpiry]);
@@ -141,7 +143,7 @@ export function QuickAddDialog({
         storage,
         image_url: null,
         source: "quick-add",
-        price: null,
+        price: price.trim() && Number.isFinite(Number(price)) ? Number(price) : null,
       });
       persist(recordAdd(store, selected.id));
       if (result) {
@@ -295,6 +297,20 @@ export function QuickAddDialog({
                     ? `${expiryText(expiry)} — edit it if the pack says otherwise.`
                     : "Pick the best-before date from the pack."}
                 </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="qa-price">Value ₹ (optional)</Label>
+                <Input
+                  id="qa-price"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  placeholder="e.g. 120"
+                  className="h-11"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
               </div>
 
               {unusual && (

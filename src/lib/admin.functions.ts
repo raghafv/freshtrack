@@ -211,6 +211,92 @@ async function assertOwner(context: { supabase: any; userId: string; claims?: an
   if (!(await isOwner(context))) throw new Error("Forbidden");
 }
 
+/** True only for the permanent owner — unlocks the role-management panel. */
+export const amIOwner = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ owner: boolean }> => {
+    return { owner: await isOwner(context) };
+  });
+
+export interface AdminRoleRow {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  is_owner: boolean;
+}
+
+/** Owner-only: everyone who currently holds the admin role. */
+export const listAdmins = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ admins: AdminRoleRow[] }> => {
+    await assertOwner(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    const ids = (roles ?? []).map((r) => r.user_id);
+    if (ids.length === 0) return { admins: [] };
+
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, full_name")
+      .in("id", ids);
+
+    return {
+      admins: ids.map((id) => {
+        const p = (profiles ?? []).find((x) => x.id === id);
+        return {
+          user_id: id,
+          email: p?.email ?? null,
+          full_name: p?.full_name ?? null,
+          is_owner: (p?.email ?? "").toLowerCase() === OWNER_EMAIL,
+        };
+      }),
+    };
+  });
+
+/** Owner-only: grant or revoke the admin role for an account, by email. */
+export const setAdminByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string; grant: boolean }) => {
+    const email = String(data?.email ?? "").trim().toLowerCase();
+    if (!email || !email.includes("@")) throw new Error("Enter a valid email address");
+    return { email, grant: Boolean(data?.grant) };
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true; message: string }> => {
+    await assertOwner(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email")
+      .ilike("email", data.email)
+      .maybeSingle();
+
+    if (!profile) throw new Error("No FreshTrack account uses that email address.");
+    if (data.email === OWNER_EMAIL && !data.grant) {
+      throw new Error("The owner account cannot lose admin access.");
+    }
+
+    if (data.grant) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: profile.id, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw new Error("Could not grant admin access.");
+      return { ok: true, message: `${data.email} is now an admin.` };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", profile.id)
+      .eq("role", "admin");
+    if (error) throw new Error("Could not remove admin access.");
+    return { ok: true, message: `${data.email} is no longer an admin.` };
+  });
+
 
 /** Owner-only, read-only detail view of a single user's account and pantry. */
 export const getAdminUserDetail = createServerFn({ method: "GET" })
