@@ -32,7 +32,51 @@ import {
   type SavedRecipe,
 } from "@/lib/data";
 import { expiryText, getStatus } from "@/lib/freshtrack";
-import { suggestRecipes, type PantryRecipe } from "@/lib/ai.functions";
+import {
+  suggestDishIdeas,
+  suggestRecipes,
+  type DishIdea,
+  type PantryRecipe,
+} from "@/lib/ai.functions";
+import { useDishImage } from "@/lib/dish-image";
+
+/** One "Surprise me" suggestion — name, one-liner and a matching dish photo. */
+function DishIdeaCard({
+  idea,
+  busy,
+  disabled,
+  onCook,
+}: {
+  idea: DishIdea;
+  busy: boolean;
+  disabled: boolean;
+  onCook: () => void;
+}) {
+  const photo = useDishImage(idea.title);
+  return (
+    <li className="surface-card overflow-hidden">
+      <img src={photo} alt="" aria-hidden className="h-32 w-full object-cover" />
+      <div className="p-5">
+        <h3 className="text-[16px] font-semibold tracking-[-0.02em]">{idea.title}</h3>
+        {idea.oneLiner && (
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{idea.oneLiner}</p>
+        )}
+        {idea.uses.length > 0 && (
+          <p className="mt-2 text-[12px] text-muted-foreground">Uses {idea.uses.join(", ")}</p>
+        )}
+        <Button
+          className="press mt-4 h-11 w-full rounded-2xl"
+          disabled={disabled}
+          onClick={onCook}
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChefHat className="h-4 w-4" />}
+          Cook this
+        </Button>
+      </div>
+    </li>
+  );
+}
+
 
 export const Route = createFileRoute("/_shell/recipes")({
   head: () => ({
@@ -123,10 +167,25 @@ function RecipesPage() {
   const pantryNames = useMemo(() => new Set(items.map((i) => i.name.toLowerCase())), [items]);
 
   const gen = useMutation({
-    mutationFn: (vars: { mode: "surprise" | "selected"; ingredients: string[] }) =>
+    mutationFn: (vars: { mode: "surprise" | "selected"; ingredients: string[]; dish?: string }) =>
       suggestRecipes({ data: vars }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-recipes"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["saved-recipes"] });
+      requestAnimationFrame(() =>
+        featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    },
     onError: (e) => toast.error(friendlyMessage(e, "Could not generate recipes")),
+  });
+
+  const [ideas, setIdeas] = useState<DishIdea[]>([]);
+  const ideasMut = useMutation({
+    mutationFn: () => suggestDishIdeas({}),
+    onSuccess: (res) => {
+      setIdeas(res.ideas);
+      if (res.ideas.length === 0) toast.info("Add a few pantry items and I'll suggest dishes.");
+    },
+    onError: (e) => toast.error(friendlyMessage(e, "Could not fetch ideas")),
   });
 
   const [handoff, setHandoff] = useState<PantryRecipe | null>(null);
@@ -150,7 +209,7 @@ function RecipesPage() {
   const recipes = handoff
     ? [handoff, ...generated.filter((r) => r.title !== handoff.title)]
     : generated;
-  const featured = recipes[0];
+
 
   function addIngredient(raw: string) {
     const name = raw.trim().replace(/,+$/, "");
@@ -277,8 +336,14 @@ function RecipesPage() {
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <Button
             className="press h-13 min-h-12 rounded-2xl"
-            disabled={chosen.length === 0 || gen.isPending}
-            onClick={() => gen.mutate({ mode: "selected", ingredients: chosen })}
+            disabled={gen.isPending}
+            onClick={() => {
+              if (chosen.length < 3) {
+                toast.error("Please pick at least 3 ingredients!");
+                return;
+              }
+              gen.mutate({ mode: "selected", ingredients: chosen });
+            }}
           >
             {gen.isPending && gen.variables?.mode === "selected" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -290,10 +355,10 @@ function RecipesPage() {
           <Button
             variant="secondary"
             className="press h-13 min-h-12 rounded-2xl"
-            disabled={gen.isPending}
-            onClick={() => gen.mutate({ mode: "surprise", ingredients: [] })}
+            disabled={gen.isPending || ideasMut.isPending}
+            onClick={() => ideasMut.mutate()}
           >
-            {gen.isPending && gen.variables?.mode === "surprise" ? (
+            {ideasMut.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Shuffle className="h-4 w-4" />
@@ -301,38 +366,37 @@ function RecipesPage() {
             Surprise me
           </Button>
         </div>
+        {chosen.length > 0 && chosen.length < 3 && (
+          <p className="mt-3 text-[12.5px] text-muted-foreground">
+            Please pick at least 3 ingredients!
+          </p>
+        )}
+
       </section>
 
-      {/* Featured recommendation */}
-      {featured && (
-        <section ref={featuredRef} className="animate-fade-up mb-9 scroll-mt-4">
-          <div className="gradient-hero rounded-[2rem] p-7 text-primary-foreground shadow-lift">
-            <p className="text-[11.5px] font-medium uppercase tracking-[0.16em] opacity-70">
-              Tonight's recommendation
-            </p>
-            <h3 className="mt-2 text-[26px] font-bold leading-tight tracking-[-0.03em]">
-              {featured.title}
-            </h3>
-            {featured.uses.length > 0 && (
-              <ul className="mt-4 space-y-1.5">
-                {featured.uses.slice(0, 4).map((u) => (
-                  <li key={u} className="text-[13.5px] opacity-90">
-                    ✓ {u}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {!focusMode && (
-              <a
-                href="#new-ideas"
-                className="press mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground px-5 py-2.5 text-[13.5px] font-semibold text-primary"
-              >
-                Cook <ArrowRight className="h-4 w-4" />
-              </a>
-            )}
-          </div>
+      {/* Surprise me — lightweight dish ideas, full recipe only on demand */}
+      {!focusMode && ideas.length > 0 && (
+        <section className="animate-fade-up mb-9">
+          <h2 className="mb-4 text-[19px] font-semibold tracking-[-0.025em]">
+            Ideas from your pantry
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {ideas.map((idea) => (
+              <DishIdeaCard
+                key={idea.title}
+                idea={idea}
+                busy={gen.isPending && gen.variables?.dish === idea.title}
+                disabled={gen.isPending}
+                onCook={() => {
+                  setIdeas([]);
+                  gen.mutate({ mode: "surprise", ingredients: [], dish: idea.title });
+                }}
+              />
+            ))}
+          </ul>
         </section>
       )}
+
 
       {!focusMode && priority.length > 0 && (
         <section className="surface-card mb-9 p-6">
@@ -356,7 +420,7 @@ function RecipesPage() {
       )}
 
       {recipes.length > 0 && (
-        <section id="new-ideas" className="mb-10">
+        <section id="new-ideas" ref={featuredRef} className="mb-10 scroll-mt-4">
           {!focusMode && (
             <h2 className="mb-4 text-[19px] font-semibold tracking-[-0.025em]">
               New ideas — save the ones you love
@@ -564,8 +628,11 @@ function RecipeCard({
   saving: boolean;
   onSave: () => void;
 }) {
+  const photo = useDishImage(recipe.title);
   return (
-    <li className="surface-card animate-fade-up p-6">
+    <li className="surface-card animate-fade-up overflow-hidden">
+      <img src={photo} alt="" aria-hidden className="h-40 w-full object-cover" />
+      <div className="p-6">
       <div className="mb-3 flex items-start justify-between gap-3">
         <h3 className="text-[20px] font-semibold leading-snug tracking-[-0.025em]">
           {recipe.title}
@@ -714,6 +781,7 @@ function RecipeCard({
       )}
 
       {recipe.note && <p className="mt-3 text-[12.5px] text-muted-foreground">{recipe.note}</p>}
+      </div>
     </li>
   );
 }

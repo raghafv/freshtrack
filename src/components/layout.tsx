@@ -10,8 +10,8 @@ const LEFT = [
 ] as const;
 
 const RIGHT = [
-  { to: "/assistant", label: "Assistant", icon: Sparkles },
   { to: "/recipes", label: "Recipes", icon: ChefHat },
+  { to: "/assistant", label: "Assistant", icon: Sparkles },
 ] as const;
 
 function NavLink({

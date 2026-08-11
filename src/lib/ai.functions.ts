@@ -3,8 +3,11 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateAIResponse, getProviderLogs } from "./ai-service.server";
 import {
+  dishRecipeRequest,
   historyMessages,
+  ideasRequest,
   loadPantryContext,
+  normalizeIdeas,
   normalizeNameList,
   normalizeRecipes,
   normalizePantryAdds,
@@ -13,8 +16,12 @@ import {
   pantrySystemPrompt,
   recipeRequest,
   shoppingRequest,
+  type DishIdea,
   type SupabaseLike,
 } from "./ai-pantry.server";
+
+export type { DishIdea };
+
 
 export type {
   AssistantReply,
@@ -47,6 +54,9 @@ async function logUsage(feature: string, userId: string | null, chars: number) {
 
 const AskInput = z.object({ question: z.string().min(1).max(1000) });
 
+/** How many off-topic questions in a row before the assistant takes a break. */
+const OFFTOPIC_LIMIT = 4;
+const COOLDOWN_MINUTES = 15;
 
 /** Natural-language pantry assistant grounded in the user's live pantry. */
 export const askAssistant = createServerFn({ method: "POST" })
@@ -54,6 +64,31 @@ export const askAssistant = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => AskInput.parse(input))
   .handler(async ({ data, context }): Promise<AssistantReply> => {
     const supabase = context.supabase as unknown as SupabaseLike;
+
+    // ---- abuse throttle ----------------------------------------------------
+    const { data: settingsRow } = await supabase
+      .from("user_settings")
+      .select("assistant_offtopic_count, assistant_blocked_until")
+      .maybeSingle();
+    const blockedUntil = (settingsRow as { assistant_blocked_until?: string | null } | null)
+      ?.assistant_blocked_until;
+    if (blockedUntil && new Date(blockedUntil).getTime() > Date.now()) {
+      const mins = Math.max(
+        1,
+        Math.ceil((new Date(blockedUntil).getTime() - Date.now()) / 60_000),
+      );
+      return {
+        reply: `I'm a pantry and cooking assistant, and the last few questions were outside that. Let's take a short break — ask me about your food, recipes or shopping list again in about ${mins} minute${mins === 1 ? "" : "s"}.`,
+        added: [],
+        removed: [],
+        checked: [],
+        cleared: false,
+        pantryAdded: [],
+      };
+    }
+    const offtopicCount =
+      (settingsRow as { assistant_offtopic_count?: number } | null)?.assistant_offtopic_count ?? 0;
+
     const ctx = await loadPantryContext(supabase);
 
     const { data: history } = await supabase
@@ -67,6 +102,25 @@ export const askAssistant = createServerFn({ method: "POST" })
       ...historyMessages((history ?? []) as { role: string; content: string }[]),
       { role: "user", content: data.question },
     ]);
+
+    // Record the off-topic streak (or clear it on a genuine pantry question).
+    const offTopic = parsed.offTopic === true;
+    const nextCount = offTopic ? offtopicCount + 1 : 0;
+    const patch: Record<string, unknown> = {
+      user_id: context.userId,
+      assistant_offtopic_count: offTopic && nextCount >= OFFTOPIC_LIMIT ? 0 : nextCount,
+      assistant_blocked_until:
+        offTopic && nextCount >= OFFTOPIC_LIMIT
+          ? new Date(Date.now() + COOLDOWN_MINUTES * 60_000).toISOString()
+          : null,
+    };
+    if (offTopic || offtopicCount > 0) {
+      const { error: throttleError } = await supabase
+        .from("user_settings")
+        .upsert(patch, { onConflict: "user_id" });
+      if (throttleError) console.error("[assistant] throttle update failed", throttleError);
+    }
+
 
     let reply = String(parsed.reply ?? "").trim() || "I couldn't work that out — try rephrasing.";
 
@@ -186,6 +240,7 @@ export const askAssistant = createServerFn({ method: "POST" })
 const RecipeInput = z.object({
   mode: z.enum(["surprise", "selected"]).default("surprise"),
   ingredients: z.array(z.string().min(1).max(80)).max(20).default([]),
+  dish: z.string().min(1).max(120).optional(),
 });
 
 /**
@@ -200,10 +255,11 @@ export const suggestRecipes = createServerFn({ method: "POST" })
     const supabase = context.supabase as unknown as SupabaseLike;
     const ctx = await loadPantryContext(supabase);
     const chosen = data.mode === "selected" ? data.ingredients.filter(Boolean) : [];
-    if (ctx.items.length === 0 && chosen.length === 0) return { recipes: [] };
+    if (ctx.items.length === 0 && chosen.length === 0 && !data.dish) return { recipes: [] };
 
-    const focus =
-      chosen.length > 0
+    const focus = data.dish
+      ? dishRecipeRequest(data.dish)
+      : chosen.length > 0
         ? `\nThe user chose these ingredients: ${chosen.join(", ")}. Build the dish STRICTLY around them — use ONLY these ingredients plus salt, water, oil and common spices, and do NOT pull in any other pantry item. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. If something essential is genuinely missing, keep the dish and list it as a substitution rather than adding unrelated pantry items.`
         : "\nSurprise the user with 4-5 varied dishes.";
 
@@ -212,12 +268,34 @@ export const suggestRecipes = createServerFn({ method: "POST" })
       { role: "user", content: recipeRequest + focus },
     ]);
 
-    const recipes = normalizeRecipes(parsed).slice(0, chosen.length > 0 ? 1 : 5);
+    const single = Boolean(data.dish) || chosen.length > 0;
+    const recipes = normalizeRecipes(parsed).slice(0, single ? 1 : 5);
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
 
     // Recipes are not auto-saved — the user explicitly saves the ones they like.
 
     return { recipes };
+  });
+
+/**
+ * "Surprise me" — a deliberately cheap call that returns only dish names and a
+ * one-liner. The full recipe is generated later, once the user picks one.
+ */
+export const suggestDishIdeas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ ideas: DishIdea[] }> => {
+    const supabase = context.supabase as unknown as SupabaseLike;
+    const ctx = await loadPantryContext(supabase);
+    if (ctx.items.length === 0) return { ideas: [] };
+
+    const parsed = await generateAIResponse("recipes", [
+      { role: "system", content: pantrySystemPrompt(ctx) },
+      { role: "user", content: ideasRequest },
+    ]);
+
+    const ideas = normalizeIdeas(parsed);
+    await logUsage("recipe-ideas", context.userId, JSON.stringify(ideas).length);
+    return { ideas };
   });
 
 /** Calendar date in India Standard Time — the daily recipe rolls over at 00:00 IST. */

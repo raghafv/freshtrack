@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { friendlyMessage } from "@/lib/errors";
 import { setTonightRecipe } from "@/lib/tonight-store";
+import { useDishImage } from "@/lib/dish-image";
 import { useRecipeMutations } from "@/lib/data";
 
 export const Route = createFileRoute("/_shell/home")({
@@ -316,7 +317,6 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   const generate = useServerFn(getDailyRecipe);
   const navigate = useNavigate();
   const { save } = useRecipeMutations();
-  const [open, setOpen] = useState(false);
   // One recipe per calendar day in IST — it stays put until midnight India time.
   const today = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -330,6 +330,9 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   });
 
   const recipe = data?.recipe;
+  const dishPhoto = useDishImage(recipe?.title);
+
+
 
 
   if (!hasPantry) {
@@ -359,15 +362,23 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   return (
     <article className="surface-card overflow-hidden shadow-lift">
       <div className="gradient-hero relative px-6 pb-5 pt-8 text-primary-foreground">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12">
-          <ChefHat className="h-5 w-5" strokeWidth={1.8} />
-        </span>
-        <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.16em] opacity-70">
-          Tonight&apos;s recipe · made from your pantry
-        </p>
-        <h3 className="mt-1 text-[21px] font-semibold leading-snug tracking-[-0.025em]">
-          {recipe.title}
-        </h3>
+        <img
+          src={dishPhoto}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
+        />
+        <div className="relative">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12">
+            <ChefHat className="h-5 w-5" strokeWidth={1.8} />
+          </span>
+          <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.16em] opacity-70">
+            Tonight&apos;s recipe · made from your pantry
+          </p>
+          <h3 className="mt-1 text-[21px] font-semibold leading-snug tracking-[-0.025em]">
+            {recipe.title}
+          </h3>
+        </div>
       </div>
 
       <div className="p-6">
@@ -381,19 +392,6 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
           {recipe.uses.length > 0 && <span>· uses {recipe.uses.slice(0, 3).join(", ")}</span>}
         </p>
 
-        {open && (
-          <ol className="mt-5 space-y-3">
-            {recipe.steps.map((s, i) => (
-              <li key={i} className="flex gap-3 text-[13.5px] leading-relaxed">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[12px] font-semibold text-primary">
-                  {i + 1}
-                </span>
-                <span>{s}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-
         <div className="mt-5 flex items-center gap-3">
           <button
             type="button"
@@ -405,13 +403,7 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
           >
             Cook this <ArrowRight className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="press rounded-full bg-secondary px-4 py-2.5 text-[13px] font-semibold"
-          >
-            {open ? "Hide method" : "Method"}
-          </button>
+
           <button
             type="button"
             aria-label="Save recipe"
