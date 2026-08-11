@@ -25,7 +25,7 @@
 
 It's an AI-powered household inventory app built around the everyday problem of forgetting what's sitting in your fridge or pantry.
 
-Add groceries using **AI vision, barcode scanning, receipt scanning, or manual entry**. FreshTrack organizes everything into a searchable inventory with quantities, purchase dates, freshness, expiry dates, and more.
+Add groceries using **AI photo recognition, barcode scanning, receipt scanning, or manual entry**. FreshTrack organizes everything into a searchable inventory with quantities, purchase dates, freshness, expiry dates, and more.
 
 Then the AI can actually use that information.
 
@@ -65,21 +65,17 @@ The assistant can use your inventory as context to answer questions and help you
 
 ## Add Anything Easily
 
-### AI Vision
-
-Use your camera to identify products without manually entering every detail.
+### AI Photo Recognition
+Point your camera at a product and FreshTrack identifies it — category, storage type, estimated shelf life, and a visual freshness read straight from the photo.
 
 ### Barcode Scanner
-
-Scan packaged products for quick identification and inventory entry.
+Scan packaged products for instant lookup. FreshTrack keeps its own self-learning barcode database and falls back to Open Food Facts for anything it hasn't seen yet — so it gets smarter with every scan, by every user.
 
 ### Receipt Scanner
-
-Scan a grocery receipt and extract purchased items instead of adding everything individually.
+Photograph a grocery receipt and FreshTrack reads it with OCR, extracting every purchased item in one pass instead of adding them individually.
 
 ### Manual Entry
-
-For fresh produce, homemade food, local-market purchases, or anything else that doesn't have a barcode, items can be added manually.
+For fresh produce, homemade food, local-market purchases, or anything else that doesn't have a barcode, items can be added manually — with automatic photo matching where possible.
 
 ---
 
@@ -98,7 +94,7 @@ You can see:
 * availability
 * location
 
-FreshTrack can also send reminders when products are approaching expiry.
+FreshTrack sends real push notifications as products approach expiry — configurable per category, not just an on/off switch.
 
 ---
 
@@ -108,7 +104,7 @@ Everything you have is organized into one searchable inventory.
 
 Search for a product and quickly see its current quantity, freshness, expiry, purchase information, and other details.
 
-The dashboard gives you an overview of your household inventory, including recently added products, expiring items, activity, and insights.
+The dashboard gives you a real analytics layer on top of your household inventory: category and storage breakdowns, monthly waste trends, spending insights, purchase history, and predictions for when you'll run out of something you buy regularly.
 
 ---
 
@@ -116,7 +112,7 @@ The dashboard gives you an overview of your household inventory, including recen
 
 FreshTrack connects what you **buy**, **have**, **use**, and **need**.
 
-Shopping lists help keep track of what you need to purchase, while consumption analytics show how your household actually uses its inventory over time.
+Shopping lists help keep track of what you need to purchase, while the analytics layer shows how your household actually uses its inventory over time — what gets wasted, what gets used, and what's worth buying differently.
 
 This makes it easier to avoid:
 
@@ -139,16 +135,52 @@ Fresh produce is especially important because it often doesn't have a standardiz
 
 ---
 
+## A Custom-Trained Freshness Model
+
+Most of FreshTrack's AI features run on general-purpose vision models. For produce freshness specifically, FreshTrack also ships its own model — trained from scratch on a labeled dataset of fresh and rotten fruits and vegetables, then converted to run entirely client-side with TensorFlow.js.
+
+No API call, no round trip — the moment you point your camera at a piece of produce, freshness gets classified locally, on-device.
+
+It's an early feature and it'll keep improving as it sees more data, but it's a real, independently-trained model doing real inference — not just prompting an existing LLM.
+
+---
+
+## What's Next: A Physical FreshTrack Device
+
+The long-term vision for FreshTrack isn't just an app you remember to open — it's a device that watches your fridge for you.
+
+<p align="center">
+  <img src="docs/freshtrack-device-concept.jpg" alt="FreshTrack fridge camera device concept" width="800">
+</p>
+
+**See. Track. Save.** A small magnetic camera mounts to the inside of your fridge door. Bring an item in front of it — add or remove, your call — and it scans and updates your inventory automatically. No phone, no manual entry, no forgetting to log what you just used.
+
+| | |
+|---|---|
+| **Camera** | 2MP, 120° FOV |
+| **Night Vision** | IR LEDs |
+| **Processor** | Raspberry Pi Zero 2 W |
+| **Connectivity** | Wi-Fi 2.4GHz |
+| **Power** | 5V / 2A (USB-C), ~2.5W |
+| **Dimensions** | 90 × 60 × 28 mm |
+| **Mounting** | Magnetic |
+| **Storage** | Cloud sync via the FreshTrack app |
+
+This isn't just a concept sitting in a deck — the groundwork is already in the app today. Open the scanner and you'll find a **"Fridge Device"** tab that simulates exactly this flow: intake arriving from a paired camera, writing straight into the same pantry as every other scan method. When the hardware ships, it plugs into infrastructure that already exists.
+
+---
+
 ## How It Works
 
 ```text
        Add groceries
              │
-     ┌───────┼────────┐
-     ▼       ▼        ▼
-   Camera  Barcode  Receipt
-     │       │        │
-     └───────┼────────┘
+  ┌────┬─────┼─────┬────────┐
+  ▼    ▼     ▼      ▼        ▼
+Camera Barcode Receipt  Manual  Fridge
+                                Device
+  │    │     │      │        │
+  └────┴─────┼──────┴────────┘
              ▼
         INVENTORY
              │
