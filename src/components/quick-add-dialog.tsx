@@ -143,7 +143,7 @@ export function QuickAddDialog({
         storage,
         image_url: null,
         source: "quick-add",
-        price: null,
+        price: price.trim() && Number.isFinite(Number(price)) ? Number(price) : null,
       });
       persist(recordAdd(store, selected.id));
       if (result) {
