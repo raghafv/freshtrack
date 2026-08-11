@@ -139,6 +139,8 @@ function AdminRolesPanel() {
 function AdminPage() {
   const navigate = useNavigate();
   const fetchOverview = useServerFn(getAdminOverview);
+  const fetchOwner = useServerFn(amIOwner);
+  const { data: ownerData } = useQuery({ queryKey: ["am-i-owner"], queryFn: () => fetchOwner({}) });
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-overview"],
     queryFn: () => fetchOverview({}),
