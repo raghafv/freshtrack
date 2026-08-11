@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { ScanCamera } from "@/components/ScanCamera"; // adjust path if needed
+import { ScanCamera } from "@/components/scan-camera"; // adjust path if needed
 import { Button } from "@/components/ui/button";
 
 declare global {
