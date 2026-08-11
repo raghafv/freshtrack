@@ -20,11 +20,11 @@ type Option = {
 };
 
 const OPTIONS: Option[] = [
-  { key: "camera", icon: Camera, label: "Scan with Camera", hint: "Point at your groceries" },
+  { key: "camera", icon: Camera, label: "Add using Camera", hint: "Point at your groceries" },
   { key: "barcode", icon: Barcode, label: "Scan Barcode", hint: "Packaged products" },
   { key: "receipt", icon: Receipt, label: "Scan Receipt", hint: "Scan your grocery bill" },
   { key: "manual", icon: PencilLine, label: "Manual Add", hint: "Search the grocery catalog" },
-  { key: "mymodel", icon: Sparkles, label: "Scan with My Model", hint: "Uses our trained freshness model" },
+  { key: "mymodel", icon: Sparkles, label: "Add using Camera", hint: "Uses our self trained AI model" },
 ];
 
 /**
