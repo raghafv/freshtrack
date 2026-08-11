@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-const TFJS_CDN = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js";
+const TFJS_CDN = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
