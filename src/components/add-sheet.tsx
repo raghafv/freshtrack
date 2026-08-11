@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Barcode, Camera, PencilLine, Receipt } from "lucide-react";
+import { Barcode, Camera, PencilLine, Receipt, Sparkles } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -24,6 +24,7 @@ const OPTIONS: Option[] = [
   { key: "barcode", icon: Barcode, label: "Scan Barcode", hint: "Packaged products" },
   { key: "receipt", icon: Receipt, label: "Scan Receipt", hint: "Scan your grocery bill" },
   { key: "manual", icon: PencilLine, label: "Manual Add", hint: "Search the grocery catalog" },
+  { key: "mymodel", icon: Sparkles, label: "Scan with My Model", hint: "Uses our trained freshness model" },
 ];
 
 /**
@@ -44,10 +45,14 @@ export function AddSheet({
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
 
-  function choose(key: string) {
+ function choose(key: string) {
     onOpenChange(false);
     if (key === "manual") {
       setTimeout(() => setQuickOpen(true), 180);
+      return;
+    }
+    if (key === "mymodel") {
+      setTimeout(() => navigate({ to: "/scan-my-model" }), 140);
       return;
     }
     setTimeout(
