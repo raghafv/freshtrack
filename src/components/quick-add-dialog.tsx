@@ -299,6 +299,20 @@ export function QuickAddDialog({
                 </p>
               </div>
 
+              <div className="grid gap-2">
+                <Label htmlFor="qa-price">Value ₹ (optional)</Label>
+                <Input
+                  id="qa-price"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  placeholder="e.g. 120"
+                  className="h-11"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+
               {unusual && (
                 <p className="rounded-2xl bg-warning/15 px-4 py-3 text-xs font-medium text-warning">
                   {storage} isn&apos;t the usual place for {selected.name.toLowerCase()}. We&apos;ve
