@@ -476,7 +476,6 @@ const EXTRA_ALIASES: Record<string, string[]> = {
   mutton: ["bakra", "goat meat", "lamb"],
   "fish-fillet": ["machli", "machhli", "fish"],
   prawns: ["jhinga", "shrimp"],
-  wheat_flour: [],
   bananas: ["kela", "kele"],
   apples: ["seb", "saeb"],
   mangoes: ["aam"],

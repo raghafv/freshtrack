@@ -126,7 +126,7 @@ export function UnknownBarcodeDialog({
 
   const shelfLifeDays =
     (Number(years) || 0) * 365 + (Number(months) || 0) * 30 + (Number(days) || 0);
-  const canSubmit = Boolean(name.trim()) && shelfLifeDays > 0 && Boolean(front) && Boolean(back);
+  const canSubmit = Boolean(name.trim()) && shelfLifeDays > 0;
 
   function capture(side: "front" | "back", file?: File | null) {
     if (!file) return;
@@ -137,15 +137,13 @@ export function UnknownBarcodeDialog({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!barcode || !canSubmit || !front || !back) return;
+    if (!barcode || !canSubmit) return;
     setSaving(true);
     try {
       let frontUrl: string | null = imageUrl ?? null;
       let backUrl: string | null = null;
-      if (userId) {
-        frontUrl = await uploadPantryImage(userId, front.file);
-        backUrl = await uploadPantryImage(userId, back.file);
-      }
+      if (userId && front) frontUrl = await uploadPantryImage(userId, front.file);
+      if (userId && back) backUrl = await uploadPantryImage(userId, back.file);
 
       const result = await submitPendingProduct({
         barcode,
@@ -227,7 +225,7 @@ export function UnknownBarcodeDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Product photos (both required)</Label>
+            <Label>Product photos (optional, but they help a lot)</Label>
             <div className="grid grid-cols-2 gap-3">
               <PhotoSlot
                 shot={front}

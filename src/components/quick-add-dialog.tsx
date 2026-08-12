@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { categoryEmoji, emojiFor } from "@/lib/emoji";
+import { FoodThumb } from "@/components/food-thumb";
 import { friendlyMessage } from "@/lib/errors";
 import { useSmartAdd } from "@/lib/smart-add";
 import { DuplicateMergeDialog } from "@/components/duplicate-merge-dialog";
@@ -169,9 +170,12 @@ export function QuickAddDialog({
           onClick={() => pick(product)}
           className="flex min-h-12 flex-1 items-center gap-2 px-3 py-2 text-left"
         >
-          <span aria-hidden className="text-lg leading-none">
-            {emojiFor(product.name, product.category)}
-          </span>
+          <FoodThumb
+            name={product.name}
+            category={product.category}
+            className="h-9 w-9 rounded-xl"
+            emojiClassName="text-lg"
+          />
           <span className="flex flex-col">
             <span className="text-sm font-semibold leading-tight">{product.name}</span>
             <span className="text-[11px] text-muted-foreground">
@@ -224,7 +228,12 @@ export function QuickAddDialog({
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <span aria-hidden>{emojiFor(selected.name, selected.category)}</span>
+                <FoodThumb
+                  name={selected.name}
+                  category={selected.category}
+                  className="h-8 w-8 rounded-xl"
+                  emojiClassName="text-base"
+                />
                 {selected.name}
               </DialogTitle>
               <DialogDescription>
