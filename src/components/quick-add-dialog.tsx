@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { categoryEmoji, emojiFor } from "@/lib/emoji";
+import { categoryEmoji } from "@/lib/emoji";
 import { FoodThumb } from "@/components/food-thumb";
 import { friendlyMessage } from "@/lib/errors";
 import { useSmartAdd } from "@/lib/smart-add";
