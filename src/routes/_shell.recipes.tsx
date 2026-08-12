@@ -189,7 +189,8 @@ function RecipesPage() {
     mutationFn: () => suggestDishIdeas({}),
     onSuccess: (res) => {
       setIdeas(res.ideas);
-      if (res.ideas.length === 0) toast.info("Add a few pantry items and I'll suggest dishes.");
+      if (res.ideas.length === 0)
+        toast.info("Couldn't come up with ideas right now — add a few pantry items or try again.");
     },
     onError: (e) => toast.error(friendlyMessage(e, "Could not fetch ideas")),
   });
@@ -201,12 +202,27 @@ function RecipesPage() {
     if (r) {
       setHandoff(r);
       setTab("cook");
-      // Land straight on tonight's recommendation rather than the composer.
-      requestAnimationFrame(() =>
-        featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
-      );
     }
   }, []);
+
+  // The recipe section only exists after the hand-off renders, so keep trying
+  // for a few frames until it is actually in the DOM, then scroll to its top.
+  useEffect(() => {
+    if (!handoff) return;
+    let tries = 0;
+    const id = window.setInterval(() => {
+      const el = featuredRef.current;
+      tries += 1;
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 12;
+        window.scrollTo({ top, behavior: "smooth" });
+        window.clearInterval(id);
+      } else if (tries > 30) {
+        window.clearInterval(id);
+      }
+    }, 60);
+    return () => window.clearInterval(id);
+  }, [handoff]);
 
   /** Arrived via "Cook this" — show only that one recipe, no browsing chrome. */
   const focusMode = Boolean(handoff);
