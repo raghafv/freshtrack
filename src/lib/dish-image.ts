@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import placeholder from "@/assets/food/other.jpg";
 
 /**
  * Deterministic recipe-title → dish photo matching.
@@ -103,8 +102,6 @@ export function dishImageFile(title?: string | null): string | null {
   return null;
 }
 
-export const DISH_PLACEHOLDER = placeholder;
-
 /** Signed URLs for the whole (small, fixed) library, fetched once per session. */
 let signedUrls: Promise<Record<string, string>> | null = null;
 
@@ -125,19 +122,19 @@ function loadSignedUrls() {
   return signedUrls;
 }
 
-/** Resolved photo for a recipe title, falling back to the placeholder. */
-export function useDishImage(title?: string | null) {
+/** Resolved photo for a recipe title, or null when no dish photo matches. */
+export function useDishImage(title?: string | null): string | null {
   const file = dishImageFile(title);
-  const [url, setUrl] = useState<string>(DISH_PLACEHOLDER);
+  const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     if (!file) {
-      setUrl(DISH_PLACEHOLDER);
+      setUrl(null);
       return;
     }
     loadSignedUrls().then((map) => {
-      if (active) setUrl(map[file] ?? DISH_PLACEHOLDER);
+      if (active) setUrl(map[file] ?? null);
     });
     return () => {
       active = false;
