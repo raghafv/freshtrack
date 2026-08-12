@@ -55,6 +55,25 @@ async function logUsage(feature: string, userId: string | null, chars: number) {
 
 const AskInput = z.object({ question: z.string().min(1).max(1000) });
 
+/**
+ * Hard, non-negotiable scope gate. These requests are refused before any model
+ * is called, so no amount of prompt-wrangling can talk the assistant into
+ * writing a poem, a song or code.
+ */
+const BANNED_PATTERNS: RegExp[] = [
+  /\b(poem|poetry|haiku|sonnet|limerick|rap|lyrics?|song|shayari)\b/i,
+  /\b(joke|riddle|pun|meme)\b/i,
+  /\b(story|short story|novel|essay|speech|letter|email|caption|slogan|tagline)\b/i,
+  /\b(code|program|script|function|python|javascript|sql|html|css|regex|api)\b/i,
+  /\b(translate|translation)\b/i,
+  /\b(politic|election|religion|horoscope|astrolog|cricket score|stock|crypto|homework|exam)\b/i,
+  /\b(roleplay|pretend to be|act as|ignore (all |your )?(previous |above )?instructions|system prompt|jailbreak|dan mode)\b/i,
+];
+
+function isBanned(question: string) {
+  return BANNED_PATTERNS.some((re) => re.test(question));
+}
+
 /** How many off-topic questions in a row before the assistant takes a break. */
 const OFFTOPIC_LIMIT = 4;
 const COOLDOWN_MINUTES = 15;
@@ -89,6 +108,31 @@ export const askAssistant = createServerFn({ method: "POST" })
     }
     const offtopicCount =
       (settingsRow as { assistant_offtopic_count?: number } | null)?.assistant_offtopic_count ?? 0;
+
+    // Hard scope gate — refuse outright, count it as off-topic, no model call.
+    if (isBanned(data.question)) {
+      const nextCount = offtopicCount + 1;
+      const blocked = nextCount >= OFFTOPIC_LIMIT;
+      await supabase.from("user_settings").upsert(
+        {
+          user_id: context.userId,
+          assistant_offtopic_count: blocked ? 0 : nextCount,
+          assistant_blocked_until: blocked
+            ? new Date(Date.now() + COOLDOWN_MINUTES * 60_000).toISOString()
+            : null,
+        },
+        { onConflict: "user_id" },
+      );
+      return {
+        reply:
+          "I only help with your pantry, food and cooking — I can't write that. Want a recipe from what's expiring soon instead?",
+        added: [],
+        removed: [],
+        checked: [],
+        cleared: false,
+        pantryAdded: [],
+      };
+    }
 
     const ctx = await loadPantryContext(supabase);
 
