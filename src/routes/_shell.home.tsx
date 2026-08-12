@@ -362,12 +362,14 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   return (
     <article className="surface-card overflow-hidden shadow-lift">
       <div className="gradient-hero relative px-6 pb-5 pt-8 text-primary-foreground">
-        <img
-          src={dishPhoto}
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
-        />
+        {dishPhoto && (
+          <img
+            src={dishPhoto}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
+          />
+        )}
         <div className="relative">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12">
             <ChefHat className="h-5 w-5" strokeWidth={1.8} />

@@ -55,7 +55,13 @@ function DishIdeaCard({
   const photo = useDishImage(idea.title);
   return (
     <li className="surface-card overflow-hidden">
-      <img src={photo} alt="" aria-hidden className="h-32 w-full object-cover" />
+      {photo ? (
+        <img src={photo} alt="" aria-hidden className="h-32 w-full object-cover" />
+      ) : (
+        <div aria-hidden className="gradient-hero flex h-32 w-full items-center justify-center text-4xl">
+          🍽️
+        </div>
+      )}
       <div className="p-5">
         <h3 className="text-[16px] font-semibold tracking-[-0.02em]">{idea.title}</h3>
         {idea.oneLiner && (
@@ -631,7 +637,13 @@ function RecipeCard({
   const photo = useDishImage(recipe.title);
   return (
     <li className="surface-card animate-fade-up overflow-hidden">
-      <img src={photo} alt="" aria-hidden className="h-40 w-full object-cover" />
+      {photo ? (
+        <img src={photo} alt="" aria-hidden className="h-40 w-full object-cover" />
+      ) : (
+        <div aria-hidden className="gradient-hero flex h-40 w-full items-center justify-center text-5xl">
+          🍽️
+        </div>
+      )}
       <div className="p-6">
       <div className="mb-3 flex items-start justify-between gap-3">
         <h3 className="text-[20px] font-semibold leading-snug tracking-[-0.025em]">
