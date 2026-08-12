@@ -14,6 +14,7 @@ import {
   normalizeShoppingAdds,
   normalizeSuggestions,
   pantrySystemPrompt,
+  dataSystemPrompt,
   recipeRequest,
   shoppingRequest,
   type DishIdea,
@@ -264,7 +265,7 @@ export const suggestRecipes = createServerFn({ method: "POST" })
         : "\nSurprise the user with 4-5 varied dishes.";
 
     const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: pantrySystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt(ctx) },
       { role: "user", content: recipeRequest + focus },
     ]);
 
@@ -289,7 +290,7 @@ export const suggestDishIdeas = createServerFn({ method: "POST" })
     if (ctx.items.length === 0) return { ideas: [] };
 
     const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: pantrySystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt(ctx) },
       { role: "user", content: ideasRequest },
     ]);
 
@@ -326,7 +327,7 @@ export const getDailyRecipe = createServerFn({ method: "POST" })
     if (ctx.items.length === 0) return { recipe: null };
 
     const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: pantrySystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt(ctx) },
       {
         role: "user",
         content:
@@ -360,7 +361,7 @@ export const suggestShoppingList = createServerFn({ method: "POST" })
     const ctx = await loadPantryContext(supabase);
 
     const parsed = await generateAIResponse("shopping", [
-      { role: "system", content: pantrySystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt(ctx) },
       { role: "user", content: shoppingRequest },
     ]);
 
