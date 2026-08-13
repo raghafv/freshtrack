@@ -3,6 +3,8 @@
  * Server-only: never import this from client code.
  */
 
+import { isAllowedPushEndpoint } from "./push-endpoints";
+
 const enc = new TextEncoder();
 
 function b64urlToBytes(value: string): Uint8Array {
@@ -154,6 +156,11 @@ export interface PushResult {
 
 /** Sends one encrypted push message to one subscription. */
 export async function sendPush(target: PushTarget, message: PushMessage): Promise<PushResult> {
+  // Re-validate at send time: stored rows must never be able to steer an
+  // authenticated outbound request at an internal address.
+  if (!isAllowedPushEndpoint(target.endpoint)) {
+    return { ok: false, status: 0, gone: true, error: "Unsupported push endpoint" };
+  }
   try {
     const body = await encryptPayload(JSON.stringify(message), target.p256dh, target.auth);
     const res = await fetch(target.endpoint, {
@@ -166,6 +173,7 @@ export async function sendPush(target: PushTarget, message: PushMessage): Promis
         Urgency: "normal",
       },
       body: body as BodyInit,
+      redirect: "error",
     });
     return {
       ok: res.ok,
