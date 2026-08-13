@@ -10,9 +10,55 @@ const ImageInput = z.object({
   image: z.string().min(32),
 });
 
+function parseJsonish(raw: string): Record<string, unknown> {
+  try {
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}/);
+    return match ? (JSON.parse(match[0]) as Record<string, unknown>) : {};
+  }
+}
+
+/** Direct Google Gemini fallback used when the Lovable gateway is out of credits. */
+async function callGeminiVision(image: string, system: string, instruction: string) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return null;
+
+  const match = /^data:([^;]+);base64,(.+)$/.exec(image);
+  if (!match) return null;
+  const [, mimeType, data] = match;
+
+  const res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    console.error(`[vision] gemini ${res.status}: ${await res.text()}`);
+    return null;
+  }
+  const json = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  };
+  const raw = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "{}";
+  return parseJsonish(raw);
+}
+
 async function callVision(image: string, system: string, instruction: string) {
   const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("AI is not configured for this project.");
+  if (!key) {
+    const viaGemini = await callGeminiVision(image, system, instruction);
+    if (viaGemini) return viaGemini;
+    throw new Error("AI is not configured for this project.");
+  }
 
   const res = await fetch(GATEWAY, {
     method: "POST",
@@ -36,6 +82,12 @@ async function callVision(image: string, system: string, instruction: string) {
     }),
   });
 
+  // Out of credits / rate limited / provider hiccup -> try the direct Gemini key.
+  if (res.status === 402 || res.status === 429 || res.status >= 500) {
+    const viaGemini = await callGeminiVision(image, system, instruction);
+    if (viaGemini) return viaGemini;
+  }
+
   if (res.status === 429) throw new Error("AI is busy right now — try again in a moment.");
   if (res.status === 402) throw new Error("AI credits exhausted. Add credits to keep scanning.");
   if (!res.ok) {
@@ -47,14 +99,9 @@ async function callVision(image: string, system: string, instruction: string) {
   const json = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
   };
-  const raw = json.choices?.[0]?.message?.content ?? "{}";
-  try {
-    return JSON.parse(raw) as Record<string, unknown>;
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
-    return match ? (JSON.parse(match[0]) as Record<string, unknown>) : {};
-  }
+  return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
 }
+
 
 export interface DetectedGrocery {
   name: string;
