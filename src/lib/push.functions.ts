@@ -1,9 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isAllowedPushEndpoint } from "./push-endpoints";
 
 const SubscriptionInput = z.object({
-  endpoint: z.string().url().max(1000),
+  endpoint: z
+    .string()
+    .url()
+    .max(1000)
+    // Only real push services — the server later POSTs to this URL with a
+    // signed VAPID header, so an arbitrary host would be an SSRF vector.
+    .refine(isAllowedPushEndpoint, "Unsupported push service endpoint"),
   p256dh: z.string().min(10).max(400),
   auth: z.string().min(4).max(200),
   userAgent: z.string().max(400).optional(),
