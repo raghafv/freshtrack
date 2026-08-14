@@ -199,24 +199,28 @@ export interface DetectedGrocery {
 export const detectGroceries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ImageInput.parse(input))
-  .handler(async ({ data }): Promise<{ items: DetectedGrocery[] }> => {
+  .handler(async ({ data, context }): Promise<{ items: DetectedGrocery[] }> => {
     const parsed = await callVision(
       data.image,
-      "You identify grocery products in photos for a pantry app used in India. Always answer with JSON only.",
+      "You identify grocery products in photos for a pantry app used in India. You NEVER guess: anything that is not unmistakably edible food or drink is rejected. Always answer with JSON only.",
       [
         "Identify every distinct grocery product in this photo.",
-        'Reply with JSON: {"items":[{"name":"","brand":null,"confidence":0.0,"category":"","storage":"","shelfLifeDays":0,"unit":"","freshness":0.0,"packaged":false,"note":""}]}.',
+        'Reply with JSON: {"items":[{"name":"","brand":null,"isFood":true,"confidence":0.0,"category":"","storage":"","shelfLifeDays":0,"unit":"","freshness":0.0,"packaged":false,"note":""}]}.',
+        "HARD RULE: only include an item if you are certain it is edible food or drink sold as a grocery. Pens, ink, ID cards, documents, phones, cosmetics, medicines, cleaning products, packaging alone, people, pets and anything you cannot name confidently must be LEFT OUT entirely — never invent a shelf life for them.",
+        "isFood: true only for edible food/drink. If in any doubt, set false (it will be discarded).",
+        "If the photo contains no edible grocery at all, return an empty items array. An empty array is a correct answer — never pad it.",
         "name: short common product name (e.g. Milk, Tomatoes, Paneer).",
-        "confidence: 0-1 how sure you are.",
+        "confidence: 0-1 how sure you are. Use below 0.45 whenever you are unsure what the item is.",
         "category: one of Dairy, Fruits, Vegetables, Produce, Meat & Seafood, Bakery, Frozen, Beverages, Grains & Pasta, Snacks, Condiments, Spices, Other.",
         "storage: best of Fridge, Freezer, Pantry.",
-        "shelfLifeDays: typical days it stays good in that storage.",
+        "shelfLifeDays: typical days it stays good in that storage. Freezing does NOT make everything last longer — only give a longer freezer life for foods that genuinely freeze well (meat, fish, peas, bread, cooked food). Milk-based sweets, eggs in shell, fresh salad leaves, cucumbers, tomatoes, potatoes, onions, bananas and most fruit get WORSE in a freezer, so keep their shelf life short there.",
         'unit: one of "g", "kg", "mL", "L", "pcs".',
         "freshness: 0-1 judged from what you can SEE — bruising, wilting, mould, browning, condensation, ripeness. 1 = just harvested/packed, 0.5 = half-way through its life, 0 = spoiled.",
         "packaged: true if it is a sealed factory pack, false for loose fresh produce.",
         'note: max 12 words explaining the freshness call (e.g. "skin slightly spotted, ripe").',
-        "If nothing edible is visible, return an empty items array.",
       ].join("\n"),
+      "scan-photo",
+      context.userId,
     );
 
     const items = Array.isArray(parsed.items) ? parsed.items : [];
@@ -226,12 +230,16 @@ export const detectGroceries = createServerFn({ method: "POST" })
           const it = raw as Record<string, unknown>;
           const name = String(it.name ?? "").trim();
           if (!name) return null;
+          // Never let a non-food object through — no shelf life is invented for it.
+          if (it.isFood === false || !isLikelyFood(name)) return null;
           const confidence = Number(it.confidence);
+          const score = Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0.5;
+          if (score < 0.35) return null;
           const shelf = Number(it.shelfLifeDays);
           return {
             name,
             brand: it.brand ? String(it.brand) : null,
-            confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0.5,
+            confidence: score,
             category: String(it.category ?? "Other"),
             storage: ["Fridge", "Freezer", "Pantry"].includes(String(it.storage))
               ? String(it.storage)
@@ -250,6 +258,7 @@ export const detectGroceries = createServerFn({ method: "POST" })
         .slice(0, 12),
     };
   });
+
 
 export interface ReceiptLine {
   name: string;
