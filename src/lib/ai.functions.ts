@@ -20,6 +20,7 @@ import {
   type DishIdea,
   type SupabaseLike,
 } from "./ai-pantry.server";
+import { splitIngredients } from "./food-guard";
 
 export type { DishIdea };
 
@@ -299,21 +300,26 @@ export const suggestRecipes = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ recipes: PantryRecipe[] }> => {
     const supabase = context.supabase as unknown as SupabaseLike;
     const ctx = await loadPantryContext(supabase);
+    const cookingPantry = ctx.items.filter((item) => splitIngredients([item.name]).usable.length > 0);
     const chosen = data.mode === "selected" ? data.ingredients.filter(Boolean) : [];
-    if (ctx.items.length === 0 && chosen.length === 0 && !data.dish) return { recipes: [] };
+    const { usable: chosenCooking, rejected: chosenRejected } = splitIngredients(chosen);
+    if (data.mode === "selected" && chosenRejected.length > 0 && chosenCooking.length === 0) {
+      throw new Error("I only make recipes from real cooking ingredients.");
+    }
+    if (cookingPantry.length === 0 && chosenCooking.length === 0 && !data.dish) return { recipes: [] };
 
     const focus = data.dish
       ? dishRecipeRequest(data.dish)
-      : chosen.length > 0
-        ? `\nThe user chose these ingredients: ${chosen.join(", ")}. Build the dish STRICTLY around them — use ONLY these ingredients plus salt, water, oil and common spices, and do NOT pull in any other pantry item. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. If something essential is genuinely missing, keep the dish and list it as a substitution rather than adding unrelated pantry items.`
+      : chosenCooking.length > 0
+        ? `\nThe user chose these ingredients: ${chosenCooking.join(", ")}. Build the dish STRICTLY around them — use ONLY these ingredients plus salt, water, oil and common spices, and do NOT pull in any other pantry item. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. If something essential is genuinely missing, keep the dish and list it as a substitution rather than adding unrelated pantry items.`
         : "\nSurprise the user with 4-5 varied dishes.";
 
     const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: dataSystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt({ ...ctx, items: cookingPantry }) },
       { role: "user", content: recipeRequest + focus },
     ]);
 
-    const single = Boolean(data.dish) || chosen.length > 0;
+    const single = Boolean(data.dish) || chosenCooking.length > 0;
     const recipes = normalizeRecipes(parsed).slice(0, single ? 1 : 5);
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
 
@@ -331,10 +337,11 @@ export const suggestDishIdeas = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ ideas: DishIdea[] }> => {
     const supabase = context.supabase as unknown as SupabaseLike;
     const ctx = await loadPantryContext(supabase);
-    if (ctx.items.length === 0) return { ideas: [] };
+    const cookingPantry = ctx.items.filter((item) => splitIngredients([item.name]).usable.length > 0);
+    if (cookingPantry.length === 0) return { ideas: [] };
 
     const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: dataSystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt({ ...ctx, items: cookingPantry }) },
       { role: "user", content: ideasRequest },
     ]);
 
@@ -368,10 +375,11 @@ export const getDailyRecipe = createServerFn({ method: "POST" })
     if (stored) return { recipe: stored as PantryRecipe };
 
     const ctx = await loadPantryContext(supabase);
-    if (ctx.items.length === 0) return { recipe: null };
+    const cookingPantry = ctx.items.filter((item) => splitIngredients([item.name]).usable.length > 0);
+    if (cookingPantry.length === 0) return { recipe: null };
 
     const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: dataSystemPrompt(ctx) },
+      { role: "system", content: dataSystemPrompt({ ...ctx, items: cookingPantry }) },
       {
         role: "user",
         content:

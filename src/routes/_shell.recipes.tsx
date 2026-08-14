@@ -38,6 +38,7 @@ import {
   type DishIdea,
   type PantryRecipe,
 } from "@/lib/ai.functions";
+import { isCookingIngredient } from "@/lib/food-guard";
 import { useDishImage } from "@/lib/dish-image";
 
 /** One "Surprise me" suggestion — name, one-liner and a matching dish photo. */
@@ -170,6 +171,7 @@ function RecipesPage() {
   const [tab, setTab] = useState<RecipeTab>("cook");
 
   const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
+  const cookableItems = useMemo(() => items.filter((item) => isCookingIngredient(item.name)), [items]);
   const pantryNames = useMemo(() => new Set(items.map((i) => i.name.toLowerCase())), [items]);
 
   const gen = useMutation({
@@ -236,6 +238,10 @@ function RecipesPage() {
   function addIngredient(raw: string) {
     const name = raw.trim().replace(/,+$/, "");
     if (!name) return;
+    if (!isCookingIngredient(name)) {
+      toast.error("I only use real cooking ingredients for recipes.");
+      return;
+    }
     setChosen((c) => (c.some((x) => x.toLowerCase() === name.toLowerCase()) ? c : [...c, name]));
     setDraft("");
   }
@@ -278,7 +284,7 @@ function RecipesPage() {
       <section className="surface-card animate-fade-up mb-9 p-6">
         <h2 className="text-[17px] font-semibold tracking-[-0.02em]">What are we cooking with?</h2>
         <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-          Add any ingredient — it doesn't have to be in your pantry.
+          Add real cooking ingredients only. Anything FreshTrack does not recognise as food is ignored.
         </p>
 
         <div className="mt-5 flex gap-2">
@@ -318,13 +324,13 @@ function RecipesPage() {
           </div>
         )}
 
-        {items.length > 0 && (
+        {cookableItems.length > 0 && (
           <>
             <p className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               From your pantry
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {items.slice(0, 16).map((i) => {
+              {cookableItems.slice(0, 16).map((i) => {
                 const on = chosen.some((x) => x.toLowerCase() === i.name.toLowerCase());
                 return (
                   <button
@@ -420,14 +426,14 @@ function RecipesPage() {
       )}
 
 
-      {!focusMode && priority.length > 0 && (
+      {!focusMode && priority.filter((i) => isCookingIngredient(i.name)).length > 0 && (
         <section className="surface-card mb-9 p-6">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
             <h2 className="text-[15px] font-semibold">Use these first</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-            {priority.map((i) => (
+            {priority.filter((i) => isCookingIngredient(i.name)).map((i) => (
               <button
                 key={i.id}
                 type="button"

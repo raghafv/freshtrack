@@ -68,6 +68,10 @@ function parseLabel(raw: string): { name: string; healthy: boolean } {
   };
 }
 
+function labelToDisplayName(raw: string) {
+  return raw.replace(/\[object Object\]/g, "").replace(/\s+/g, " ").trim();
+}
+
 export default function ScanWithModel() {
   const { user } = useAuth();
   const recordScan = useRecordScan();
@@ -125,7 +129,7 @@ export default function ScanWithModel() {
 
       const { name, healthy } = parseLabel(classNames[bestIdx] ?? "Unknown");
       lastBlob.current = blob;
-      setResult({ name, healthy, confidence: bestScore });
+      setResult({ name: labelToDisplayName(name), healthy, confidence: bestScore });
     } catch (err) {
       console.error(err);
       toast.error("Couldn't analyse that photo. Try again.");

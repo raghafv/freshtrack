@@ -55,6 +55,33 @@ import {
   type ReceiptLine,
 } from "@/lib/vision.functions";
 
+function splitReceiptLine(line: string) {
+  const trimmed = line.replace(/\s+/g, " ").trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/^(.*?)(?:\s+)(\d{1,4}(?:\.\d{1,2})?)$/);
+  if (!match) return { name: trimmed, price: null };
+  const name = match[1].trim();
+  if (!name) return null;
+  const price = Number(match[2]);
+  return { name, price: Number.isFinite(price) ? price : null };
+}
+
+async function localReceiptOcr(blob: Blob): Promise<ReceiptLine[]> {
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker("eng");
+  try {
+    const result = await worker.recognize(blob);
+    return String(result.data.text ?? "")
+      .split(/\n+/)
+      .map((line) => splitReceiptLine(line))
+      .filter((line): line is { name: string; price: number | null } => line !== null)
+      .map((line) => ({ name: line.name, quantity: 1, unit: "pcs", price: line.price }))
+      .slice(0, 40);
+  } finally {
+    await worker.terminate();
+  }
+}
+
 export const Route = createFileRoute("/_shell/scanner")({
   validateSearch: (search: Record<string, unknown>) => ({
     tab:
@@ -322,14 +349,29 @@ function ScannerPage() {
       const dataUrl = await toDataUrl(blob);
       const { items } = await parseReceipt({ data: { image: dataUrl } });
       if (items.length === 0) {
-        openManual("No products found on that receipt — add items manually.");
+        const fallback = await localReceiptOcr(blob);
+        if (fallback.length === 0) {
+          openManual("No products found on that receipt — add items manually.");
+          return;
+        }
+        setReceiptLines(fallback);
+        setReceiptPicked(Object.fromEntries(fallback.map((_, i) => [i, true])));
+        toast.info("Used local OCR instead of AI.");
         return;
       }
       setReceiptLines(items);
       setReceiptPicked(Object.fromEntries(items.map((_, i) => [i, true])));
       toast.success(`${items.length} line item${items.length === 1 ? "" : "s"} found`);
     } catch (e) {
-      toast.error(friendlyMessage(e, "Receipt scan failed"));
+      try {
+        const fallback = await localReceiptOcr(blob);
+        if (fallback.length === 0) throw e;
+        setReceiptLines(fallback);
+        setReceiptPicked(Object.fromEntries(fallback.map((_, i) => [i, true])));
+        toast.info("Used local OCR instead of AI.");
+      } catch {
+        toast.error(friendlyMessage(e, "Receipt scan failed"));
+      }
     } finally {
       setBusy(null);
     }
@@ -510,6 +552,7 @@ function ScannerPage() {
                     c.storage,
                     new Date().toISOString().slice(0, 10),
                   );
+                  const refuseEstimate = shouldRefuseShelfLifeEstimate(c);
                   return (
                     <li key={c.key}>
                       <button
@@ -522,9 +565,9 @@ function ScannerPage() {
                           <p className="text-xs text-muted-foreground">
                             {c.category} · {c.storage} ·{" "}
                             <span className="font-medium text-foreground">
-                              ~{prediction.days}d left
+                              {refuseEstimate ? "no estimate" : `~${prediction.days}d left`}
                             </span>{" "}
-                            · {expiryText(prediction.expiry).toLowerCase()}
+                            · {refuseEstimate ? "I do not recognize this product." : expiryText(prediction.expiry).toLowerCase()}
                           </p>
                           <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
                             {prediction.explanation}

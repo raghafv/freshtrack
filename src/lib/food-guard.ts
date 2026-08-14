@@ -52,6 +52,15 @@ const FOOD_WORDS = [
   "biryani", "pulao", "idli", "dosa", "upma", "poori", "samosa", "pakora", "tikka", "kebab",
 ];
 
+const DISH_WORDS = [
+  "recipe", "dish", "curry", "masala", "gravy", "sabzi", "stir fry", "fry", "saute",
+  "salad", "soup", "toast", "sandwich", "wrap", "roll", "bowl", "bake", "roast",
+  "simmer", "steam", "paratha", "roti", "naan", "rice", "dal", "khichdi", "pulao",
+  "biryani", "pasta", "noodle", "omelette", "bhurji", "pakora", "samosa", "cutlet",
+  "kebab", "tikka", "chutney", "pickle", "dessert", "dessert", "halwa", "kheer",
+  "pudding", "smoothie", "shake",
+];
+
 const norm = (value: string) => value.toLowerCase().trim();
 
 /** Obvious non-food object? */
@@ -63,7 +72,7 @@ export function isNonFood(name: string) {
 
 /** Passes the loose gate used by the camera scanner. */
 export function isLikelyFood(name: string) {
-  return !isNonFood(name);
+  return isCookingIngredient(name);
 }
 
 /**
@@ -92,4 +101,14 @@ export function splitIngredients(names: string[]) {
     (isCookingIngredient(name) ? usable : rejected).push(name);
   }
   return { usable, rejected };
+}
+
+/** Recipe titles should sound like actual dishes, not a list of ingredients. */
+export function isLikelyRecipeTitle(title: string) {
+  const n = norm(title);
+  if (!n) return false;
+  if (DISH_WORDS.some((word) => n.includes(word))) return true;
+
+  const ingredientHits = FOOD_WORDS.filter((word) => n.includes(word)).length;
+  return ingredientHits <= 2;
 }

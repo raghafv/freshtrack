@@ -29,6 +29,7 @@ import {
   candidateShelfDays,
   candidateUnusualStorage,
   confidenceLabel,
+  shouldRefuseShelfLifeEstimate,
   type ScanCandidate,
 } from "@/lib/scan";
 
@@ -67,6 +68,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
   const prediction = predictShelfLife(candidate, storage, purchaseDate);
   const expiry = expiryOverride ?? prediction.expiry;
   const unusual = candidateUnusualStorage(candidate, storage);
+  const refuseEstimate = shouldRefuseShelfLifeEstimate(candidate);
   const conf = candidate.confidence != null ? confidenceLabel(candidate.confidence) : null;
 
   async function save() {
@@ -136,17 +138,24 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
         </DialogHeader>
 
         <div className="grid gap-4 overflow-y-auto py-1">
-          <div className="rounded-2xl bg-primary-soft px-4 py-3 text-primary">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold">
-                ~{prediction.days} day{prediction.days === 1 ? "" : "s"} of shelf life left
-              </p>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold">
-                {Math.round(prediction.confidence * 100)}% confident
-              </span>
+          {refuseEstimate ? (
+            <div className="rounded-2xl bg-warning/15 px-4 py-3 text-warning">
+              <p className="text-sm font-semibold">No shelf-life estimate available</p>
+              <p className="mt-1 text-xs leading-snug opacity-90">{prediction.explanation}</p>
             </div>
-            <p className="mt-1 text-xs leading-snug opacity-90">{prediction.explanation}</p>
-          </div>
+          ) : (
+            <div className="rounded-2xl bg-primary-soft px-4 py-3 text-primary">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">
+                  ~{prediction.days} day{prediction.days === 1 ? "" : "s"} of shelf life left
+                </p>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold">
+                  {Math.round(prediction.confidence * 100)}% confident
+                </span>
+              </div>
+              <p className="mt-1 text-xs leading-snug opacity-90">{prediction.explanation}</p>
+            </div>
+          )}
           {candidate.image_url && (
             <img
               src={candidate.image_url}
@@ -158,7 +167,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
 
           <div className="grid gap-2">
             <Label htmlFor="scan-name">Product name</Label>
-            <Input
+                    {refuseEstimate ? "unknown" : `${candidateShelfDays(candidate, s)} days`}
               id="scan-name"
               className="h-11"
               value={name}
