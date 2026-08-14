@@ -1,5 +1,4 @@
 import { toISODate, type StorageType } from "@/lib/freshtrack";
-import { isCookingIngredient } from "@/lib/food-guard";
 import {
   findProduct,
   formForUnit,
@@ -119,9 +118,9 @@ export function buildCandidate(input: {
   const storage = (input.storage as StorageType) ?? "Pantry";
   const days = input.shelfLifeDays && input.shelfLifeDays > 0 ? input.shelfLifeDays : 7;
   const shelf: ShelfLife = {
-    Fridge: days,
-    Freezer: days,
-    Pantry: days,
+    Fridge: storage === "Fridge" ? days : Math.round(days * 1.2),
+    Freezer: Math.max(days, Math.round(days * 6)),
+    Pantry: storage === "Pantry" ? days : Math.max(1, Math.round(days * 0.6)),
   };
   shelf[storage] = days;
 
@@ -159,14 +158,6 @@ export interface ShelfLifePrediction {
   explanation: string;
 }
 
-export function shouldRefuseShelfLifeEstimate(candidate: ScanCandidate) {
-  return (
-    !candidate.labelExpiry &&
-    !candidate.labelManufactured &&
-    (!candidate.matched || !isCookingIngredient(candidate.name))
-  );
-}
-
 function daysBetween(fromISO: string, toISO: string): number {
   const a = new Date(`${fromISO}T00:00:00`).getTime();
   const b = new Date(`${toISO}T00:00:00`).getTime();
@@ -188,17 +179,6 @@ export function predictShelfLife(
   storage: string,
   purchaseDate: string,
 ): ShelfLifePrediction {
-  if (shouldRefuseShelfLifeEstimate(candidate)) {
-    return {
-      days: 0,
-      expiry: purchaseDate,
-      confidence: 0,
-      source: "estimated",
-      explanation:
-        "I do not recognize this product as a real cooking item, so I will not estimate shelf life.",
-    };
-  }
-
   const base = candidateShelfDays(candidate, storage);
 
   if (candidate.labelExpiry) {

@@ -1,6 +1,5 @@
 /** Pantry grounding, prompts and response normalisation for the AI features. */
 import type { AiMessage, PantryRecipe, ShoppingSuggestion } from "./ai-types";
-import { isCookingIngredient, isLikelyRecipeTitle } from "./food-guard";
 
 function daysUntil(dateStr: string) {
   const today = new Date();
@@ -126,7 +125,6 @@ export function dataSystemPrompt(ctx: PantryContext) {
     "You are FreshTrack's kitchen engine for a household in India. Currency is Indian Rupees (₹).",
     `Today is ${new Date().toISOString().slice(0, 10)}. Items with days_left <= ${ctx.soonDays} expire soon; negative days_left means already expired.`,
     "Only use the pantry data below. Never invent items the user does not have. Never build anything around an expired item — say it should be discarded.",
-    "The pantry data below already excludes anything that is not a real cooking ingredient.",
     "Indian kitchen staples may be assumed: salt, water, oil, ghee, common spices.",
     "Know Indian ingredient names and their synonyms (arbi/arvi/arabi = taro root/colocasia, lehsun/lahsun = garlic, pyaz = onion, aloo = potato, bhindi = okra, baingan = brinjal/eggplant, palak = spinach, dahi = curd/yogurt, atta = wheat flour, tamatar = tomato, adrak = ginger, methi = fenugreek, lauki = bottle gourd, tinda, parwal, karela = bitter gourd, jimikand = yam).",
     "Flag common allergens. No medical, diagnostic or dosage advice.",
@@ -151,7 +149,6 @@ export function historyMessages(rows: { role: string; content: string }[]): AiMe
 export const recipeRequest = [
   "Suggest 4 realistic, COMPLETE home recipes I can cook right now — written so a beginner can follow them end to end with no other source.",
   "Every ingredient must already be in my pantry (salt, water, oil and common spices excepted).",
-  "If the user selected or typed anything that is not a real cooking ingredient, ignore it completely and do not use it in the recipe.",
   "Prioritise the ingredients with the smallest days_left.",
   "If a classic version of the dish needs something I do not have, keep the dish and swap in a pantry item instead — list that as a substitution.",
   "Each recipe MUST include: a one-line description, servings, prep and cook time, difficulty, cuisine, a FULL ingredient list with exact measurements (grams/ml/tbsp/tsp/pieces) including salt, oil and spices, the equipment needed, 6-12 numbered steps that state heat level, timings and visual cues, 2-4 practical tips, storage/leftover advice and a rough nutrition line per serving.",
@@ -260,42 +257,17 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
   const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
   const strList = (v: unknown, max: number) =>
     Array.isArray(v) ? v.map(String).filter((s) => s.trim().length > 0).slice(0, max) : [];
-
-  const cleanIngredientList = (v: unknown, max: number) => {
-    if (!Array.isArray(v)) return [];
-    const seen = new Set<string>();
-    return v
-      .map((ing) => {
-        const o = ing as Record<string, unknown>;
-        const name = String(o.name ?? "").trim();
-        if (!name || seen.has(name.toLowerCase()) || !isCookingIngredient(name)) return null;
-        seen.add(name.toLowerCase());
-        return {
-          name,
-          amount: String(o.amount ?? "").trim(),
-          inPantry: o.inPantry !== false,
-        };
-      })
-      .filter((v): v is { name: string; amount: string; inPantry: boolean } => v !== null)
-      .slice(0, max);
-  };
-
   return raw
     .map((entry): PantryRecipe | null => {
       const r = entry as Record<string, unknown>;
       const title = String(r.title ?? "").trim();
-      if (!title || !isLikelyRecipeTitle(title)) return null;
+      if (!title) return null;
       const num = (v: unknown, fallback: number) => {
         const n = Number(v);
         return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
       };
       const prepMinutes = num(r.prepMinutes, 0);
       const cookMinutes = num(r.cookMinutes, 0);
-      const rawIngredients = Array.isArray(r.ingredients) ? r.ingredients : [];
-      const ingredients = cleanIngredientList(rawIngredients, 25);
-      if (rawIngredients.length > 0 && ingredients.length !== rawIngredients.length) {
-        return null;
-      }
       return {
         title,
         description: r.description ? String(r.description) : undefined,
@@ -305,10 +277,24 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
         prepMinutes: prepMinutes || undefined,
         cookMinutes: cookMinutes || undefined,
         minutes: num(r.minutes, prepMinutes + cookMinutes || 20),
-        ingredients,
+        ingredients: Array.isArray(r.ingredients)
+          ? r.ingredients
+              .map((ing) => {
+                const o = ing as Record<string, unknown>;
+                const name = String(o.name ?? "").trim();
+                if (!name) return null;
+                return {
+                  name,
+                  amount: String(o.amount ?? "").trim(),
+                  inPantry: o.inPantry !== false,
+                };
+              })
+              .filter((v): v is { name: string; amount: string; inPantry: boolean } => v !== null)
+              .slice(0, 25)
+          : [],
         equipment: strList(r.equipment, 8),
-        uses: strList(r.uses, 12).filter(isCookingIngredient),
-        priority: strList(r.priority, 6).filter(isCookingIngredient),
+        uses: strList(r.uses, 12),
+        priority: strList(r.priority, 6),
         steps: strList(r.steps, 14),
         tips: strList(r.tips, 6),
         storageAdvice: r.storageAdvice ? String(r.storageAdvice) : null,
@@ -319,7 +305,7 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
                 const o = sub as Record<string, unknown>;
                 const missing = String(o.missing ?? "").trim();
                 const use = String(o.use ?? "").trim();
-                return missing && use && isCookingIngredient(use) ? { missing, use } : null;
+                return missing && use ? { missing, use } : null;
               })
               .filter((v): v is { missing: string; use: string } => v !== null)
               .slice(0, 6)

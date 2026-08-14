@@ -26,25 +26,7 @@ export interface AdminOverview {
   byProvider: { provider: string; calls: number; avgMs: number; failures: number }[];
   byFeature: { feature: string; calls: number }[];
   daily: { date: string; calls: number }[];
-  aiApis: AiApiStatus[];
   users: AdminUserRow[];
-}
-
-export interface AiApiStatus {
-  name: string;
-  surface: "text" | "vision";
-  provider: string;
-  endpoint: string;
-  model: string;
-  envKey: string;
-  configured: boolean;
-  calls: number;
-  failures: number;
-  quotaFailures: number;
-  avgMs: number;
-  lastUsed: string | null;
-  lastError: string | null;
-  status: "configured" | "missing-key" | "degraded" | "quota-limited";
 }
 
 /** True when the signed-in user holds the admin role. */
@@ -92,7 +74,6 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     const logs = usage.data ?? [];
     const aiBy = new Map<string, { calls: number; last: string }>();
     const providers = new Map<string, { calls: number; ms: number; failures: number }>();
-    const latestErrorByProvider = new Map<string, string | null>();
     const features = new Map<string, number>();
     const days = new Map<string, number>();
     const since24h = Date.now() - 86_400_000;
@@ -111,10 +92,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       const agg = providers.get(p) ?? { calls: 0, ms: 0, failures: 0 };
       agg.calls++;
       agg.ms += log.ms ?? 0;
-      if (!log.ok) {
-        agg.failures++;
-        latestErrorByProvider.set(p, log.error ?? null);
-      }
+      if (!log.ok) agg.failures++;
       providers.set(p, agg);
 
       features.set(log.feature, (features.get(log.feature) ?? 0) + 1);
@@ -138,94 +116,6 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         push_devices: pushBy.get(p.id) ?? 0,
       }))
       .sort((a, b) => b.ai_calls - a.ai_calls || b.pantry_items - a.pantry_items);
-
-    const providerCatalog = [
-      {
-        name: "Gemini text",
-        surface: "text" as const,
-        provider: "gemini",
-        endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-        model: "gemini-2.0-flash",
-        envKey: "GEMINI_API_KEY",
-      },
-      {
-        name: "Groq text",
-        surface: "text" as const,
-        provider: "groq",
-        endpoint: "https://api.groq.com/openai/v1/chat/completions",
-        model: "llama-3.3-70b-versatile",
-        envKey: "GROQ_API_KEY",
-      },
-      {
-        name: "Lovable text",
-        surface: "text" as const,
-        provider: "lovable",
-        endpoint: "https://ai.gateway.lovable.dev/v1/chat/completions",
-        model: "google/gemini-3.6-flash",
-        envKey: "LOVABLE_API_KEY",
-      },
-      {
-        name: "Gemini vision",
-        surface: "vision" as const,
-        provider: "gemini",
-        endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-        model: "gemini-2.0-flash",
-        envKey: "GEMINI_API_KEY",
-      },
-      {
-        name: "Hugging Face vision",
-        surface: "vision" as const,
-        provider: "huggingface",
-        endpoint: "https://router.huggingface.co/v1/chat/completions",
-        model: "Qwen/Qwen2.5-VL-7B-Instruct",
-        envKey: "HUGGINGFACE_API_KEY",
-      },
-      {
-        name: "Lovable vision",
-        surface: "vision" as const,
-        provider: "lovable",
-        endpoint: "https://ai.gateway.lovable.dev/v1/chat/completions",
-        model: "google/gemini-3.6-flash",
-        envKey: "LOVABLE_API_KEY",
-      },
-    ] satisfies {
-      name: string;
-      surface: "text" | "vision";
-      provider: string;
-      endpoint: string;
-      model: string;
-      envKey: string;
-    }[];
-
-    const aiApis: AiApiStatus[] = providerCatalog.map((api) => {
-      const agg = providers.get(api.provider) ?? { calls: 0, ms: 0, failures: 0 };
-      const quotaFailures = logs.filter(
-        (log) =>
-          log.provider === api.provider &&
-          !log.ok &&
-          /429|quota|credit|rate limit|limit exceeded|insufficient/i.test(log.error ?? ""),
-      ).length;
-      const configured = Boolean(process.env[api.envKey]);
-      const lastError = latestErrorByProvider.get(api.provider) ?? null;
-      const status = !configured
-        ? "missing-key"
-        : quotaFailures > 0
-          ? "quota-limited"
-          : agg.failures > 0
-            ? "degraded"
-            : "configured";
-      return {
-        ...api,
-        configured,
-        calls: agg.calls,
-        failures: agg.failures,
-        quotaFailures,
-        avgMs: agg.calls ? Math.round(agg.ms / agg.calls) : 0,
-        lastUsed: [...logs].find((log) => log.provider === api.provider)?.created_at ?? null,
-        lastError,
-        status,
-      };
-    });
 
     return {
       totals: {
@@ -251,7 +141,6 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         .map(([date, calls]) => ({ date, calls }))
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(-14),
-      aiApis,
       users,
     };
   });

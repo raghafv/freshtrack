@@ -42,17 +42,6 @@ import {
 import type { ItemFormPrefill } from "@/components/item-form-dialog";
 import { MeasureInput } from "@/components/measure-input";
 
-const CATEGORY_QUICK_PICK = [
-  { name: "Fruits", hint: "fresh, seasonal, snackable" },
-  { name: "Vegetables", hint: "daily cooking basics" },
-  { name: "Dairy", hint: "milk, curd, paneer, butter" },
-  { name: "Meat & Seafood", hint: "protein and frozen cuts" },
-  { name: "Grains & Pasta", hint: "rice, flour, noodles" },
-  { name: "Bakery", hint: "bread, buns, rolls" },
-  { name: "Snacks", hint: "quick bites and treats" },
-  { name: "Spices", hint: "masalas, seasoning, heat" },
-] as const;
-
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -120,12 +109,6 @@ export function QuickAddDialog({
     [activeCategory],
   );
 
-  function selectCategory(category: string) {
-    setActiveCategory(category);
-    setQuery("");
-    setSelected(null);
-  }
-
   const suggestedExpiry = selected ? expiryForProduct(selected, storage, purchaseDate) : "";
   const unusual = selected ? isUnusualStorage(selected, storage) : false;
 
@@ -181,31 +164,30 @@ export function QuickAddDialog({
   function ProductRow({ product }: { product: GroceryProduct }) {
     const fav = store.favorites.includes(product.id);
     return (
-      <div className="press grid min-h-24 grid-cols-[5rem_1fr_auto] gap-3 rounded-3xl border border-border/60 bg-card/70 p-3 transition-colors hover:bg-accent/40">
+      <div className="press flex items-center gap-2 rounded-2xl border border-border/60 bg-card/60 pr-1 transition-colors hover:bg-accent/40">
         <button
           type="button"
           onClick={() => pick(product)}
-          className="col-span-2 flex min-w-0 items-center gap-3 text-left"
+          className="flex min-h-12 flex-1 items-center gap-2 px-3 py-2 text-left"
         >
           <FoodThumb
             name={product.name}
             category={product.category}
-            className="h-14 w-14 rounded-2xl"
-            emojiClassName="text-2xl"
+            className="h-9 w-9 rounded-xl"
+            emojiClassName="text-lg"
           />
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[15px] font-semibold leading-tight">{product.name}</span>
-            <span className="text-[12px] text-muted-foreground">
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold leading-tight">{product.name}</span>
+            <span className="text-[11px] text-muted-foreground">
               {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
             </span>
-            <span className="text-[11px] text-muted-foreground/80">Tap to prefill quantity and storage.</span>
           </span>
         </button>
         <Button
           size="icon"
           variant="ghost"
           aria-label={fav ? `Remove ${product.name} from favourites` : `Favourite ${product.name}`}
-          className="h-10 w-10 shrink-0 rounded-2xl"
+          className="h-9 w-9 shrink-0 rounded-xl"
           onClick={() => persist(toggleFavorite(store, product.id))}
         >
           <Star className={cn("h-4 w-4", fav && "fill-primary text-primary")} />
@@ -383,33 +365,22 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
-              {CATEGORY_QUICK_PICK.map((c) => {
-                const active = activeCategory === c.name;
-                return (
-                  <button
-                    key={c.name}
-                    type="button"
-                    onClick={() => selectCategory(c.name)}
-                    className={cn(
-                      "press flex min-h-24 items-start justify-between rounded-3xl border p-4 text-left transition-colors",
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border/60 bg-card/60 hover:bg-accent/40",
-                    )}
-                  >
-                    <span className="flex flex-col gap-1">
-                      <span className="text-base font-semibold">{categoryEmoji(c.name)} {c.name}</span>
-                      <span className={cn("text-xs", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                        {c.hint}
-                      </span>
-                    </span>
-                    <span className={cn("text-xs font-medium", active ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                      Browse
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              {["all", ...CATALOG_CATEGORIES].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setActiveCategory(c)}
+                  className={cn(
+                    "press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    activeCategory === c
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border/60 bg-card/60 hover:bg-accent/40",
+                  )}
+                >
+                  {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
+                </button>
+              ))}
             </div>
 
             <div className="-mx-1 flex-1 overflow-y-auto px-1">
@@ -426,6 +397,7 @@ export function QuickAddDialog({
               ) : (
                 <>
                   <Section title="Favourites" items={favorites} />
+                  <Section title="Frequently added" items={frequent} />
                   <Section title="Recent items" items={recents} />
                   <Section title="Popular items" items={popular} />
                 </>

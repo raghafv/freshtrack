@@ -1,7 +1,9 @@
-import { isLikelyFood } from "@/lib/food-guard";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MODEL = "google/gemini-3.6-flash";
 
 const ImageInput = z.object({
   /** data:image/...;base64,... */
@@ -17,43 +19,13 @@ function parseJsonish(raw: string): Record<string, unknown> {
   }
 }
 
-/** Records one vision call so the owner dashboard sees every provider, ok or not. */
-async function logVision(
-  feature: string,
-  provider: string,
-  ok: boolean,
-  ms: number,
-  error: string | null,
-  userId: string | null,
-) {
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("ai_usage_log").insert({
-      user_id: userId,
-      feature,
-      provider,
-      model: null,
-      ok,
-      ms,
-      chars: 0,
-      error: error ? error.slice(0, 300) : null,
-    });
-  } catch (e) {
-    console.error("[vision] usage log failed", e);
-  }
-}
-
-type VisionCall = (image: string, system: string, instruction: string) => Promise<
-  Record<string, unknown>
->;
-
-/** Google Gemini directly on the user's own key — first choice, no Lovable credits. */
-const geminiVision: VisionCall = async (image, system, instruction) => {
+/** Direct Google Gemini fallback used when the Lovable gateway is out of credits. */
+async function callGeminiVision(image: string, system: string, instruction: string) {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("no key");
+  if (!key) return null;
 
   const match = /^data:([^;]+);base64,(.+)$/.exec(image);
-  if (!match) throw new Error("image must be a data URL");
+  if (!match) return null;
   const [, mimeType, data] = match;
 
   const res = await fetch(
@@ -63,62 +35,39 @@ const geminiVision: VisionCall = async (image, system, instruction) => {
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
-        contents: [
-          { role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] },
-        ],
+        contents: [{ role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] }],
         generationConfig: { responseMimeType: "application/json" },
       }),
     },
   );
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
 
+  if (!res.ok) {
+    console.error(`[vision] gemini ${res.status}: ${await res.text()}`);
+    return null;
+  }
   const json = (await res.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
   };
-  return parseJsonish(
-    json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "{}",
-  );
-};
+  const raw = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "{}";
+  return parseJsonish(raw);
+}
 
-/** Hugging Face router (OpenAI-compatible) — second free fallback. */
-const huggingFaceVision: VisionCall = async (image, system, instruction) => {
-  const key = process.env.HUGGINGFACE_API_KEY;
-  if (!key) throw new Error("no key");
-
-  const res = await fetch("https://router.huggingface.co/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: "Qwen/Qwen2.5-VL-7B-Instruct",
-      messages: [
-        { role: "system", content: system },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${instruction}\n\nAnswer with raw JSON only, no markdown.` },
-            { type: "image_url", image_url: { url: image } },
-          ],
-        },
-      ],
-      max_tokens: 1200,
-    }),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
-
-  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
-};
-
-/** Lovable AI gateway — last resort, the only path that spends Lovable credits. */
-const lovableVision: VisionCall = async (image, system, instruction) => {
+async function callVision(image: string, system: string, instruction: string) {
   const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("no key");
+  if (!key) {
+    const viaGemini = await callGeminiVision(image, system, instruction);
+    if (viaGemini) return viaGemini;
+    throw new Error("AI is not configured for this project.");
+  }
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch(GATEWAY, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+    headers: {
+      "Content-Type": "application/json",
+      "Lovable-API-Key": key,
+    },
     body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
+      model: MODEL,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: system },
@@ -132,52 +81,26 @@ const lovableVision: VisionCall = async (image, system, instruction) => {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
 
-  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
-};
-
-const VISION_PROVIDERS: { name: string; call: VisionCall }[] = [
-  { name: "gemini", call: geminiVision },
-  { name: "huggingface", call: huggingFaceVision },
-  { name: "lovable", call: lovableVision },
-];
-
-/**
- * Runs the image through every configured provider in order and returns the
- * first parsed answer. Personal keys go first so Lovable credits are only ever
- * touched when both of them fail.
- */
-async function callVision(
-  image: string,
-  system: string,
-  instruction: string,
-  feature = "vision",
-  userId: string | null = null,
-) {
-  let lastError = "AI is not configured for this project.";
-
-  for (const provider of VISION_PROVIDERS) {
-    const started = Date.now();
-    try {
-      const value = await provider.call(image, system, instruction);
-      void logVision(feature, provider.name, true, Date.now() - started, null, userId);
-      return value;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message === "no key") continue; // provider not configured -> skip silently
-      lastError = message;
-      console.error(`[vision:${feature}] ${provider.name} failed: ${message}`);
-      void logVision(feature, provider.name, false, Date.now() - started, message, userId);
-    }
+  // Out of credits / rate limited / provider hiccup -> try the direct Gemini key.
+  if (res.status === 402 || res.status === 429 || res.status >= 500) {
+    const viaGemini = await callGeminiVision(image, system, instruction);
+    if (viaGemini) return viaGemini;
   }
 
-  throw new Error(
-    `AI is temporarily unavailable — add the item manually for now. (${lastError.slice(0, 80)})`,
-  );
-}
+  if (res.status === 429) throw new Error("AI is busy right now — try again in a moment.");
+  if (res.status === 402) throw new Error("AI credits exhausted. Add credits to keep scanning.");
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`[vision] gateway ${res.status}: ${body}`);
+    throw new Error("Could not analyse the photo. Try again or add the item manually.");
+  }
 
+  const json = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
+}
 
 
 export interface DetectedGrocery {
@@ -200,28 +123,24 @@ export interface DetectedGrocery {
 export const detectGroceries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ImageInput.parse(input))
-  .handler(async ({ data, context }): Promise<{ items: DetectedGrocery[] }> => {
+  .handler(async ({ data }): Promise<{ items: DetectedGrocery[] }> => {
     const parsed = await callVision(
       data.image,
-      "You identify grocery products in photos for a pantry app used in India. You NEVER guess: anything that is not unmistakably edible food or drink is rejected. Always answer with JSON only.",
+      "You identify grocery products in photos for a pantry app used in India. Always answer with JSON only.",
       [
         "Identify every distinct grocery product in this photo.",
-        'Reply with JSON: {"items":[{"name":"","brand":null,"isFood":true,"confidence":0.0,"category":"","storage":"","shelfLifeDays":0,"unit":"","freshness":0.0,"packaged":false,"note":""}]}.',
-        "HARD RULE: only include an item if you are certain it is edible food or drink sold as a grocery. Pens, ink, ID cards, documents, phones, cosmetics, medicines, cleaning products, packaging alone, people, pets and anything you cannot name confidently must be LEFT OUT entirely — never invent a shelf life for them.",
-        "isFood: true only for edible food/drink. If in any doubt, set false (it will be discarded).",
-        "If the photo contains no edible grocery at all, return an empty items array. An empty array is a correct answer — never pad it.",
+        'Reply with JSON: {"items":[{"name":"","brand":null,"confidence":0.0,"category":"","storage":"","shelfLifeDays":0,"unit":"","freshness":0.0,"packaged":false,"note":""}]}.',
         "name: short common product name (e.g. Milk, Tomatoes, Paneer).",
-        "confidence: 0-1 how sure you are. Use below 0.45 whenever you are unsure what the item is.",
+        "confidence: 0-1 how sure you are.",
         "category: one of Dairy, Fruits, Vegetables, Produce, Meat & Seafood, Bakery, Frozen, Beverages, Grains & Pasta, Snacks, Condiments, Spices, Other.",
         "storage: best of Fridge, Freezer, Pantry.",
-        "shelfLifeDays: typical days it stays good in that storage. Freezing does NOT make everything last longer — only give a longer freezer life for foods that genuinely freeze well (meat, fish, peas, bread, cooked food). Milk-based sweets, eggs in shell, fresh salad leaves, cucumbers, tomatoes, potatoes, onions, bananas and most fruit get WORSE in a freezer, so keep their shelf life short there.",
+        "shelfLifeDays: typical days it stays good in that storage.",
         'unit: one of "g", "kg", "mL", "L", "pcs".',
         "freshness: 0-1 judged from what you can SEE — bruising, wilting, mould, browning, condensation, ripeness. 1 = just harvested/packed, 0.5 = half-way through its life, 0 = spoiled.",
         "packaged: true if it is a sealed factory pack, false for loose fresh produce.",
         'note: max 12 words explaining the freshness call (e.g. "skin slightly spotted, ripe").',
+        "If nothing edible is visible, return an empty items array.",
       ].join("\n"),
-      "scan-photo",
-      context.userId,
     );
 
     const items = Array.isArray(parsed.items) ? parsed.items : [];
@@ -231,16 +150,12 @@ export const detectGroceries = createServerFn({ method: "POST" })
           const it = raw as Record<string, unknown>;
           const name = String(it.name ?? "").trim();
           if (!name) return null;
-          // Never let a non-food object through — no shelf life is invented for it.
-          if (it.isFood === false || !isLikelyFood(name)) return null;
           const confidence = Number(it.confidence);
-          const score = Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0.5;
-          if (score < 0.35) return null;
           const shelf = Number(it.shelfLifeDays);
           return {
             name,
             brand: it.brand ? String(it.brand) : null,
-            confidence: score,
+            confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0.5,
             category: String(it.category ?? "Other"),
             storage: ["Fridge", "Freezer", "Pantry"].includes(String(it.storage))
               ? String(it.storage)
@@ -259,7 +174,6 @@ export const detectGroceries = createServerFn({ method: "POST" })
         .slice(0, 12),
     };
   });
-
 
 export interface ReceiptLine {
   name: string;

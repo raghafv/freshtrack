@@ -47,13 +47,6 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
   );
 }
 
-function statusTone(status: string) {
-  if (status === "configured") return "bg-success/15 text-success";
-  if (status === "quota-limited") return "bg-destructive/15 text-destructive";
-  if (status === "degraded") return "bg-warning/15 text-warning";
-  return "bg-muted/50 text-muted-foreground";
-}
-
 /** Owner-only: hand out or take back the admin role by email address. */
 function AdminRolesPanel() {
   const qc = useQueryClient();
@@ -241,42 +234,6 @@ function AdminPage() {
                 {data.byFeature.map((f) => `${f.feature}: ${f.calls}`).join("  ·  ")}
               </p>
             ) : null}
-          </section>
-
-          <section className="surface-card p-5">
-            <h2 className="mb-1 text-sm font-semibold tracking-tight">AI APIs in use</h2>
-            <p className="mb-4 text-xs text-muted-foreground">
-              FreshTrack can see usage and failures, but exact remaining credits usually live in the provider dashboard, not inside the app.
-            </p>
-            <div className="space-y-2">
-              {data.aiApis.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No AI providers detected yet.</p>
-              ) : (
-                data.aiApis.map((api) => (
-                  <div key={`${api.surface}-${api.provider}-${api.name}`} className="rounded-2xl bg-muted/40 px-4 py-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{api.name}</p>
-                        <p className="text-xs text-muted-foreground">{api.endpoint}</p>
-                      </div>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusTone(api.status)}`}>
-                        {api.status.replace("-", " ")}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {api.surface} · provider {api.provider} · model {api.model}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {api.configured ? "API key configured" : "API key missing"} · {api.calls} calls · {api.failures} failed · {api.quotaFailures} quota-style failures · {api.avgMs}ms avg
-                    </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Last used: {api.lastUsed ? new Date(api.lastUsed).toLocaleString() : "never"}
-                      {api.lastError ? ` · last error: ${api.lastError}` : ""}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
           </section>
 
           <section className="surface-card p-5">
