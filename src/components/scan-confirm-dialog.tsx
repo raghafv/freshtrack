@@ -167,7 +167,7 @@ export function ScanConfirmDialog({ candidate, onOpenChange, onSaved }: Props) {
 
           <div className="grid gap-2">
             <Label htmlFor="scan-name">Product name</Label>
-                    {refuseEstimate ? "unknown" : `${candidateShelfDays(candidate, s)} days`}
+            <Input
               id="scan-name"
               className="h-11"
               value={name}

@@ -9,33 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
-import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
-import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
-import { Route as ShellScanMyModelRouteImport } from './routes/_shell.scan-my-model'
-import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
-import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
-import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
-import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
-import { Route as ShellHomeRouteImport } from './routes/_shell.home'
-import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
-import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
-import { Route as ShellAdminPendingRouteImport } from './routes/_shell.admin-pending'
-import { Route as ShellAdminBarcodesRouteImport } from './routes/_shell.admin-barcodes'
+import { Route as ShellRouteImport } from './routes/_shell'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
-import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
+import { Route as ShellAdminBarcodesRouteImport } from './routes/_shell.admin-barcodes'
+import { Route as ShellAdminPendingRouteImport } from './routes/_shell.admin-pending'
+import { Route as ShellAnalyticsRouteImport } from './routes/_shell.analytics'
+import { Route as ShellAssistantRouteImport } from './routes/_shell.assistant'
+import { Route as ShellHomeRouteImport } from './routes/_shell.home'
+import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifications'
+import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
+import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
+import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
+import { Route as ShellScanMyModelRouteImport } from './routes/_shell.scan-my-model'
+import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
+import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
+import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
 import { Route as ShellAdminUserUserIdRouteImport } from './routes/_shell.admin-user.$userId'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShellRoute = ShellRouteImport.update({
+  id: '/_shell',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -43,73 +47,14 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShellRoute = ShellRouteImport.update({
-  id: '/_shell',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShellShoppingRoute = ShellShoppingRouteImport.update({
-  id: '/shopping',
-  path: '/shopping',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellSettingsRoute = ShellSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellScannerRoute = ShellScannerRouteImport.update({
-  id: '/scanner',
-  path: '/scanner',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellScanMyModelRoute = ShellScanMyModelRouteImport.update({
-  id: '/scan-my-model',
-  path: '/scan-my-model',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellRecipesRoute = ShellRecipesRouteImport.update({
-  id: '/recipes',
-  path: '/recipes',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellProfileRoute = ShellProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellPantryRoute = ShellPantryRouteImport.update({
-  id: '/pantry',
-  path: '/pantry',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellNotificationsRoute = ShellNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellHomeRoute = ShellHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellAssistantRoute = ShellAssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => ShellRoute,
-} as any)
-const ShellAdminPendingRoute = ShellAdminPendingRouteImport.update({
-  id: '/admin-pending',
-  path: '/admin-pending',
+const ShellAdminRoute = ShellAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellAdminBarcodesRoute = ShellAdminBarcodesRouteImport.update({
@@ -117,9 +62,69 @@ const ShellAdminBarcodesRoute = ShellAdminBarcodesRouteImport.update({
   path: '/admin-barcodes',
   getParentRoute: () => ShellRoute,
 } as any)
-const ShellAdminRoute = ShellAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const ShellAdminPendingRoute = ShellAdminPendingRouteImport.update({
+  id: '/admin-pending',
+  path: '/admin-pending',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAnalyticsRoute = ShellAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAssistantRoute = ShellAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellHomeRoute = ShellHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellNotificationsRoute = ShellNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellPantryRoute = ShellPantryRouteImport.update({
+  id: '/pantry',
+  path: '/pantry',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellProfileRoute = ShellProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellRecipesRoute = ShellRecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellScanMyModelRoute = ShellScanMyModelRouteImport.update({
+  id: '/scan-my-model',
+  path: '/scan-my-model',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellScannerRoute = ShellScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellSettingsRoute = ShellSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellShoppingRoute = ShellShoppingRouteImport.update({
+  id: '/shopping',
+  path: '/shopping',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAdminUserUserIdRoute = ShellAdminUserUserIdRouteImport.update({
+  id: '/admin-user/$userId',
+  path: '/admin-user/$userId',
   getParentRoute: () => ShellRoute,
 } as any)
 const ApiPublicPushDigestRoute = ApiPublicPushDigestRouteImport.update({
@@ -127,10 +132,15 @@ const ApiPublicPushDigestRoute = ApiPublicPushDigestRouteImport.update({
   path: '/api/public/push-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShellAdminUserUserIdRoute = ShellAdminUserUserIdRouteImport.update({
-  id: '/admin-user/$userId',
-  path: '/admin-user/$userId',
-  getParentRoute: () => ShellRoute,
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
@@ -138,16 +148,6 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -312,18 +312,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_shell': {
@@ -333,95 +326,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_shell/shopping': {
-      id: '/_shell/shopping'
-      path: '/shopping'
-      fullPath: '/shopping'
-      preLoaderRoute: typeof ShellShoppingRouteImport
-      parentRoute: typeof ShellRoute
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_shell/settings': {
-      id: '/_shell/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof ShellSettingsRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/scanner': {
-      id: '/_shell/scanner'
-      path: '/scanner'
-      fullPath: '/scanner'
-      preLoaderRoute: typeof ShellScannerRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/scan-my-model': {
-      id: '/_shell/scan-my-model'
-      path: '/scan-my-model'
-      fullPath: '/scan-my-model'
-      preLoaderRoute: typeof ShellScanMyModelRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/recipes': {
-      id: '/_shell/recipes'
-      path: '/recipes'
-      fullPath: '/recipes'
-      preLoaderRoute: typeof ShellRecipesRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/profile': {
-      id: '/_shell/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ShellProfileRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/pantry': {
-      id: '/_shell/pantry'
-      path: '/pantry'
-      fullPath: '/pantry'
-      preLoaderRoute: typeof ShellPantryRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/notifications': {
-      id: '/_shell/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof ShellNotificationsRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/home': {
-      id: '/_shell/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof ShellHomeRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/assistant': {
-      id: '/_shell/assistant'
-      path: '/assistant'
-      fullPath: '/assistant'
-      preLoaderRoute: typeof ShellAssistantRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/analytics': {
-      id: '/_shell/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof ShellAnalyticsRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/_shell/admin-pending': {
-      id: '/_shell/admin-pending'
-      path: '/admin-pending'
-      fullPath: '/admin-pending'
-      preLoaderRoute: typeof ShellAdminPendingRouteImport
+    '/_shell/admin': {
+      id: '/_shell/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof ShellAdminRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/admin-barcodes': {
@@ -431,11 +354,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAdminBarcodesRouteImport
       parentRoute: typeof ShellRoute
     }
-    '/_shell/admin': {
-      id: '/_shell/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof ShellAdminRouteImport
+    '/_shell/admin-pending': {
+      id: '/_shell/admin-pending'
+      path: '/admin-pending'
+      fullPath: '/admin-pending'
+      preLoaderRoute: typeof ShellAdminPendingRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/analytics': {
+      id: '/_shell/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof ShellAnalyticsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/assistant': {
+      id: '/_shell/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof ShellAssistantRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/home': {
+      id: '/_shell/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof ShellHomeRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/notifications': {
+      id: '/_shell/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof ShellNotificationsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/pantry': {
+      id: '/_shell/pantry'
+      path: '/pantry'
+      fullPath: '/pantry'
+      preLoaderRoute: typeof ShellPantryRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/profile': {
+      id: '/_shell/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ShellProfileRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/recipes': {
+      id: '/_shell/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof ShellRecipesRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/scan-my-model': {
+      id: '/_shell/scan-my-model'
+      path: '/scan-my-model'
+      fullPath: '/scan-my-model'
+      preLoaderRoute: typeof ShellScanMyModelRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/scanner': {
+      id: '/_shell/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ShellScannerRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/settings': {
+      id: '/_shell/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof ShellSettingsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/shopping': {
+      id: '/_shell/shopping'
+      path: '/shopping'
+      fullPath: '/shopping'
+      preLoaderRoute: typeof ShellShoppingRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/admin-user/$userId': {
+      id: '/_shell/admin-user/$userId'
+      path: '/admin-user/$userId'
+      fullPath: '/admin-user/$userId'
+      preLoaderRoute: typeof ShellAdminUserUserIdRouteImport
       parentRoute: typeof ShellRoute
     }
     '/api/public/push-digest': {
@@ -445,18 +452,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPushDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_shell/admin-user/$userId': {
-      id: '/_shell/admin-user/$userId'
-      path: '/admin-user/$userId'
-      fullPath: '/admin-user/$userId'
-      preLoaderRoute: typeof ShellAdminUserUserIdRouteImport
-      parentRoute: typeof ShellRoute
-    }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
@@ -466,11 +466,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
