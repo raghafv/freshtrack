@@ -145,9 +145,9 @@ const openRouterVision: VisionCall = async (image, system, instruction) => {
   const models =
     !configured || configured.toLowerCase() === "openrouter/free"
       ? [
-          "meta-llama/llama-3.2-11b-vision-instruct:free",
-          "qwen/qwen2.5-vl-72b-instruct:free",
-          "google/gemma-3-27b-it:free",
+          "nvidia/nemotron-nano-12b-v2-vl:free",
+          "google/gemma-4-31b-it:free",
+          "google/gemma-4-26b-a4b-it:free",
         ]
       : [configured];
 
