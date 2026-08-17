@@ -130,7 +130,7 @@ const huggingFaceVision: VisionCall = async (image, system, instruction) => {
 
     lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
     // A model that a provider no longer serves -> try the next vision model.
-    if (res.status !== 400 && res.status !== 404) break;
+    if (![400, 404, 429].includes(res.status)) break;
   }
   throw new Error(lastError);
 };
@@ -178,7 +178,7 @@ const openRouterVision: VisionCall = async (image, system, instruction) => {
     }
 
     lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
-    if (res.status !== 400 && res.status !== 404) break;
+    if (![400, 404, 429].includes(res.status)) break;
   }
   throw new Error(lastError);
 };
