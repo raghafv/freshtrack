@@ -48,7 +48,7 @@ type VisionCall = (image: string, system: string, instruction: string) => Promis
 >;
 
 /** Google Gemini directly on the user's own key — first choice, no Lovable credits. */
-const GEMINI_VISION_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+const GEMINI_VISION_MODELS = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.5-flash"];
 
 const geminiVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.GEMINI_API_KEY;
@@ -130,7 +130,7 @@ const huggingFaceVision: VisionCall = async (image, system, instruction) => {
 
     lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
     // A model that a provider no longer serves -> try the next vision model.
-    if (res.status !== 400 && res.status !== 404) break;
+    if (![400, 404, 429].includes(res.status)) break;
   }
   throw new Error(lastError);
 };
@@ -145,9 +145,9 @@ const openRouterVision: VisionCall = async (image, system, instruction) => {
   const models =
     !configured || configured.toLowerCase() === "openrouter/free"
       ? [
-          "meta-llama/llama-3.2-11b-vision-instruct:free",
-          "qwen/qwen2.5-vl-72b-instruct:free",
-          "google/gemma-3-27b-it:free",
+          "nvidia/nemotron-nano-12b-v2-vl:free",
+          "google/gemma-4-31b-it:free",
+          "google/gemma-4-26b-a4b-it:free",
         ]
       : [configured];
 
@@ -178,7 +178,7 @@ const openRouterVision: VisionCall = async (image, system, instruction) => {
     }
 
     lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
-    if (res.status !== 400 && res.status !== 404) break;
+    if (![400, 404, 429].includes(res.status)) break;
   }
   throw new Error(lastError);
 };

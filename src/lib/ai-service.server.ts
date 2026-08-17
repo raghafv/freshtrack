@@ -34,7 +34,7 @@ const PROVIDERS: ProviderDefinition[] = [
   {
     name: "gemini",
     url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    model: "gemini-2.0-flash",
+    model: "gemini-flash-latest",
     headers: () => {
       const key = process.env.GEMINI_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
