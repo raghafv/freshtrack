@@ -48,7 +48,7 @@ type VisionCall = (image: string, system: string, instruction: string) => Promis
 >;
 
 /** Google Gemini directly on the user's own key — first choice, no Lovable credits. */
-const GEMINI_VISION_MODELS = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.5-flash"];
+const GEMINI_VISION_MODELS = ["gemini-3.1-flash-lite"];
 
 const geminiVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.GEMINI_API_KEY;
@@ -93,9 +93,7 @@ const geminiVision: VisionCall = async (image, system, instruction) => {
 
 /** Hugging Face router (OpenAI-compatible) — second free fallback. */
 const HF_VISION_MODELS = [
-  "Qwen/Qwen3-VL-30B-A3B-Instruct",
-  "Qwen/Qwen2.5-VL-72B-Instruct",
-  "google/gemma-3-27b-it",
+  "google/gemma-3-4b-it",
 ];
 
 const huggingFaceVision: VisionCall = async (image, system, instruction) => {
