@@ -48,7 +48,7 @@ type VisionCall = (image: string, system: string, instruction: string) => Promis
 >;
 
 /** Google Gemini directly on the user's own key — first choice, no Lovable credits. */
-const GEMINI_VISION_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+const GEMINI_VISION_MODELS = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.5-flash"];
 
 const geminiVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.GEMINI_API_KEY;
