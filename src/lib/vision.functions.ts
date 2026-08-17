@@ -48,6 +48,8 @@ type VisionCall = (image: string, system: string, instruction: string) => Promis
 >;
 
 /** Google Gemini directly on the user's own key — first choice, no Lovable credits. */
+const GEMINI_VISION_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+
 const geminiVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("no key");
@@ -56,57 +58,129 @@ const geminiVision: VisionCall = async (image, system, instruction) => {
   if (!match) throw new Error("image must be a data URL");
   const [, mimeType, data] = match;
 
-  const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [
-          { role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] },
-        ],
-        generationConfig: { responseMimeType: "application/json" },
-      }),
-    },
-  );
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
+  let lastError = "gemini failed";
+  for (const model of GEMINI_VISION_MODELS) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [
+            { role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] },
+          ],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      },
+    );
 
-  const json = (await res.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
-  };
-  return parseJsonish(
-    json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "{}",
-  );
+    if (res.ok) {
+      const json = (await res.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      return parseJsonish(
+        json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "{}",
+      );
+    }
+
+    lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
+    // Only a missing/unsupported model is worth retrying with the next model id.
+    if (res.status !== 404 && res.status !== 400) break;
+  }
+  throw new Error(lastError);
 };
 
 /** Hugging Face router (OpenAI-compatible) — second free fallback. */
+const HF_VISION_MODELS = [
+  "Qwen/Qwen3-VL-30B-A3B-Instruct",
+  "Qwen/Qwen2.5-VL-72B-Instruct",
+  "google/gemma-3-27b-it",
+];
+
 const huggingFaceVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.HUGGINGFACE_API_KEY;
   if (!key) throw new Error("no key");
 
-  const res = await fetch("https://router.huggingface.co/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: "Qwen/Qwen2.5-VL-7B-Instruct",
-      messages: [
-        { role: "system", content: system },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${instruction}\n\nAnswer with raw JSON only, no markdown.` },
-            { type: "image_url", image_url: { url: image } },
-          ],
-        },
-      ],
-      max_tokens: 1200,
-    }),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
+  let lastError = "hugging face failed";
+  for (const model of HF_VISION_MODELS) {
+    const res = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: system },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `${instruction}\n\nAnswer with raw JSON only, no markdown.` },
+              { type: "image_url", image_url: { url: image } },
+            ],
+          },
+        ],
+        max_tokens: 1200,
+      }),
+    });
 
-  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
+    if (res.ok) {
+      const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+      return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
+    }
+
+    lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
+    // A model that a provider no longer serves -> try the next vision model.
+    if (res.status !== 400 && res.status !== 404) break;
+  }
+  throw new Error(lastError);
+};
+
+/** OpenRouter (OpenAI-compatible) — third fallback, works with free vision models. */
+const openRouterVision: VisionCall = async (image, system, instruction) => {
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) throw new Error("no key");
+
+  const configured = (process.env.OPENROUTER_MODEL ?? "").trim();
+  // "openrouter/free" is a routing alias, not a model id — map it to free vision models.
+  const models =
+    !configured || configured.toLowerCase() === "openrouter/free"
+      ? [
+          "meta-llama/llama-3.2-11b-vision-instruct:free",
+          "qwen/qwen2.5-vl-72b-instruct:free",
+          "google/gemma-3-27b-it:free",
+        ]
+      : [configured];
+
+  let lastError = "openrouter failed";
+  for (const model of models) {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: system },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `${instruction}\n\nAnswer with raw JSON only, no markdown.` },
+              { type: "image_url", image_url: { url: image } },
+            ],
+          },
+        ],
+        max_tokens: 1200,
+      }),
+    });
+
+    if (res.ok) {
+      const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+      return parseJsonish(json.choices?.[0]?.message?.content ?? "{}");
+    }
+
+    lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
+    if (res.status !== 400 && res.status !== 404) break;
+  }
+  throw new Error(lastError);
 };
 
 /** Lovable AI gateway — last resort, the only path that spends Lovable credits. */
@@ -141,8 +215,10 @@ const lovableVision: VisionCall = async (image, system, instruction) => {
 const VISION_PROVIDERS: { name: string; call: VisionCall }[] = [
   { name: "gemini", call: geminiVision },
   { name: "huggingface", call: huggingFaceVision },
+  { name: "openrouter", call: openRouterVision },
   { name: "lovable", call: lovableVision },
 ];
+
 
 /**
  * Runs the image through every configured provider in order and returns the
