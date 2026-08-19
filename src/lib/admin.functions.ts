@@ -23,7 +23,7 @@ export interface AdminOverview {
     aiFailures: number;
     pushDevices: number;
   };
-  byProvider: { provider: string; calls: number; avgMs: number; failures: number }[];
+  byProvider: { provider: string; model: string | null; calls: number; avgMs: number; failures: number }[];
   byFeature: { feature: string; calls: number }[];
   daily: { date: string; calls: number }[];
   users: AdminUserRow[];
@@ -48,7 +48,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       supabaseAdmin.from("profiles").select("id, email, full_name, created_at"),
       supabaseAdmin
         .from("ai_usage_log")
-        .select("user_id, feature, provider, ok, ms, created_at")
+        .select("user_id, feature, provider, model, ok, ms, created_at")
         .order("created_at", { ascending: false })
         .limit(5000),
       supabaseAdmin.from("pantry_items").select("user_id"),
@@ -88,7 +88,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
           last: prev?.last ?? log.created_at,
         });
       }
-      const p = log.provider ?? "unknown";
+      const p = `${log.provider ?? "unknown"}::${log.model ?? "unknown"}`;
       const agg = providers.get(p) ?? { calls: 0, ms: 0, failures: 0 };
       agg.calls++;
       agg.ms += log.ms ?? 0;
@@ -127,12 +127,16 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         pushDevices: pushes.data?.length ?? 0,
       },
       byProvider: [...providers.entries()]
-        .map(([provider, v]) => ({
-          provider,
-          calls: v.calls,
-          avgMs: v.calls ? Math.round(v.ms / v.calls) : 0,
-          failures: v.failures,
-        }))
+        .map(([key, v]) => {
+          const [provider, model] = key.split("::");
+          return {
+            provider,
+            model: model === "unknown" ? null : model,
+            calls: v.calls,
+            avgMs: v.calls ? Math.round(v.ms / v.calls) : 0,
+            failures: v.failures,
+          };
+        })
         .sort((a, b) => b.calls - a.calls),
       byFeature: [...features.entries()]
         .map(([feature, calls]) => ({ feature, calls }))

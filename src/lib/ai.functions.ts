@@ -32,6 +32,7 @@ export type {
 } from "./ai-types";
 
 import type { AssistantReply, PantryRecipe, ShoppingSuggestion, AiProviderLog } from "./ai-types";
+import { splitIngredients } from "./food-guard";
 
 /** Records one AI call for the owner-only usage dashboard. Never throws. */
 async function logUsage(feature: string, userId: string | null, chars: number) {
@@ -299,7 +300,14 @@ export const suggestRecipes = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ recipes: PantryRecipe[] }> => {
     const supabase = context.supabase as unknown as SupabaseLike;
     const ctx = await loadPantryContext(supabase);
-    const chosen = data.mode === "selected" ? data.ingredients.filter(Boolean) : [];
+    const split = splitIngredients(data.mode === "selected" ? data.ingredients : []);
+    if (split.rejected.length > 0) {
+      throw new Error(`I do not recognize this product as food: ${split.rejected.join(", ")}`);
+    }
+    const chosen = split.usable;
+    if (data.mode === "selected" && chosen.length < 3) {
+      throw new Error("Please pick at least 3 recognized food ingredients.");
+    }
     if (ctx.items.length === 0 && chosen.length === 0 && !data.dish) return { recipes: [] };
 
     const focus = data.dish
