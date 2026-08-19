@@ -63,7 +63,7 @@ export function isNonFood(name: string) {
 
 /** Passes the loose gate used by the camera scanner. */
 export function isLikelyFood(name: string) {
-  return !isNonFood(name);
+  return !isNonFood(name) && isCookingIngredient(name);
 }
 
 /**

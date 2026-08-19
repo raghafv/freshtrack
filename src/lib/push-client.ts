@@ -10,6 +10,15 @@ export type PushState =
   | "default"
   | "granted";
 
+function unsupportedIOSVersion() {
+  if (typeof window === "undefined") return false;
+  const match = navigator.userAgent.match(/OS (\d+)_(\d+)/);
+  if (!match || !/iPad|iPhone|iPod/.test(navigator.userAgent)) return false;
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  return major < 16 || (major === 16 && minor < 4);
+}
+
 export function pushSupported() {
   return (
     typeof window !== "undefined" &&
@@ -47,6 +56,7 @@ export function pushState(): PushState {
   if (typeof window === "undefined") return "unsupported";
   if (inEmbeddedPreview()) return "preview";
   if (iosNeedsInstall()) return "needs-install";
+  if (unsupportedIOSVersion()) return "unsupported";
   if (!pushSupported()) return "unsupported";
   const p = Notification.permission;
   if (p === "denied") return "blocked";
@@ -79,7 +89,16 @@ export interface SubscribeResult {
 }
 
 /** Asks for permission (if needed), registers the worker and returns the subscription. */
-export async function subscribeToPush(publicKey: string): Promise<SubscribeResult> {
+export async function requestPushPermission(): Promise<NotificationPermission> {
+  if (!pushSupported()) throw new Error("This browser doesn't support push notifications.");
+  if (unsupportedIOSVersion()) throw new Error("Web notifications require iOS 16.4 or newer.");
+  return Notification.permission === "granted" ? "granted" : Notification.requestPermission();
+}
+
+export async function subscribeToPush(
+  publicKey: string,
+  grantedPermission?: NotificationPermission,
+): Promise<SubscribeResult> {
   if (inEmbeddedPreview())
     throw new Error(
       "Notifications can't be enabled inside the preview window. Open FreshTrack in its own tab or install it, then try again.",
@@ -90,10 +109,7 @@ export async function subscribeToPush(publicKey: string): Promise<SubscribeResul
     );
   if (!pushSupported()) throw new Error("This browser doesn't support push notifications.");
 
-  const permission =
-    Notification.permission === "granted"
-      ? "granted"
-      : await Notification.requestPermission();
+  const permission = grantedPermission ?? (await requestPushPermission());
   if (permission !== "granted")
     throw new Error(
       "Notification permission was blocked. Allow notifications for this site in your browser settings.",
