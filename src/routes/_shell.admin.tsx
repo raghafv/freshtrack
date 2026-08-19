@@ -221,7 +221,14 @@ function AdminPage() {
                     key={p.provider}
                     className="flex items-center justify-between rounded-2xl bg-muted/40 px-4 py-3 text-sm"
                   >
-                    <span className="font-medium capitalize">{p.provider}</span>
+                    <span className="min-w-0 font-medium">
+                      <span className="block capitalize">{p.provider}</span>
+                      {p.model ? (
+                        <span className="block truncate text-xs font-normal text-muted-foreground">
+                          {p.model}
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="text-muted-foreground">
                       {p.calls} calls · {p.avgMs}ms avg · {p.failures} failed
                     </span>

@@ -87,6 +87,12 @@ export const Route = createFileRoute("/api/public/push-digest")({
                 .from("push_subscriptions")
                 .delete()
                 .eq("endpoint", device.endpoint);
+            } else {
+              console.error("[push:digest] delivery failed", {
+                userId,
+                status: result.status,
+                error: result.error,
+              });
             }
           }
         }

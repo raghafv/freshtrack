@@ -13,6 +13,7 @@ import {
   currentEndpoint,
   inEmbeddedPreview,
   pushState,
+  requestPushPermission,
   subscribeToPush,
   unsubscribeFromPush,
   type PushState,
@@ -39,13 +40,18 @@ export function usePush() {
   const enable = useCallback(async () => {
     setBusy(true);
     try {
+      // Start the permission request before any server round trip so mobile
+      // browsers keep it associated with the user's tap.
+      const permissionPromise = requestPushPermission();
       const { key } = await getKey({});
       if (!key) throw new Error("Push isn't configured on the server yet.");
-      const sub = await subscribeToPush(key);
+      const permission = await permissionPromise;
+      const sub = await subscribeToPush(key, permission);
       await save({ data: sub });
       setActive(true);
       setState(pushState());
-      await test({});
+      const result = await test({});
+      if (result.sent === 0) throw new Error("The device subscribed, but the test alert could not be delivered.");
       toast.success("Notifications enabled", {
         description: "We just sent a test alert to this device.",
       });

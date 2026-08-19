@@ -70,6 +70,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
       if (result.ok) sent++;
       else {
         failed++;
+        console.error("[push:test] delivery failed", { status: result.status, error: result.error });
         if (result.gone)
           await context.supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
       }

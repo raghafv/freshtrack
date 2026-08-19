@@ -117,9 +117,12 @@ export function buildCandidate(input: {
   const unit = input.unit ?? "pcs";
   const storage = (input.storage as StorageType) ?? "Pantry";
   const days = input.shelfLifeDays && input.shelfLifeDays > 0 ? input.shelfLifeDays : 7;
+  const poorFreezerFit = /salad|lettuce|cucumber|kheera|tomato|tamatar|potato|aloo|onion|pyaz|banana|kela|egg/i.test(
+    `${input.name} ${input.category ?? ""}`,
+  );
   const shelf: ShelfLife = {
     Fridge: storage === "Fridge" ? days : Math.round(days * 1.2),
-    Freezer: Math.max(days, Math.round(days * 6)),
+    Freezer: poorFreezerFit ? Math.max(1, Math.round(days * 0.75)) : Math.max(days, Math.round(days * 6)),
     Pantry: storage === "Pantry" ? days : Math.max(1, Math.round(days * 0.6)),
   };
   shelf[storage] = days;

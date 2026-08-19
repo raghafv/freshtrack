@@ -164,21 +164,21 @@ export function QuickAddDialog({
   function ProductRow({ product }: { product: GroceryProduct }) {
     const fav = store.favorites.includes(product.id);
     return (
-      <div className="press flex items-center gap-2 rounded-2xl border border-border/60 bg-card/60 pr-1 transition-colors hover:bg-accent/40">
+      <div className="press flex min-h-[76px] items-center gap-3 rounded-xl border border-border/60 bg-card/60 pr-2 transition-colors hover:bg-accent/40">
         <button
           type="button"
           onClick={() => pick(product)}
-          className="flex min-h-12 flex-1 items-center gap-2 px-3 py-2 text-left"
+          className="flex min-h-[74px] flex-1 items-center gap-3 px-3 py-3 text-left"
         >
           <FoodThumb
             name={product.name}
             category={product.category}
-            className="h-9 w-9 rounded-xl"
-            emojiClassName="text-lg"
+            className="h-12 w-12 rounded-xl"
+            emojiClassName="text-xl"
           />
           <span className="flex flex-col">
-            <span className="text-sm font-semibold leading-tight">{product.name}</span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[15px] font-semibold leading-tight">{product.name}</span>
+            <span className="mt-1 text-xs text-muted-foreground">
               {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
             </span>
           </span>
@@ -203,7 +203,7 @@ export function QuickAddDialog({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </p>
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {items.map((p) => (
             <ProductRow key={`${title}-${p.id}`} product={p} />
           ))}
@@ -365,14 +365,14 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {["all", ...CATALOG_CATEGORIES].map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setActiveCategory(c)}
                   className={cn(
-                    "press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    "press min-h-11 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors",
                     activeCategory === c
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border/60 bg-card/60 hover:bg-accent/40",

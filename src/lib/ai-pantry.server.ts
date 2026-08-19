@@ -1,6 +1,10 @@
 /** Pantry grounding, prompts and response normalisation for the AI features. */
 import type { AiMessage, PantryRecipe, ShoppingSuggestion } from "./ai-types";
 
+function asText(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
+}
+
 function daysUntil(dateStr: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -181,13 +185,13 @@ export function normalizeIdeas(parsed: Record<string, unknown>): DishIdea[] {
   return raw
     .map((entry) => {
       const o = entry as Record<string, unknown>;
-      const title = String(o.title ?? "").trim();
+      const title = asText(o.title);
       if (!title || seen.has(title.toLowerCase())) return null;
       seen.add(title.toLowerCase());
       return {
         title,
-        oneLiner: String(o.oneLiner ?? o.description ?? "").trim(),
-        uses: Array.isArray(o.uses) ? o.uses.map(String).slice(0, 5) : [],
+        oneLiner: asText(o.oneLiner) || asText(o.description),
+        uses: Array.isArray(o.uses) ? o.uses.map(asText).filter(Boolean).slice(0, 5) : [],
       };
     })
     .filter((v): v is DishIdea => v !== null)
@@ -209,7 +213,7 @@ export function normalizeShoppingAdds(parsed: Record<string, unknown>, existing:
   return raw
     .map((entry) => {
       const it = entry as Record<string, unknown>;
-      const name = String(it.name ?? "").trim();
+      const name = asText(it.name);
       if (!name || existing.has(name.toLowerCase())) return null;
       existing.add(name.toLowerCase());
       const qty = Number(it.quantity);
@@ -217,7 +221,7 @@ export function normalizeShoppingAdds(parsed: Record<string, unknown>, existing:
         name,
         quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
         unit: UNITS.includes(String(it.unit)) ? String(it.unit) : "pcs",
-        category: String(it.category ?? "Other"),
+        category: asText(it.category) || "Other",
       };
     })
     .filter(
@@ -235,7 +239,7 @@ export function normalizePantryAdds(parsed: Record<string, unknown>) {
   return raw
     .map((entry) => {
       const it = entry as Record<string, unknown>;
-      const name = String(it.name ?? "").trim();
+      const name = asText(it.name);
       if (!name || seen.has(name.toLowerCase())) return null;
       seen.add(name.toLowerCase());
       const qty = Number(it.quantity);
@@ -244,7 +248,7 @@ export function normalizePantryAdds(parsed: Record<string, unknown>) {
         name,
         quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
         unit: UNITS.includes(String(it.unit)) ? String(it.unit) : "pcs",
-        category: String(it.category ?? "Other"),
+        category: asText(it.category) || "Other",
         storage: STORAGES.includes(String(it.storage)) ? String(it.storage) : "Pantry",
         shelfLifeDays: Number.isFinite(shelf) && shelf > 0 ? Math.round(shelf) : 7,
       };
@@ -256,11 +260,11 @@ export function normalizePantryAdds(parsed: Record<string, unknown>) {
 export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
   const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
   const strList = (v: unknown, max: number) =>
-    Array.isArray(v) ? v.map(String).filter((s) => s.trim().length > 0).slice(0, max) : [];
+    Array.isArray(v) ? v.map(asText).filter(Boolean).slice(0, max) : [];
   return raw
     .map((entry): PantryRecipe | null => {
       const r = entry as Record<string, unknown>;
-      const title = String(r.title ?? "").trim();
+      const title = asText(r.title);
       if (!title) return null;
       const num = (v: unknown, fallback: number) => {
         const n = Number(v);
@@ -270,9 +274,9 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
       const cookMinutes = num(r.cookMinutes, 0);
       return {
         title,
-        description: r.description ? String(r.description) : undefined,
-        cuisine: r.cuisine ? String(r.cuisine) : undefined,
-        difficulty: r.difficulty ? String(r.difficulty) : undefined,
+        description: asText(r.description) || undefined,
+        cuisine: asText(r.cuisine) || undefined,
+        difficulty: asText(r.difficulty) || undefined,
         servings: num(r.servings, 2),
         prepMinutes: prepMinutes || undefined,
         cookMinutes: cookMinutes || undefined,
@@ -281,11 +285,11 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
           ? r.ingredients
               .map((ing) => {
                 const o = ing as Record<string, unknown>;
-                const name = String(o.name ?? "").trim();
+                const name = asText(o.name);
                 if (!name) return null;
                 return {
                   name,
-                  amount: String(o.amount ?? "").trim(),
+                  amount: asText(o.amount),
                   inPantry: o.inPantry !== false,
                 };
               })
@@ -297,24 +301,27 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
         priority: strList(r.priority, 6),
         steps: strList(r.steps, 14),
         tips: strList(r.tips, 6),
-        storageAdvice: r.storageAdvice ? String(r.storageAdvice) : null,
-        nutrition: r.nutrition ? String(r.nutrition) : null,
+        storageAdvice: asText(r.storageAdvice) || null,
+        nutrition: asText(r.nutrition) || null,
         substitutions: Array.isArray(r.substitutions)
           ? r.substitutions
               .map((sub) => {
                 const o = sub as Record<string, unknown>;
-                const missing = String(o.missing ?? "").trim();
-                const use = String(o.use ?? "").trim();
+                const missing = asText(o.missing);
+                const use = asText(o.use);
                 return missing && use ? { missing, use } : null;
               })
               .filter((v): v is { missing: string; use: string } => v !== null)
               .slice(0, 6)
           : [],
-        savesWaste: r.savesWaste ? String(r.savesWaste) : null,
-        note: r.note ? String(r.note) : null,
+        savesWaste: asText(r.savesWaste) || null,
+        note: asText(r.note) || null,
       };
     })
-    .filter((v): v is PantryRecipe => v !== null)
+    .filter(
+      (v): v is PantryRecipe =>
+        v !== null && (v.ingredients?.length ?? 0) >= 2 && v.steps.length >= 4,
+    )
     .slice(0, 6);
 }
 
@@ -327,7 +334,7 @@ export function normalizeSuggestions(
   return raw
     .map((entry) => {
       const s = entry as Record<string, unknown>;
-      const name = String(s.name ?? "").trim();
+      const name = asText(s.name);
       if (!name || existing.has(name.toLowerCase())) return null;
       existing.add(name.toLowerCase());
       const qty = Number(s.quantity);
@@ -335,8 +342,8 @@ export function normalizeSuggestions(
         name,
         quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
         unit: UNITS.includes(String(s.unit)) ? String(s.unit) : "pcs",
-        category: String(s.category ?? "Other"),
-        reason: String(s.reason ?? ""),
+        category: asText(s.category) || "Other",
+        reason: asText(s.reason),
       } satisfies ShoppingSuggestion;
     })
     .filter((v): v is ShoppingSuggestion => v !== null)
@@ -347,7 +354,7 @@ export function normalizeSuggestions(
 export function normalizeNameList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map((v) => String(v ?? "").trim())
+    .map(asText)
     .filter((v) => v.length > 0)
     .slice(0, 100);
 }
