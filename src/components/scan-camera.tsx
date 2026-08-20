@@ -107,13 +107,13 @@ export function ScanCamera({
     const canvas = document.createElement("canvas");
     const width = video.videoWidth || 720;
     const height = video.videoHeight || 960;
-    const scale = Math.min(1, 1280 / Math.max(width, height));
+    const scale = Math.min(1, 1600 / Math.max(width, height));
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.78));
+    return new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.84));
   }
 
   async function capture() {
@@ -122,13 +122,13 @@ export function ScanCamera({
     const canvas = document.createElement("canvas");
     const width = video.videoWidth || 720;
     const height = video.videoHeight || 960;
-    const scale = Math.min(1, 1280 / Math.max(width, height));
+    const scale = Math.min(1, 1600 / Math.max(width, height));
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.78));
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.84));
     if (!blob) {
       toast.error("Could not capture the photo");
       return;

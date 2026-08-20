@@ -1,7 +1,7 @@
 import { isLikelyFood } from "@/lib/food-guard";
 import type { DetectedGrocery, LabelDates, ReceiptLine } from "@/lib/vision.types";
 
-const PROVIDER_TIMEOUT_MS = 18_000;
+const PROVIDER_TIMEOUT_MS = 14_000;
 const TRANSIENT = new Set([429, 500, 502, 503, 504]);
 
 type VisionResult = { value: Record<string, unknown>; model: string };
@@ -119,39 +119,6 @@ const huggingFaceVision: VisionCall = async (image, system, instruction) => {
   return { model, value: parseJsonish(json.choices?.[0]?.message?.content ?? "{}") };
 };
 
-const openRouterVision: VisionCall = async (image, system, instruction) => {
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) throw new Error("no key");
-  const configured = (process.env.OPENROUTER_MODEL ?? "").trim();
-  const models = !configured || configured.toLowerCase() === "openrouter/free"
-    ? ["nvidia/nemotron-nano-12b-v2-vl:free", "google/gemma-4-31b-it:free"]
-    : [configured];
-  let lastError = "OpenRouter vision failed";
-  for (const model of models) {
-    const response = await withTransientRetry(() =>
-      fetchBounded("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: [{ type: "text", text: `${instruction}\nAnswer with raw JSON only.` }, { type: "image_url", image_url: { url: image } }] },
-          ],
-          max_tokens: 1200,
-        }),
-      }),
-    );
-    if (response.ok) {
-      const json = (await response.json()) as { choices?: { message?: { content?: string } }[] };
-      return { model, value: parseJsonish(json.choices?.[0]?.message?.content ?? "{}") };
-    }
-    lastError = `${model}: ${response.status} ${(await response.text()).slice(0, 200)}`;
-    if (![400, 404, 429].includes(response.status) && response.status < 500) break;
-  }
-  throw new Error(lastError);
-};
-
 const gatewayVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("no key");
@@ -178,7 +145,6 @@ const gatewayVision: VisionCall = async (image, system, instruction) => {
 const PROVIDERS = [
   { name: "gemini", model: "gemini-3.1-flash-lite", call: geminiVision },
   { name: "huggingface", model: "google/gemma-3-4b-it", call: huggingFaceVision },
-  { name: "openrouter", model: null, call: openRouterVision },
   { name: "gateway", model: "google/gemini-3.6-flash", call: gatewayVision },
 ];
 

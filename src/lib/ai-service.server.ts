@@ -2,9 +2,8 @@
  * Centralised AI service.
  *
  * Every text AI feature in FreshTrack goes through `generateAIResponse()`.
- * Providers are tried in order (Gemini -> Groq -> Lovable AI) with one retry
- * on the primary provider for transient failures. Image/OCR work is NOT
- * handled here — it stays on the existing Lovable vision pipeline.
+ * Text generation uses Groq directly for low-latency assistant and recipe
+ * responses. Image/OCR work uses the separate vision provider chain.
  *
  * Adding a provider = push one more entry into PROVIDERS below.
  */
@@ -32,30 +31,12 @@ interface ProviderDefinition {
 
 const PROVIDERS: ProviderDefinition[] = [
   {
-    name: "gemini",
-    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    model: "gemini-flash-latest",
-    headers: () => {
-      const key = process.env.GEMINI_API_KEY;
-      return key ? { Authorization: `Bearer ${key}` } : null;
-    },
-  },
-  {
     name: "groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
     model: "llama-3.3-70b-versatile",
     headers: () => {
       const key = process.env.GROQ_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
-    },
-  },
-  {
-    name: "lovable",
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
-    model: "google/gemini-3.6-flash",
-    headers: () => {
-      const key = process.env.LOVABLE_API_KEY;
-      return key ? { "Lovable-API-Key": key } : null;
     },
   },
 ];
@@ -160,8 +141,8 @@ export async function generateAIResponse(
       const headers = provider.headers();
       if (!headers) continue; // not configured -> skip silently
 
-      // Primary provider gets one retry on transient failures.
-      const attempts = provider.name === PROVIDERS[0].name ? 2 : 1;
+      // One bounded retry only for a transient Groq failure.
+      const attempts = 2;
       for (let attempt = 1; attempt <= attempts; attempt++) {
         const started = Date.now();
         try {
@@ -193,7 +174,8 @@ export async function generateAIResponse(
             error: message,
             fallback: usedFallback,
           });
-          if (attempt < attempts && !transient) break; // non-transient: don't retry same provider
+          if (!transient) break;
+          if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
       usedFallback = true;
