@@ -77,8 +77,7 @@ const geminiVision: VisionCall = async (image, system, instruction) => {
   const match = /^data:([^;]+);base64,(.+)$/.exec(image);
   if (!match) throw new Error("image must be a data URL");
   const [, mimeType, data] = match;
-  const response = await withTransientRetry(() =>
-    fetchBounded(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const response = await fetchBounded(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
@@ -86,8 +85,7 @@ const geminiVision: VisionCall = async (image, system, instruction) => {
         contents: [{ role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] }],
         generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 },
       }),
-    }),
-  );
+    });
   if (!response.ok) throw new Error(`${model}: ${response.status} ${(await response.text()).slice(0, 200)}`);
   const json = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   return {
@@ -100,8 +98,7 @@ const huggingFaceVision: VisionCall = async (image, system, instruction) => {
   const key = process.env.HUGGINGFACE_API_KEY;
   if (!key) throw new Error("no key");
   const model = "google/gemma-3-4b-it";
-  const response = await withTransientRetry(() =>
-    fetchBounded("https://router.huggingface.co/v1/chat/completions", {
+  const response = await fetchBounded("https://router.huggingface.co/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
@@ -112,8 +109,7 @@ const huggingFaceVision: VisionCall = async (image, system, instruction) => {
         ],
         max_tokens: 1200,
       }),
-    }),
-  );
+    });
   if (!response.ok) throw new Error(`${model}: ${response.status} ${(await response.text()).slice(0, 200)}`);
   const json = (await response.json()) as { choices?: { message?: { content?: string } }[] };
   return { model, value: parseJsonish(json.choices?.[0]?.message?.content ?? "{}") };
@@ -124,7 +120,7 @@ const gatewayVision: VisionCall = async (image, system, instruction) => {
   if (!key) throw new Error("no key");
   const model = "google/gemini-3.6-flash";
   const response = await withTransientRetry(() =>
-    fetchBounded("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
       body: JSON.stringify({
