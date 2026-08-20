@@ -277,7 +277,26 @@ export function confidenceLabel(confidence: number): {
 }
 
 /** Reads a File/Blob into a data URL usable as AI image input. */
-export function toDataUrl(file: Blob): Promise<string> {
+export async function toDataUrl(file: Blob): Promise<string> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    if (scale < 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const context = canvas.getContext("2d");
+      if (context) {
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        return canvas.toDataURL("image/jpeg", 0.84);
+      }
+    }
+    bitmap.close();
+  } catch {
+    // Fall back to the original bytes when the browser cannot decode the file.
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
