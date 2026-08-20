@@ -33,7 +33,7 @@ const PROVIDERS: ProviderDefinition[] = [
   {
     name: "groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
+    model: "qwen/qwen3.6-27b",
     headers: () => {
       const key = process.env.GROQ_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
