@@ -78,7 +78,7 @@ export async function sendTemplateEmail(
         idempotency_key: options.idempotencyKey || crypto.randomUUID(),
         reply_to: options.replyTo,
       },
-      { apiKey, sendUrl: process.env['LOVABLE_SEND_URL'] }
+      { apiKey: emailApiKey, sendUrl: process.env['LOVABLE_SEND_URL'] }
     )
   } catch (error) {
     if (error instanceof EmailAPIError && error.code === 'recipient_suppressed') {
