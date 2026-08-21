@@ -365,22 +365,24 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {["all", ...CATALOG_CATEGORIES].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setActiveCategory(c)}
-                  className={cn(
-                    "press min-h-11 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors",
-                    activeCategory === c
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border/60 bg-card/60 hover:bg-accent/40",
-                  )}
-                >
-                  {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
-                </button>
-              ))}
+            <div className="relative -mx-1">
+              <div className="scrollbar-thin flex gap-2 overflow-x-auto px-1 pb-1">
+                {["all", ...CATALOG_CATEGORIES].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setActiveCategory(c)}
+                    className={cn(
+                      "press shrink-0 rounded-lg border px-3.5 py-2 text-[13px] font-medium transition-colors",
+                      activeCategory === c
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border/60 bg-card/60 hover:bg-accent/40",
+                    )}
+                  >
+                    {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="-mx-1 flex-1 overflow-y-auto px-1">
