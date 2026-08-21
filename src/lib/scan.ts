@@ -122,7 +122,9 @@ export function buildCandidate(input: {
   );
   const shelf: ShelfLife = {
     Fridge: storage === "Fridge" ? days : Math.round(days * 1.2),
-    Freezer: poorFreezerFit ? Math.max(1, Math.round(days * 0.75)) : Math.max(days, Math.round(days * 6)),
+    Freezer: poorFreezerFit
+      ? Math.max(1, Math.round(days * 0.5))
+      : Math.max(days, Math.round(days * 2.5)),
     Pantry: storage === "Pantry" ? days : Math.max(1, Math.round(days * 0.6)),
   };
   shelf[storage] = days;
