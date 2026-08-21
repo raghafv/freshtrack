@@ -3,7 +3,7 @@ import { render } from '@react-email/render'
 import { EmailAPIError, sendLovableEmail } from '@lovable.dev/email-js'
 import { TEMPLATES } from './registry'
 
-// Server-only: reads LOVABLE_API_KEY. Never import from client components.
+// Server-only: reads the managed email API key. Never import from client components.
 
 // Configuration baked in at scaffold time
 const SITE_NAME = "FreshTrack"
