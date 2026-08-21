@@ -366,7 +366,7 @@ export function QuickAddDialog({
             </div>
 
             <div className="relative -mx-1">
-              <div className="scrollbar-thin flex gap-2 overflow-x-auto px-1 pb-1">
+              <div className="category-scroll flex gap-2 overflow-x-auto px-1 pb-1">
                 {["all", ...CATALOG_CATEGORIES].map((c) => (
                   <button
                     key={c}
