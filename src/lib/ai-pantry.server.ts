@@ -260,6 +260,8 @@ export function normalizePantryAdds(parsed: Record<string, unknown>) {
     .slice(0, 20);
 }
 
+const BANNED_TITLE_WORDS = /\b(delight|medley|fusion|concoction|creation|special|bowl|plate|magic|dream)\b/i;
+
 export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
   const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
   const strList = (v: unknown, max: number) =>
@@ -268,7 +270,7 @@ export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[
     .map((entry): PantryRecipe | null => {
       const r = entry as Record<string, unknown>;
       const title = asText(r.title);
-      if (!title) return null;
+      if (!title || BANNED_TITLE_WORDS.test(title)) return null;
       const num = (v: unknown, fallback: number) => {
         const n = Number(v);
         return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
