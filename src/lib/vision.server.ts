@@ -170,8 +170,9 @@ export async function detectGroceriesServer(image: string, userId: string): Prom
     [
       'Return {"items":[{"name":"","brand":null,"isFood":true,"confidence":0,"category":"","storage":"","shelfLifeDays":0,"unit":"pcs","freshness":0,"packaged":false,"note":""}]}.',
       "Exclude non-food objects, packaging without food, medicines, cosmetics, cleaners, people, pets, and anything uncertain.",
-      "If no edible grocery is confidently identifiable, return an empty items array.",
-      "Freezing does not extend every food's life. Do not recommend freezing eggs in shell, salad leaves, cucumber, tomato, potato, onion, banana, or delicate dairy sweets.",
+      "If no edible grocery is confidently identifiable, return an empty items array and nothing else.",
+      "Freezing does NOT extend shelf life for most foods; it only preserves quality for items that actually freeze well. For eggs in shell, salad leaves, cucumber, tomato, potato, onion, banana and delicate dairy sweets, freezing shortens life or ruins texture — never recommend Freezer for those.",
+      "If the object is not a food product, do not return it at all.",
     ].join("\n"),
     "scan-photo",
     userId,

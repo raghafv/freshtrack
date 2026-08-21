@@ -785,13 +785,15 @@ function ScannerPage() {
       <AlertDialog open={noItemsOpen} onOpenChange={setNoItemsOpen}>
         <AlertDialogContent className="max-w-xs rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>No items detected</AlertDialogTitle>
-            <AlertDialogDescription>Search manually?</AlertDialogDescription>
+            <AlertDialogTitle>Not a recognised food product</AlertDialogTitle>
+            <AlertDialogDescription>
+              I do not recognise this product, so I will not estimate a shelf life. Add it manually if it is a food item.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row justify-end gap-2">
-            <AlertDialogCancel className="mt-0 rounded-2xl">No</AlertDialogCancel>
+            <AlertDialogCancel className="mt-0 rounded-2xl">Cancel</AlertDialogCancel>
             <AlertDialogAction className="rounded-2xl" onClick={() => setManualOpen(true)}>
-              Yes
+              Add manually
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

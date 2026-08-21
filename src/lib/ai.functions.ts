@@ -289,6 +289,20 @@ const RecipeInput = z.object({
   dish: z.string().min(1).max(120).optional(),
 });
 
+const BASIC_STAPLES = new Set([
+  "salt",
+  "namak",
+  "sugar",
+  "water",
+  "oil",
+  "ghee",
+  "butter",
+  "black pepper",
+  "pepper",
+  "spice",
+  "masala",
+]);
+
 /**
  * Recipe ideas built strictly from the pantry. "surprise" lets the AI pick;
  * "selected" restricts the dishes to the ingredients the user chose. Results are
@@ -307,6 +321,10 @@ export const suggestRecipes = createServerFn({ method: "POST" })
     const chosen = split.usable;
     if (data.mode === "selected" && chosen.length < 3) {
       throw new Error("Please pick at least 3 recognized food ingredients.");
+    }
+    const nonStaples = chosen.filter((c) => !BASIC_STAPLES.has(c.toLowerCase()));
+    if (data.mode === "selected" && nonStaples.length < 2) {
+      throw new Error("Please pick at least 2 real ingredients besides salt, oil, ghee, butter, sugar or water.");
     }
     if (ctx.items.length === 0 && chosen.length === 0 && !data.dish) return { recipes: [] };
 

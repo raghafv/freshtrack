@@ -164,21 +164,21 @@ export function QuickAddDialog({
   function ProductRow({ product }: { product: GroceryProduct }) {
     const fav = store.favorites.includes(product.id);
     return (
-      <div className="press flex min-h-[76px] items-center gap-3 rounded-xl border border-border/60 bg-card/60 pr-2 transition-colors hover:bg-accent/40">
+      <div className="press flex min-h-[92px] items-center gap-4 rounded-2xl border border-border/60 bg-card/60 pr-3 transition-colors hover:bg-accent/40">
         <button
           type="button"
           onClick={() => pick(product)}
-          className="flex min-h-[74px] flex-1 items-center gap-3 px-3 py-3 text-left"
+          className="flex min-h-[90px] flex-1 items-center gap-4 px-4 py-3.5 text-left"
         >
           <FoodThumb
             name={product.name}
             category={product.category}
-            className="h-12 w-12 rounded-xl"
-            emojiClassName="text-xl"
+            className="h-16 w-16 rounded-2xl"
+            emojiClassName="text-2xl"
           />
           <span className="flex flex-col">
-            <span className="text-[15px] font-semibold leading-tight">{product.name}</span>
-            <span className="mt-1 text-xs text-muted-foreground">
+            <span className="text-base font-semibold leading-tight">{product.name}</span>
+            <span className="mt-1 text-[13px] text-muted-foreground">
               {product.category} · {product.storage} · {shelfLifeDays(product, product.storage)}d
             </span>
           </span>
@@ -187,10 +187,10 @@ export function QuickAddDialog({
           size="icon"
           variant="ghost"
           aria-label={fav ? `Remove ${product.name} from favourites` : `Favourite ${product.name}`}
-          className="h-9 w-9 shrink-0 rounded-xl"
+          className="h-10 w-10 shrink-0 rounded-xl"
           onClick={() => persist(toggleFavorite(store, product.id))}
         >
-          <Star className={cn("h-4 w-4", fav && "fill-primary text-primary")} />
+          <Star className={cn("h-5 w-5", fav && "fill-primary text-primary")} />
         </Button>
       </div>
     );
@@ -199,11 +199,11 @@ export function QuickAddDialog({
   function Section({ title, items }: { title: string; items: GroceryProduct[] }) {
     if (items.length === 0) return null;
     return (
-      <div className="mb-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="mb-5">
+        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {items.map((p) => (
             <ProductRow key={`${title}-${p.id}`} product={p} />
           ))}
@@ -365,22 +365,24 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {["all", ...CATALOG_CATEGORIES].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setActiveCategory(c)}
-                  className={cn(
-                    "press min-h-11 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors",
-                    activeCategory === c
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border/60 bg-card/60 hover:bg-accent/40",
-                  )}
-                >
-                  {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
-                </button>
-              ))}
+            <div className="relative -mx-1">
+              <div className="category-scroll flex gap-2 overflow-x-auto px-1 pb-1">
+                {["all", ...CATALOG_CATEGORIES].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setActiveCategory(c)}
+                    className={cn(
+                      "press shrink-0 rounded-lg border px-3.5 py-2 text-[13px] font-medium transition-colors",
+                      activeCategory === c
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border/60 bg-card/60 hover:bg-accent/40",
+                    )}
+                  >
+                    {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="-mx-1 flex-1 overflow-y-auto px-1">
