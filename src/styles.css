@@ -212,6 +212,21 @@
   }
 }
 
+@utility category-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  &::-webkit-scrollbar {
+    height: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 0;
+  }
+}
+
 @utility add-fab {
   background: var(--gradient-hero);
   box-shadow:
