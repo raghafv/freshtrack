@@ -169,9 +169,9 @@ export async function detectGroceriesServer(image: string, userId: string): Prom
     "Identify unmistakable edible groceries for an Indian pantry. Never guess. Return JSON only.",
     [
       'Return {"items":[{"name":"","brand":null,"isFood":true,"confidence":0,"category":"","storage":"","shelfLifeDays":0,"unit":"pcs","freshness":0,"packaged":false,"note":""}]}.',
-      "Exclude non-food objects, packaging without food, medicines, cosmetics, cleaners, people, pets, and anything uncertain.",
+      "A returned item MUST be a real food or drink people cook with or eat. Exclude non-food objects, packaging without food, medicines, cosmetics, cleaners, people, pets, and anything uncertain.",
       "If no edible grocery is confidently identifiable, return an empty items array and nothing else.",
-      "Freezing does NOT extend shelf life for most foods; it only preserves quality for items that actually freeze well. For eggs in shell, salad leaves, cucumber, tomato, potato, onion, banana and delicate dairy sweets, freezing shortens life or ruins texture — never recommend Freezer for those.",
+      "Freezing does NOT extend shelf life for most foods; it only preserves quality for items that actually freeze well. For eggs in shell, salad leaves, cucumber, tomato, potato, onion, banana, dairy (milk, curd, cream, yogurt) and delicate dairy sweets, freezing shortens life or ruins texture — never recommend Freezer for those.",
       "If the object is not a food product, do not return it at all.",
     ].join("\n"),
     "scan-photo",
@@ -183,7 +183,7 @@ export async function detectGroceriesServer(image: string, userId: string): Prom
     const name = asText(item.name);
     const confidence = Number(item.confidence);
     const score = Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0;
-    if (!name || item.isFood !== true || !isLikelyFood(name) || score < 0.45) return null;
+    if (!name || item.isFood !== true || !isLikelyFood(name) || score < 0.55) return null;
     const shelf = Number(item.shelfLifeDays);
     const freshness = Number(item.freshness);
     return {
