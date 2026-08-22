@@ -22,6 +22,10 @@ const NON_FOOD = [
   "plastic bag", "carry bag", "wrapper", "packaging", "box", "container", "bottle cap",
   "toy", "plant pot", "fertilizer", "pesticide", "petrol", "diesel", "oil engine",
   "person", "human", "face", "hand", "dog", "cat", "animal",
+  "furniture", "chair", "table", "desk", "sofa", "lamp", "light", "fan", "ac", "tv", "television",
+  "monitor", "camera", "gadget", "device", "electronic", "appliance", "tool", "car", "bike",
+  "wood", "metal", "plastic", "glass", "paper", "magazine", "newspaper", "leaflet",
+  "toilet", "bathroom", "sanitary", "pad", "diaper", "dustbin", "bin", "trash", "garbage",
 ];
 
 /** Broad edible vocabulary, so home-made and regional dishes still pass. */

@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/public/push-digest")({
           const body =
             soon.length > 0
               ? `${headline.name} ${headline.left === 0 ? "expires today" : `expires in ${headline.left} day${headline.left === 1 ? "" : "s"}`}` +
-                (soon.length > 1 ? ` · ${soon.length - 1} more item${soon.length > 2 ? "s" : ""} need attention` : "")
+                (soon.length > 1 ? ` · ${soon.length - 1} more item${soon.length > 2 ? "s need" : " needs"} attention` : "")
               : `${expired.length} item${expired.length === 1 ? "" : "s"} in your pantry have expired.`;
 
           for (const device of devices) {

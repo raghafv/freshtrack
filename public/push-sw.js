@@ -51,3 +51,20 @@ self.addEventListener("notificationclick", (event) => {
     })(),
   );
 });
+
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    self.registration.pushManager
+      .subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: event.oldSubscription?.options?.applicationServerKey,
+      })
+      .then((subscription) => {
+        // The app will refresh this with the server on next launch.
+        console.log("[push-sw] subscription refreshed", subscription);
+      })
+      .catch((error) => {
+        console.error("[push-sw] failed to resubscribe", error);
+      }),
+  );
+});
