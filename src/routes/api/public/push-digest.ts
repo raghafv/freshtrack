@@ -62,6 +62,7 @@ export const Route = createFileRoute("/api/public/push-digest")({
           if (expired.length === 0 && soon.length === 0) continue;
 
 
+          const headline = soon[0] ?? expired[0];
           const body =
             soon.length > 0
               ? `${headline.name} ${headline.left === 0 ? "expires today" : `expires in ${headline.left} day${headline.left === 1 ? "" : "s"}`}` +
