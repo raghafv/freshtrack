@@ -173,8 +173,8 @@ export function QuickAddDialog({
           <FoodThumb
             name={product.name}
             category={product.category}
-            className="h-16 w-16 rounded-2xl"
-            emojiClassName="text-2xl"
+            className="h-16 w-16 rounded-2xl bg-muted"
+            emojiClassName="text-3xl"
           />
           <span className="flex flex-col">
             <span className="text-base font-semibold leading-tight">{product.name}</span>
