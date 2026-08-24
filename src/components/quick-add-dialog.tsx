@@ -164,11 +164,11 @@ export function QuickAddDialog({
   function ProductRow({ product }: { product: GroceryProduct }) {
     const fav = store.favorites.includes(product.id);
     return (
-      <div className="press flex min-h-[92px] items-center gap-4 rounded-2xl border border-border/60 bg-card/60 pr-3 transition-colors hover:bg-accent/40">
+      <div className="press flex min-h-[100px] items-center gap-4 rounded-2xl border border-border/60 bg-card/60 pr-3 transition-colors hover:bg-accent/40">
         <button
           type="button"
           onClick={() => pick(product)}
-          className="flex min-h-[90px] flex-1 items-center gap-4 px-4 py-3.5 text-left"
+          className="flex min-h-[98px] flex-1 items-center gap-4 px-4 py-3.5 text-left"
         >
           <FoodThumb
             name={product.name}
@@ -196,6 +196,25 @@ export function QuickAddDialog({
     );
   }
 
+  function CategoryChip({ c }: { c: string }) {
+    const active = activeCategory === c;
+    return (
+      <button
+        key={c}
+        type="button"
+        onClick={() => setActiveCategory(c)}
+        className={cn(
+          "press flex items-center gap-2 rounded-full border px-4 py-2.5 text-[14px] font-medium transition-colors",
+          active
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border/60 bg-card/60 hover:bg-accent/40",
+        )}
+      >
+        {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
+      </button>
+    );
+  }
+
   function Section({ title, items }: { title: string; items: GroceryProduct[] }) {
     if (items.length === 0) return null;
     return (
@@ -211,6 +230,7 @@ export function QuickAddDialog({
       </div>
     );
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
