@@ -1,11 +1,26 @@
 import { isLikelyFood } from "@/lib/food-guard";
 import type { DetectedGrocery, LabelDates, ReceiptLine } from "@/lib/vision.types";
 
-const PROVIDER_TIMEOUT_MS = 14_000;
 const TRANSIENT = new Set([429, 500, 502, 503, 504]);
 
+function featureTimeoutMs(feature: string): number {
+  // Receipts are dense and need more time; single-photo detection should be fast.
+  return feature === "scan-receipt" ? 14_000 : 8_000;
+}
+
+function featureMaxTokens(feature: string): number {
+  if (feature === "scan-receipt") return 1200;
+  if (feature === "scan-label") return 500;
+  return 800;
+}
+
 type VisionResult = { value: Record<string, unknown>; model: string };
-type VisionCall = (image: string, system: string, instruction: string) => Promise<VisionResult>;
+type VisionCall = (
+  image: string,
+  system: string,
+  instruction: string,
+  opts: { maxTokens: number; timeoutMs: number },
+) => Promise<VisionResult>;
 
 function parseJsonish(raw: string): Record<string, unknown> {
   try {
@@ -25,15 +40,16 @@ function asText(value: unknown): string {
   return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
 }
 
-async function fetchBounded(url: string, init: RequestInit): Promise<Response> {
+async function fetchBounded(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }
 }
+
 
 async function withTransientRetry(run: () => Promise<Response>): Promise<Response> {
   let response = await run();
