@@ -9,7 +9,6 @@
  */
 import type { AiMessage, AiProviderLog, AiProviderName } from "./ai-types";
 
-const REQUEST_TIMEOUT_MS = 45_000;
 const CACHE_TTL_MS = 60_000;
 const MAX_LOGS = 100;
 
@@ -39,7 +38,47 @@ const PROVIDERS: ProviderDefinition[] = [
       return key ? { Authorization: `Bearer ${key}` } : null;
     },
   },
+  {
+    name: "groq-fallback",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "openai/gpt-oss-120b",
+    headers: () => {
+      const key = process.env.GROQ_API_KEY;
+      return key ? { Authorization: `Bearer ${key}` } : null;
+    },
+  },
 ];
+
+function featureMaxTokens(feature: string): number {
+  switch (feature) {
+    case "assistant":
+      return 1200;
+    case "recipe-ideas":
+      return 800;
+    case "recipes":
+      return 2500;
+    case "shopping":
+      return 1200;
+    default:
+      return 1500;
+  }
+}
+
+function featureTimeoutMs(feature: string): number {
+  switch (feature) {
+    case "assistant":
+      return 16_000;
+    case "recipe-ideas":
+      return 12_000;
+    case "recipes":
+      return 30_000;
+    case "shopping":
+      return 14_000;
+    default:
+      return 20_000;
+  }
+}
+
 
 /* ------------------------------------------------------------------ logs */
 
