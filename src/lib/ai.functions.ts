@@ -359,10 +359,11 @@ export const suggestDishIdeas = createServerFn({ method: "POST" })
     const ctx = await loadPantryContext(supabase);
     if (ctx.items.length === 0) return { ideas: [] };
 
-    const parsed = await generateAIResponse("recipes", [
+    const parsed = await generateAIResponse("recipe-ideas", [
       { role: "system", content: dataSystemPrompt(ctx) },
       { role: "user", content: ideasRequest },
-    ]);
+    ], { maxTokens: 800 });
+
 
     const ideas = normalizeIdeas(parsed);
     await logUsage("recipe-ideas", context.userId, JSON.stringify(ideas).length);

@@ -9,7 +9,6 @@
  */
 import type { AiMessage, AiProviderLog, AiProviderName } from "./ai-types";
 
-const REQUEST_TIMEOUT_MS = 45_000;
 const CACHE_TTL_MS = 60_000;
 const MAX_LOGS = 100;
 
@@ -39,7 +38,47 @@ const PROVIDERS: ProviderDefinition[] = [
       return key ? { Authorization: `Bearer ${key}` } : null;
     },
   },
+  {
+    name: "groq-fallback",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "openai/gpt-oss-120b",
+    headers: () => {
+      const key = process.env.GROQ_API_KEY;
+      return key ? { Authorization: `Bearer ${key}` } : null;
+    },
+  },
 ];
+
+function featureMaxTokens(feature: string): number {
+  switch (feature) {
+    case "assistant":
+      return 1200;
+    case "recipe-ideas":
+      return 800;
+    case "recipes":
+      return 2500;
+    case "shopping":
+      return 1200;
+    default:
+      return 1500;
+  }
+}
+
+function featureTimeoutMs(feature: string): number {
+  switch (feature) {
+    case "assistant":
+      return 16_000;
+    case "recipe-ideas":
+      return 12_000;
+    case "recipes":
+      return 30_000;
+    case "shopping":
+      return 14_000;
+    default:
+      return 20_000;
+  }
+}
+
 
 /* ------------------------------------------------------------------ logs */
 
@@ -81,9 +120,11 @@ async function callProvider(
   provider: ProviderDefinition,
   headers: Record<string, string>,
   messages: AiMessage[],
+  maxTokens: number,
+  timeoutMs: number,
 ): Promise<Record<string, unknown>> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(provider.url, {
       method: "POST",
@@ -91,8 +132,8 @@ async function callProvider(
       body: JSON.stringify({
         model: provider.model,
         response_format: { type: "json_object" },
-        max_completion_tokens: 4000,
-        reasoning_effort: "low",
+        max_completion_tokens: maxTokens,
+        temperature: 0.3,
         messages,
       }),
       signal: controller.signal,
@@ -118,7 +159,19 @@ async function callProvider(
   }
 }
 
+
 /* ---------------------------------------------------------------- public */
+
+const JSON_SYSTEM_APPEND = "\nReturn only valid JSON matching the requested schema. No markdown, no explanations, no text outside the JSON.";
+
+function withJsonGuard(messages: AiMessage[]): AiMessage[] {
+  if (messages.length === 0) return [{ role: "system", content: JSON_SYSTEM_APPEND.trim() }];
+  const first = messages[0];
+  if (first.role === "system") {
+    return [{ ...first, content: first.content + JSON_SYSTEM_APPEND }, ...messages.slice(1)];
+  }
+  return [{ role: "system", content: JSON_SYSTEM_APPEND.trim() }, ...messages];
+}
 
 /**
  * The single entry point for every text AI feature.
@@ -127,8 +180,12 @@ async function callProvider(
 export async function generateAIResponse(
   feature: string,
   messages: AiMessage[],
+  options?: { maxTokens?: number; timeoutMs?: number },
 ): Promise<Record<string, unknown>> {
-  const key = cacheKey(feature, messages);
+  const guarded = withJsonGuard(messages);
+  const key = cacheKey(feature, guarded);
+  const maxTokens = Math.min(options?.maxTokens ?? featureMaxTokens(feature), 4000);
+  const timeoutMs = options?.timeoutMs ?? featureTimeoutMs(feature);
 
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
@@ -148,7 +205,7 @@ export async function generateAIResponse(
       for (let attempt = 1; attempt <= attempts; attempt++) {
         const started = Date.now();
         try {
-          const value = await callProvider(provider, headers, messages);
+          const value = await callProvider(provider, headers, guarded, maxTokens, timeoutMs);
           record({
             at: new Date().toISOString(),
             feature,
@@ -193,3 +250,4 @@ export async function generateAIResponse(
     inFlight.delete(key);
   }
 }
+

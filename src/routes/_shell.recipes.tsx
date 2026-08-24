@@ -24,6 +24,7 @@ import { PageContainer, PageHeader } from "@/components/layout";
 import { RecipeTabs, type RecipeTab } from "@/components/recipe-tabs";
 import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
+import { splitIngredients } from "@/lib/food-guard";
 import {
   usePantryItems,
   useRecipeMutations,
@@ -31,6 +32,7 @@ import {
   useSettings,
   type SavedRecipe,
 } from "@/lib/data";
+
 import { expiryText, getStatus } from "@/lib/freshtrack";
 import {
   suggestDishIdeas,
@@ -236,9 +238,17 @@ function RecipesPage() {
   function addIngredient(raw: string) {
     const name = raw.trim().replace(/,+$/, "");
     if (!name) return;
-    setChosen((c) => (c.some((x) => x.toLowerCase() === name.toLowerCase()) ? c : [...c, name]));
+    const { usable, rejected } = splitIngredients([name]);
+    if (rejected.length) {
+      toast.error(`${rejected[0]} doesn't look like a food ingredient.`);
+      return;
+    }
+    const next = usable[0];
+    if (!next) return;
+    setChosen((c) => (c.some((x) => x.toLowerCase() === next.toLowerCase()) ? c : [...c, next]));
     setDraft("");
   }
+
 
   const filteredSaved = useMemo(() => {
     if (filter === "Favorites") return saved.filter((r) => favorites.ids.includes(r.id));
@@ -364,7 +374,12 @@ function RecipesPage() {
                 toast.error("Please pick at least 3 ingredients!");
                 return;
               }
-              gen.mutate({ mode: "selected", ingredients: chosen });
+              const { usable } = splitIngredients(chosen);
+              if (usable.length < 3) {
+                toast.error("Please pick at least 3 real food ingredients!");
+                return;
+              }
+              gen.mutate({ mode: "selected", ingredients: usable });
             }}
           >
             {gen.isPending && gen.variables?.mode === "selected" ? (
@@ -374,6 +389,7 @@ function RecipesPage() {
             )}
             Write my recipe
           </Button>
+
           <Button
             variant="secondary"
             className="press h-13 min-h-12 rounded-2xl"

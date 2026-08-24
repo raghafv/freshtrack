@@ -1,11 +1,26 @@
 import { isLikelyFood } from "@/lib/food-guard";
 import type { DetectedGrocery, LabelDates, ReceiptLine } from "@/lib/vision.types";
 
-const PROVIDER_TIMEOUT_MS = 14_000;
 const TRANSIENT = new Set([429, 500, 502, 503, 504]);
 
+function featureTimeoutMs(feature: string): number {
+  // Receipts are dense and need more time; single-photo detection should be fast.
+  return feature === "scan-receipt" ? 14_000 : 8_000;
+}
+
+function featureMaxTokens(feature: string): number {
+  if (feature === "scan-receipt") return 1200;
+  if (feature === "scan-label") return 500;
+  return 800;
+}
+
 type VisionResult = { value: Record<string, unknown>; model: string };
-type VisionCall = (image: string, system: string, instruction: string) => Promise<VisionResult>;
+type VisionCall = (
+  image: string,
+  system: string,
+  instruction: string,
+  opts: { maxTokens: number; timeoutMs: number },
+) => Promise<VisionResult>;
 
 function parseJsonish(raw: string): Record<string, unknown> {
   try {
@@ -25,15 +40,16 @@ function asText(value: unknown): string {
   return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
 }
 
-async function fetchBounded(url: string, init: RequestInit): Promise<Response> {
+async function fetchBounded(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }
 }
+
 
 async function withTransientRetry(run: () => Promise<Response>): Promise<Response> {
   let response = await run();
@@ -70,22 +86,26 @@ async function logVision(
   }
 }
 
-const geminiVision: VisionCall = async (image, system, instruction) => {
+const geminiVision: VisionCall = async (image, system, instruction, opts) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("no key");
   const model = "gemini-3.1-flash-lite";
   const match = /^data:([^;]+);base64,(.+)$/.exec(image);
   if (!match) throw new Error("image must be a data URL");
   const [, mimeType, data] = match;
-  const response = await fetchBounded(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const response = await fetchBounded(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: instruction }, { inlineData: { mimeType, data } }] }],
-        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 },
+        generationConfig: { responseMimeType: "application/json", maxOutputTokens: opts.maxTokens },
       }),
-    });
+    },
+    opts.timeoutMs,
+  );
   if (!response.ok) throw new Error(`${model}: ${response.status} ${(await response.text()).slice(0, 200)}`);
   const json = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   return {
@@ -94,11 +114,13 @@ const geminiVision: VisionCall = async (image, system, instruction) => {
   };
 };
 
-const huggingFaceVision: VisionCall = async (image, system, instruction) => {
+const huggingFaceVision: VisionCall = async (image, system, instruction, opts) => {
   const key = process.env.HUGGINGFACE_API_KEY;
   if (!key) throw new Error("no key");
   const model = "google/gemma-3-4b-it";
-  const response = await fetchBounded("https://router.huggingface.co/v1/chat/completions", {
+  const response = await fetchBounded(
+    "https://router.huggingface.co/v1/chat/completions",
+    {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
@@ -107,15 +129,17 @@ const huggingFaceVision: VisionCall = async (image, system, instruction) => {
           { role: "system", content: system },
           { role: "user", content: [{ type: "text", text: `${instruction}\nAnswer with raw JSON only.` }, { type: "image_url", image_url: { url: image } }] },
         ],
-        max_tokens: 1200,
+        max_tokens: opts.maxTokens,
       }),
-    });
+    },
+    opts.timeoutMs,
+  );
   if (!response.ok) throw new Error(`${model}: ${response.status} ${(await response.text()).slice(0, 200)}`);
   const json = (await response.json()) as { choices?: { message?: { content?: string } }[] };
   return { model, value: parseJsonish(json.choices?.[0]?.message?.content ?? "{}") };
 };
 
-const gatewayVision: VisionCall = async (image, system, instruction) => {
+const gatewayVision: VisionCall = async (image, system, instruction, opts) => {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("no key");
   const model = "google/gemini-3.6-flash";
@@ -130,6 +154,7 @@ const gatewayVision: VisionCall = async (image, system, instruction) => {
           { role: "system", content: system },
           { role: "user", content: [{ type: "text", text: instruction }, { type: "image_url", image_url: { url: image } }] },
         ],
+        max_tokens: opts.maxTokens,
       }),
     }),
   );
@@ -145,11 +170,13 @@ const PROVIDERS = [
 ];
 
 async function callVision(image: string, system: string, instruction: string, feature: string, userId: string) {
+  const maxTokens = featureMaxTokens(feature);
+  const timeoutMs = featureTimeoutMs(feature);
   let lastError = "No vision provider is configured.";
   for (const provider of PROVIDERS) {
     const started = Date.now();
     try {
-      const result = await provider.call(image, system, instruction);
+      const result = await provider.call(image, system, instruction, { maxTokens, timeoutMs });
       void logVision(feature, provider.name, result.model, true, Date.now() - started, null, userId);
       return result.value;
     } catch (error) {
@@ -162,6 +189,7 @@ async function callVision(image: string, system: string, instruction: string, fe
   }
   throw new Error(`Image analysis is temporarily unavailable. Add the item manually. ${lastError.slice(0, 100)}`);
 }
+
 
 export async function detectGroceriesServer(image: string, userId: string): Promise<{ items: DetectedGrocery[] }> {
   const parsed = await callVision(

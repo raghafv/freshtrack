@@ -3,15 +3,10 @@ import { render } from '@react-email/render'
 import { EmailAPIError, sendLovableEmail } from '@lovable.dev/email-js'
 import { TEMPLATES } from './registry'
 
-// Server-only: reads the managed email API key. Never import from client components.
+// Server-only: reads the email API key. Never import from client components.
 
-// Configuration baked in at scaffold time
 const SITE_NAME = "FreshTrack"
-// SENDER_DOMAIN is the verified sender subdomain FQDN (e.g., "notify.example.com").
-// It MUST match the subdomain delegated to the platform nameservers. NEVER use the root domain.
 const SENDER_DOMAIN = "notify.fresh-track.in"
-// FROM_DOMAIN is the domain shown in the From: header (e.g., "example.com").
-// Can be the root domain when display_from_root is enabled — this is cosmetic only.
 const FROM_DOMAIN = "fresh-track.in"
 
 export type SendTemplateEmailResult =
@@ -25,12 +20,8 @@ export interface SendTemplateEmailOptions {
   replyTo?: string
 }
 
-/**
- * Renders a registered template and sends it through the managed email API.
- * Suppression, retries, and rate limits are enforced server-side.
- * A suppressed recipient is an expected outcome ({ sent: false }); any other
- * failure throws — EmailAPIError exposes .code and .status for branching.
- */
+/** Renders a registered template and sends it through the email API. */
+
 export async function sendTemplateEmail(
   templateName: string,
   to: string,

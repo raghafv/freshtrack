@@ -11,9 +11,9 @@ import { findProduct, GROCERY_CATALOG } from "@/lib/grocery-catalog";
 const NON_FOOD = [
   "id card", "identity", "aadhaar", "aadhar", "pan card", "licence", "license", "passport",
   "credit card", "debit card", "business card", "ticket", "receipt", "invoice", "document",
-  "notebook", "book", "diary", "pen", "pencil", "marker", "ink", "eraser", "stapler", "scissors",
+  "notebook", "book", "diary", "pen", "pencil", "marker", "ink", "pen ink", "eraser", "stapler", "scissors",
   "battery", "charger", "cable", "phone", "mobile", "laptop", "keyboard", "mouse", "remote",
-  "watch", "earphone", "headphone", "wallet", "purse", "key", "coin", "currency", "cash",
+  "watch", "earphone", "headphone", "wallet", "purse", "key", "coin", "currency", "cash", "currency note",
   "glasses", "spectacle", "shoe", "sock", "shirt", "cloth", "towel", "soap", "shampoo",
   "detergent", "bleach", "phenyl", "cleaner", "sanitizer", "sanitiser", "deodorant", "perfume",
   "lotion", "cream lotion", "cosmetic", "lipstick", "makeup", "toothpaste", "toothbrush", "razor",
@@ -27,6 +27,12 @@ const NON_FOOD = [
   "wood", "metal", "plastic", "glass", "paper", "magazine", "newspaper", "leaflet",
   "toilet", "bathroom", "sanitary", "pad", "diaper", "dustbin", "bin", "trash", "garbage",
 ];
+
+/** Basic staples that cannot be the main building block of a real recipe. */
+export const STAPLES = new Set([
+  "salt", "namak", "sugar", "water", "oil", "ghee", "butter", "black pepper", "pepper",
+  "spice", "masala", "turmeric", "haldi", "cumin", "jeera", "coriander powder", "dhaniya powder",
+]);
 
 /** Broad edible vocabulary, so home-made and regional dishes still pass. */
 const FOOD_WORDS = [
@@ -97,3 +103,4 @@ export function splitIngredients(names: string[]) {
   }
   return { usable, rejected };
 }
+
