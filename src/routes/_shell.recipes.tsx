@@ -374,7 +374,12 @@ function RecipesPage() {
                 toast.error("Please pick at least 3 ingredients!");
                 return;
               }
-              gen.mutate({ mode: "selected", ingredients: chosen });
+              const { usable } = splitIngredients(chosen);
+              if (usable.length < 3) {
+                toast.error("Please pick at least 3 real food ingredients!");
+                return;
+              }
+              gen.mutate({ mode: "selected", ingredients: usable });
             }}
           >
             {gen.isPending && gen.variables?.mode === "selected" ? (
@@ -384,6 +389,7 @@ function RecipesPage() {
             )}
             Write my recipe
           </Button>
+
           <Button
             variant="secondary"
             className="press h-13 min-h-12 rounded-2xl"
