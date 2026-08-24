@@ -387,23 +387,11 @@ export function QuickAddDialog({
 
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               {["all", ...CATALOG_CATEGORIES].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setActiveCategory(c)}
-                  className={cn(
-                    "press flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors",
-                    activeCategory === c
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border/60 bg-card/60 hover:bg-accent/40",
-                  )}
-                >
-                  {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
-                </button>
+                <CategoryChip key={c} c={c} />
               ))}
             </div>
 
-            <div className="-mx-1 flex-1 overflow-y-auto px-1">
+            <div className="-mx-1 flex-1 overflow-y-auto overflow-x-hidden px-1">
               {query ? (
                 results.length ? (
                   <Section title={`Results (${results.length})`} items={results} />
@@ -417,12 +405,12 @@ export function QuickAddDialog({
               ) : (
                 <>
                   <Section title="Favourites" items={favorites} />
-                  <Section title="Frequently added" items={frequent} />
                   <Section title="Recent items" items={recents} />
                   <Section title="Popular items" items={popular} />
                 </>
               )}
             </div>
+
 
             <Button
               variant="secondary"
