@@ -115,13 +115,15 @@ export function buildCandidate(input: {
   }
 
   const unit = input.unit ?? "pcs";
-  const storage = (input.storage as StorageType) ?? "Pantry";
+  let storage = (input.storage as StorageType) ?? "Pantry";
   const days = input.shelfLifeDays && input.shelfLifeDays > 0 ? input.shelfLifeDays : 7;
   // Freezing does not extend shelf life for every food. Items with high water
   // content, delicate dairy or eggs lose texture or spoil quickly even frozen.
-  const poorFreezerFit = /salad|lettuce|cucumber|kheera|tomato|tamatar|potato|aloo|onion|pyaz|banana|kela|egg|curd|dahi|yogurt|cream|milk/i.test(
+  const poorFreezerFit = /salad|lettuce|cucumber|kheera|tomato|tamatar|potato|aloo|onion|pyaz|banana|kela|egg|curd|dahi|yogurt|cream|milk|paneer|cheese|butter|ghee/i.test(
     `${input.name} ${input.category ?? ""}`,
   );
+  // Force a safer default if the AI tried to put a poor-freezer-fit item in the Freezer.
+  if (storage === "Freezer" && poorFreezerFit) storage = "Fridge";
   const freezerDays = poorFreezerFit
     ? Math.max(1, Math.round(days * 0.5))
     : Math.min(120, Math.max(days, Math.round(days * 2)));
@@ -131,6 +133,7 @@ export function buildCandidate(input: {
     Pantry: storage === "Pantry" ? days : Math.max(1, Math.round(days * 0.6)),
   };
   shelf[storage] = days;
+
 
   return {
     key: nextKey("ai"),
