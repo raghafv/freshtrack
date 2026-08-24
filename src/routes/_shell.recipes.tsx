@@ -24,6 +24,7 @@ import { PageContainer, PageHeader } from "@/components/layout";
 import { RecipeTabs, type RecipeTab } from "@/components/recipe-tabs";
 import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
+import { splitIngredients } from "@/lib/food-guard";
 import {
   usePantryItems,
   useRecipeMutations,
@@ -31,6 +32,7 @@ import {
   useSettings,
   type SavedRecipe,
 } from "@/lib/data";
+
 import { expiryText, getStatus } from "@/lib/freshtrack";
 import {
   suggestDishIdeas,
