@@ -120,9 +120,11 @@ async function callProvider(
   provider: ProviderDefinition,
   headers: Record<string, string>,
   messages: AiMessage[],
+  maxTokens: number,
+  timeoutMs: number,
 ): Promise<Record<string, unknown>> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(provider.url, {
       method: "POST",
@@ -130,8 +132,8 @@ async function callProvider(
       body: JSON.stringify({
         model: provider.model,
         response_format: { type: "json_object" },
-        max_completion_tokens: 4000,
-        reasoning_effort: "low",
+        max_completion_tokens: maxTokens,
+        temperature: 0.3,
         messages,
       }),
       signal: controller.signal,
@@ -156,6 +158,7 @@ async function callProvider(
     clearTimeout(timer);
   }
 }
+
 
 /* ---------------------------------------------------------------- public */
 
