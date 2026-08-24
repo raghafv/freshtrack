@@ -162,6 +162,17 @@ async function callProvider(
 
 /* ---------------------------------------------------------------- public */
 
+const JSON_SYSTEM_APPEND = "\nReturn only valid JSON matching the requested schema. No markdown, no explanations, no text outside the JSON.";
+
+function withJsonGuard(messages: AiMessage[]): AiMessage[] {
+  if (messages.length === 0) return [{ role: "system", content: JSON_SYSTEM_APPEND.trim() }];
+  const first = messages[0];
+  if (first.role === "system") {
+    return [{ ...first, content: first.content + JSON_SYSTEM_APPEND }, ...messages.slice(1)];
+  }
+  return [{ role: "system", content: JSON_SYSTEM_APPEND.trim() }, ...messages];
+}
+
 /**
  * The single entry point for every text AI feature.
  * Always resolves to a parsed JSON object, or throws `AiUnavailableError`.
@@ -169,8 +180,12 @@ async function callProvider(
 export async function generateAIResponse(
   feature: string,
   messages: AiMessage[],
+  options?: { maxTokens?: number; timeoutMs?: number },
 ): Promise<Record<string, unknown>> {
-  const key = cacheKey(feature, messages);
+  const guarded = withJsonGuard(messages);
+  const key = cacheKey(feature, guarded);
+  const maxTokens = Math.min(options?.maxTokens ?? featureMaxTokens(feature), 4000);
+  const timeoutMs = options?.timeoutMs ?? featureTimeoutMs(feature);
 
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
@@ -190,7 +205,7 @@ export async function generateAIResponse(
       for (let attempt = 1; attempt <= attempts; attempt++) {
         const started = Date.now();
         try {
-          const value = await callProvider(provider, headers, messages);
+          const value = await callProvider(provider, headers, guarded, maxTokens, timeoutMs);
           record({
             at: new Date().toISOString(),
             feature,
@@ -235,3 +250,4 @@ export async function generateAIResponse(
     inFlight.delete(key);
   }
 }
+
