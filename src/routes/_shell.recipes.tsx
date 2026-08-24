@@ -238,9 +238,17 @@ function RecipesPage() {
   function addIngredient(raw: string) {
     const name = raw.trim().replace(/,+$/, "");
     if (!name) return;
-    setChosen((c) => (c.some((x) => x.toLowerCase() === name.toLowerCase()) ? c : [...c, name]));
+    const { usable, rejected } = splitIngredients([name]);
+    if (rejected.length) {
+      toast.error(`${rejected[0]} doesn't look like a food ingredient.`);
+      return;
+    }
+    const next = usable[0];
+    if (!next) return;
+    setChosen((c) => (c.some((x) => x.toLowerCase() === next.toLowerCase()) ? c : [...c, next]));
     setDraft("");
   }
+
 
   const filteredSaved = useMemo(() => {
     if (filter === "Favorites") return saved.filter((r) => favorites.ids.includes(r.id));
