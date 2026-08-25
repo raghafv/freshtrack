@@ -385,10 +385,12 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-              {["all", ...CATALOG_CATEGORIES].map((c) => (
-                <CategoryChip key={c} c={c} />
-              ))}
+            <div className="-mx-1 overflow-x-auto px-1 pb-1 scrollbar-hide">
+              <div className="flex gap-2">
+                {["all", ...CATALOG_CATEGORIES].map((c) => (
+                  <CategoryChip key={c} c={c} />
+                ))}
+              </div>
             </div>
 
             <div className="-mx-1 flex-1 overflow-y-auto overflow-x-hidden px-1">
