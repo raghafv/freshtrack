@@ -260,7 +260,10 @@ export function normalizePantryAdds(parsed: Record<string, unknown>) {
     .slice(0, 20);
 }
 
-const BANNED_TITLE_WORDS = /\b(delight|medley|fusion|concoction|creation|special|bowl|plate|magic|dream)\b/i;
+// Only reject invented marketing-style names. Words like "bowl", "plate" or
+// "special" appear in plenty of real dishes (Rice Bowl, Thali Plate, Chef's
+// Special), so they must not cause a recipe to be dropped.
+const BANNED_TITLE_WORDS = /\b(delight|medley|concoction|extravaganza|sensation)\b/i;
 
 export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
   const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];
