@@ -1,58 +1,25 @@
 import * as React from 'react'
 
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Heading, Text } from '@react-email/components'
+
+import { EmailShell, codeBox, h1, note, text } from './_layout'
 
 interface ReauthenticationEmailProps {
   token: string
 }
 
-export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head />
-    <Preview>Your verification code</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+export const ReauthenticationEmail = ({
+  token,
+}: ReauthenticationEmailProps) => (
+  <EmailShell preview="Your FreshTrack verification code">
+    <Heading style={h1}>Confirm it&apos;s you</Heading>
+    <Text style={text}>Enter this code in FreshTrack to continue:</Text>
+    <Text style={codeBox}>{token}</Text>
+    <Text style={note}>
+      This code expires shortly. If you didn&apos;t request it, ignore this
+      email and consider changing your password.
+    </Text>
+  </EmailShell>
 )
 
 export default ReauthenticationEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 30px',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
