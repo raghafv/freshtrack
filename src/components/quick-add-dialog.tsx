@@ -385,7 +385,7 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="-mx-1 overflow-x-auto px-1 pb-1 scrollbar-hide">
+            <div className="-mx-1 overflow-x-auto px-1 pb-1 no-scrollbar">
               <div className="flex gap-2">
                 {["all", ...CATALOG_CATEGORIES].map((c) => (
                   <CategoryChip key={c} c={c} />
