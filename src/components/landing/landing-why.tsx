@@ -36,9 +36,7 @@ export function LandingWhy() {
           <span className="mb-4 block text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             Why FreshTrack
           </span>
-          <h2 className="text-3xl font-bold tracking-[-0.03em] md:text-4xl">
-            A kitchen that keeps track of itself
-          </h2>
+          <h2 className="text-3xl font-bold tracking-[-0.03em] md:text-4xl">A kitchen that keeps track of itself</h2>
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -74,13 +72,6 @@ export function LandingWhy() {
           <p className="mx-auto mt-4 max-w-md text-[14.5px] leading-relaxed text-background/70">
             Create your free FreshTrack account and add your first item in under a minute.
           </p>
-          <a
-            href="#signin"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-background px-7 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-90"
-          >
-            Get started free
-            <ArrowRight className="h-4 w-4" />
-          </a>
         </motion.div>
       </div>
     </section>
