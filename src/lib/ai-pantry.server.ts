@@ -156,7 +156,7 @@ export const recipeRequest = [
   "Prioritise the ingredients with the smallest days_left.",
   "If a classic version of the dish needs something I do not have, keep the dish and swap in a pantry item instead — list that as a substitution.",
   "ONLY suggest real, named dishes that a home cook would recognise. Never invent a recipe name by concatenating ingredient names (for example, 'Creamy Ghee Salt Milk Delight' is forbidden).",
-  "The title must be a single real dish name. Banned fake-name words: Delight, Medley, Fusion, Concoction, Creation, Special, Bowl, Plate, Magic, Dream.",
+  "The title must be a real dish name people actually cook (e.g. Paneer Bhurji, Rice Bowl, Masala Omelette). Do not invent marketing names like 'Creamy Ghee Salt Delight' or 'Medley'.",
   "If the chosen ingredients cannot make a coherent, real dish, return an empty recipes array and no made-up dish.",
   "Each recipe MUST include: a one-line description, servings, prep and cook time, difficulty, cuisine, a FULL ingredient list with exact measurements (grams/ml/tbsp/tsp/pieces) including salt, oil and spices, the equipment needed, 6-12 numbered steps that state heat level, timings and visual cues, 2-4 practical tips, storage/leftover advice and a rough nutrition line per serving.",
   'Reply with JSON only: {"recipes":[{"title":"","description":"","cuisine":"","difficulty":"Easy","servings":2,"prepMinutes":10,"cookMinutes":20,"minutes":30,"ingredients":[{"name":"","amount":"200 g","inPantry":true}],"equipment":[""],"uses":[""],"priority":[""],"steps":["",""],"tips":[""],"storageAdvice":"","nutrition":"","substitutions":[{"missing":"","use":""}],"savesWaste":"short line","note":null}]}.',
@@ -260,7 +260,10 @@ export function normalizePantryAdds(parsed: Record<string, unknown>) {
     .slice(0, 20);
 }
 
-const BANNED_TITLE_WORDS = /\b(delight|medley|fusion|concoction|creation|special|bowl|plate|magic|dream)\b/i;
+// Only reject invented marketing-style names. Words like "bowl", "plate" or
+// "special" appear in plenty of real dishes (Rice Bowl, Thali Plate, Chef's
+// Special), so they must not cause a recipe to be dropped.
+const BANNED_TITLE_WORDS = /\b(delight|medley|concoction|extravaganza|sensation)\b/i;
 
 export function normalizeRecipes(parsed: Record<string, unknown>): PantryRecipe[] {
   const raw = Array.isArray(parsed.recipes) ? parsed.recipes : [];

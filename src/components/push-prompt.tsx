@@ -50,11 +50,18 @@ export function usePush() {
       await save({ data: sub });
       setActive(true);
       setState(pushState());
-      const result = await test({});
-      if (result.sent === 0) throw new Error("The device subscribed, but the test alert could not be delivered.");
-      toast.success("Notifications enabled", {
-        description: "We just sent a test alert to this device.",
-      });
+      // The subscription is already saved at this point, so a failed test
+      // alert is only a warning — future alerts can still arrive.
+      const result = await test({}).catch(() => ({ sent: 0 }));
+      if (result.sent === 0) {
+        toast.success("Notifications enabled", {
+          description: "The test alert didn't go through, but alerts are set up for this device.",
+        });
+      } else {
+        toast.success("Notifications enabled", {
+          description: "We just sent a test alert to this device.",
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Couldn't enable notifications.";
       setState(pushState());

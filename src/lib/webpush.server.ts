@@ -173,13 +173,15 @@ export async function sendPush(target: PushTarget, message: PushMessage): Promis
         Urgency: "normal",
       },
       body: body as BodyInit,
-      redirect: "error",
+      redirect: "manual",
     });
+    // Push services must respond directly; a redirect is treated as a failure.
+    const redirected = res.status >= 300 && res.status < 400;
     return {
-      ok: res.ok,
+      ok: res.ok && !redirected,
       status: res.status,
       gone: res.status === 404 || res.status === 410,
-      error: res.ok ? undefined : (await res.text()).slice(0, 200),
+      error: res.ok && !redirected ? undefined : (await res.text().catch(() => "")).slice(0, 200),
     };
   } catch (error) {
     return {
