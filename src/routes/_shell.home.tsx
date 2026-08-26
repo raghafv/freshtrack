@@ -16,7 +16,7 @@ import {
 } from "@/lib/data";
 import { getDailyRecipe } from "@/lib/ai.functions";
 import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
-import { generateInsights, type Insight } from "@/lib/analytics";
+import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
 import { ItemDetailSheet } from "@/components/item-detail-sheet";
 import { cn } from "@/lib/utils";
@@ -109,6 +109,7 @@ function Dashboard() {
   const attention = items
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
+  const health = useMemo(() => explainHealth(items, soonDays), [items, soonDays]);
   const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 2);
   const shoppingPreview = shopping.slice(0, 6);
   const [detail, setDetail] = useState<PantryItem | null>(null);
@@ -192,36 +193,39 @@ function Dashboard() {
         <TonightCard hasPantry={items.length > 0} />
       </section>
 
-      {/* Quiet suggestions */}
-      {suggestions.length > 0 && (
-        <section className="animate-fade-up mb-10" style={{ animationDelay: "160ms" }}>
-          <SectionHeading title="Suggestions" />
-          <div className="surface-card space-y-4 p-6">
-            {suggestions.map((s) => (
-              <div key={s.id} className="flex gap-3.5">
-                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.8} />
-                <div className="min-w-0">
-                  <p className="text-[14px] font-medium">{s.title}</p>
-                  <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
-                    {s.detail}
-                  </p>
-                </div>
-              </div>
-            ))}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <Button asChild variant="secondary" className="press h-12 rounded-2xl">
-                <Link to="/recipes">
-                  <ChefHat className="h-4 w-4" /> Cook
-                </Link>
-              </Button>
-              <Button asChild variant="secondary" className="press h-12 rounded-2xl">
-                <Link to="/assistant">
-                  <Sparkles className="h-4 w-4" /> Ask
-                </Link>
-              </Button>
+      {/* Pantry insights & suggestions */}
+      <section className="animate-fade-up mb-10" style={{ animationDelay: "160ms" }}>
+        <SectionHeading title="Pantry insights" href="/analytics" hrefLabel="Full analytics" />
+        <div className="surface-card space-y-5 p-6">
+          <div className="flex gap-3.5">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.8} />
+            <div className="min-w-0">
+              <p className="text-[14px] font-medium">{health.headline}</p>
+              <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                {health.reasons[0]?.text}
+              </p>
             </div>
           </div>
-        </section>
+
+          {suggestions.map((s) => (
+            <div key={s.id} className="flex gap-3.5">
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.8} />
+              <div className="min-w-0">
+                <p className="text-[14px] font-medium">{s.title}</p>
+                <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                  {s.detail}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          <Button asChild variant="secondary" className="press mt-1 h-12 w-full rounded-2xl">
+            <Link to="/analytics">
+              Full analytics
+            </Link>
+          </Button>
+        </div>
+      </section>
       )}
 
       {/* Shopping list — check items off without losing them */}
