@@ -127,7 +127,7 @@ export function buildCandidate(input: {
   const freezerDays = poorFreezerFit
     ? Math.max(1, Math.round(days * 0.5))
     : Math.min(120, Math.max(days, Math.round(days * 2)));
-  const shelf: ShelfLife = {
+  const shelf: ShelfLife = input.packaged ? { Fridge: days, Freezer: days, Pantry: days } : {
     Fridge: storage === "Fridge" ? days : Math.round(days * 1.2),
     Freezer: freezerDays,
     Pantry: storage === "Pantry" ? days : Math.max(1, Math.round(days * 0.6)),
