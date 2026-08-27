@@ -5,6 +5,7 @@ import {
   type ActivityEntry,
   type PantryItem,
 } from "@/lib/freshtrack";
+import { isCookingIngredient } from "@/lib/food-guard";
 
 const AVG_ITEM_VALUE = 120;
 
@@ -340,8 +341,9 @@ export function generateInsights(
   soonDays = 3,
 ): Insight[] {
   const insights: Insight[] = [];
+  const foodItems = items.filter((item) => isCookingIngredient(item.name));
 
-  const expiring = items
+  const expiring = foodItems
     .filter((i) => {
       const d = daysUntil(i.expiry_date);
       return d >= 0 && d <= soonDays;
@@ -368,7 +370,7 @@ export function generateInsights(
     });
   }
 
-  const expired = items.filter((i) => daysUntil(i.expiry_date) < 0);
+  const expired = foodItems.filter((i) => daysUntil(i.expiry_date) < 0);
   if (expired.length > 0) {
     insights.push({
       id: "expired",
@@ -379,7 +381,7 @@ export function generateInsights(
     });
   }
 
-  const freezable = items.filter(
+  const freezable = foodItems.filter(
     (i) =>
       i.storage !== "Freezer" &&
       daysUntil(i.expiry_date) >= 0 &&
@@ -399,7 +401,7 @@ export function generateInsights(
     });
   }
 
-  const lowStock = items.filter((i) => {
+  const lowStock = foodItems.filter((i) => {
     const t = LOW_STOCK_THRESHOLD[i.unit] ?? 1;
     return Number(i.quantity) <= t && daysUntil(i.expiry_date) >= 0;
   });
@@ -417,7 +419,7 @@ export function generateInsights(
   }
 
   const byName = new Map<string, PantryItem[]>();
-  for (const i of items) {
+  for (const i of foodItems) {
     const key = i.name.trim().toLowerCase();
     byName.set(key, [...(byName.get(key) ?? []), i]);
   }

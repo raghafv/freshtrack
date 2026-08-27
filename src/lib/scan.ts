@@ -260,6 +260,7 @@ export function predictShelfLife(
 }
 
 export function candidateShelfDays(candidate: ScanCandidate, storage: string): number {
+  if (candidate.packaged) return shelfDaysFrom(candidate.shelf, candidate.storage);
   return shelfDaysFrom(candidate.shelf, storage);
 }
 

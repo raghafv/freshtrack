@@ -26,13 +26,14 @@ interface ProviderDefinition {
   model: string;
   /** Returns null when the provider has no key configured -> skipped. */
   headers: () => Record<string, string> | null;
+  transport?: "openai" | "gemini";
 }
 
 const PROVIDERS: ProviderDefinition[] = [
   {
     name: "groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "openai/gpt-oss-20b",
+    model: "llama-3.3-70b-versatile",
     headers: () => {
       const key = process.env.GROQ_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
@@ -41,10 +42,29 @@ const PROVIDERS: ProviderDefinition[] = [
   {
     name: "groq-fallback",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "openai/gpt-oss-120b",
+    model: "llama-3.1-8b-instant",
     headers: () => {
       const key = process.env.GROQ_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
+    },
+  },
+  {
+    name: "gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
+    model: "gemini-3.1-flash-lite",
+    transport: "gemini",
+    headers: () => {
+      const key = process.env.GEMINI_API_KEY;
+      return key ? { "x-goog-api-key": key } : null;
+    },
+  },
+  {
+    name: "gateway",
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    model: "google/gemini-3.6-flash",
+    headers: () => {
+      const key = process.env.LOVABLE_API_KEY;
+      return key ? { "Lovable-API-Key": key } : null;
     },
   },
 ];
@@ -126,16 +146,26 @@ async function callProvider(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const openAiBody = {
+      model: provider.model,
+      response_format: { type: "json_object" },
+      max_completion_tokens: maxTokens,
+      temperature: 0.3,
+      messages,
+    };
+    const geminiBody = {
+      systemInstruction: {
+        parts: messages.filter((message) => message.role === "system").map((message) => ({ text: message.content })),
+      },
+      contents: messages
+        .filter((message) => message.role !== "system")
+        .map((message) => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens, temperature: 0.3 },
+    };
     const res = await fetch(provider.url, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({
-        model: provider.model,
-        response_format: { type: "json_object" },
-        max_completion_tokens: maxTokens,
-        temperature: 0.3,
-        messages,
-      }),
+      body: JSON.stringify(provider.transport === "gemini" ? geminiBody : openAiBody),
       signal: controller.signal,
     });
 
@@ -146,8 +176,13 @@ async function callProvider(
       throw err;
     }
 
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = json.choices?.[0]?.message?.content ?? "{}";
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const raw = provider.transport === "gemini"
+      ? json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "{}"
+      : json.choices?.[0]?.message?.content ?? "{}";
     try {
       return JSON.parse(raw) as Record<string, unknown>;
     } catch {
@@ -200,8 +235,8 @@ export async function generateAIResponse(
       const headers = provider.headers();
       if (!headers) continue; // not configured -> skip silently
 
-      // One bounded retry only for a transient Groq failure.
-      const attempts = 2;
+      // Fall through quickly rather than stacking retries on an interactive request.
+      const attempts = 1;
       for (let attempt = 1; attempt <= attempts; attempt++) {
         const started = Date.now();
         try {
