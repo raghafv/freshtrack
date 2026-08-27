@@ -1,5 +1,6 @@
 /** Pantry grounding, prompts and response normalisation for the AI features. */
 import type { AiMessage, PantryRecipe, ShoppingSuggestion } from "./ai-types";
+import { isCookingIngredient, STAPLES } from "./food-guard";
 
 function asText(value: unknown): string {
   return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
@@ -38,7 +39,7 @@ export async function loadPantryContext(supabase: SupabaseLike) {
       .limit(120),
   ]);
 
-  const items = ((pantry.data ?? []) as PantryRow[]).map((i) => ({
+  const items = ((pantry.data ?? []) as PantryRow[]).filter((i) => isCookingIngredient(i.name)).map((i) => ({
     name: i.name,
     brand: i.brand,
     category: i.category,
@@ -199,6 +200,30 @@ export function normalizeIdeas(parsed: Record<string, unknown>): DishIdea[] {
     })
     .filter((v): v is DishIdea => v !== null)
     .slice(0, 5);
+}
+
+function matchesAvailableFood(name: string, pantryNames: string[]) {
+  const normalized = name.toLowerCase().trim();
+  return STAPLES.has(normalized) || pantryNames.some((item) => {
+    const pantryName = item.toLowerCase().trim();
+    return normalized === pantryName || normalized.includes(pantryName) || pantryName.includes(normalized);
+  });
+}
+
+export function keepGroundedIdeas(ideas: DishIdea[], pantryNames: string[]): DishIdea[] {
+  return ideas.filter((idea) =>
+    idea.uses.length > 0 && idea.uses.every((name) => matchesAvailableFood(name, pantryNames)),
+  );
+}
+
+export function keepGroundedRecipes(recipes: PantryRecipe[], pantryNames: string[]): PantryRecipe[] {
+  return recipes.filter((recipe) =>
+    recipe.uses.length > 0 &&
+    recipe.uses.every((name) => matchesAvailableFood(name, pantryNames)) &&
+    (recipe.ingredients ?? []).every((ingredient) =>
+      !ingredient.inPantry || matchesAvailableFood(ingredient.name, pantryNames),
+    ),
+  );
 }
 
 

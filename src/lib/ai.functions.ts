@@ -8,6 +8,8 @@ import {
   ideasRequest,
   loadPantryContext,
   normalizeIdeas,
+  keepGroundedIdeas,
+  keepGroundedRecipes,
   normalizeNameList,
   normalizeRecipes,
   normalizePantryAdds,
@@ -340,7 +342,10 @@ export const suggestRecipes = createServerFn({ method: "POST" })
     ]);
 
     const single = Boolean(data.dish) || chosen.length > 0;
-    const recipes = normalizeRecipes(parsed).slice(0, single ? 1 : 5);
+    const recipes = keepGroundedRecipes(
+      normalizeRecipes(parsed),
+      chosen.length > 0 ? chosen : ctx.items.map((item) => item.name),
+    ).slice(0, single ? 1 : 5);
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
 
     // Recipes are not auto-saved — the user explicitly saves the ones they like.
@@ -365,7 +370,7 @@ export const suggestDishIdeas = createServerFn({ method: "POST" })
     ], { maxTokens: 800 });
 
 
-    const ideas = normalizeIdeas(parsed);
+    const ideas = keepGroundedIdeas(normalizeIdeas(parsed), ctx.items.map((item) => item.name));
     await logUsage("recipe-ideas", context.userId, JSON.stringify(ideas).length);
     return { ideas };
   });
@@ -407,7 +412,10 @@ export const getDailyRecipe = createServerFn({ method: "POST" })
       },
     ]);
 
-    const recipe = normalizeRecipes(parsed)[0] ?? null;
+    const recipe = keepGroundedRecipes(
+      normalizeRecipes(parsed),
+      ctx.items.map((item) => item.name),
+    )[0] ?? null;
     await logUsage("recipes", context.userId, JSON.stringify(recipe ?? {}).length);
     if (!recipe) return { recipe: null };
 
