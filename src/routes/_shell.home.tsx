@@ -16,7 +16,7 @@ import {
 } from "@/lib/data";
 import { getDailyRecipe } from "@/lib/ai.functions";
 import { daysUntil, getStatus, type PantryItem } from "@/lib/freshtrack";
-import { explainHealth, generateInsights, type Insight } from "@/lib/analytics";
+import { explainHealth, generateInsights } from "@/lib/analytics";
 import { FoodThumb } from "@/components/food-thumb";
 import { ItemDetailSheet } from "@/components/item-detail-sheet";
 import { cn } from "@/lib/utils";
@@ -46,15 +46,6 @@ export const Route = createFileRoute("/_shell/home")({
   }),
   component: Dashboard,
 });
-
-const SUGGESTION_KINDS: Insight["kind"][] = [
-  "consume-first",
-  "freeze",
-  "shopping",
-  "storage",
-  "overbuying",
-  "duplicate",
-];
 
 function greetingFor(now: Date) {
   const h = now.getHours();
@@ -110,7 +101,7 @@ function Dashboard() {
     .filter((i) => getStatus(i, soonDays) !== "fresh")
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
   const health = useMemo(() => explainHealth(items, soonDays), [items, soonDays]);
-  const suggestions = insights.filter((i) => SUGGESTION_KINDS.includes(i.kind)).slice(0, 2);
+  const suggestions = insights.slice(0, 6);
   const shoppingPreview = shopping.slice(0, 6);
   const [detail, setDetail] = useState<PantryItem | null>(null);
   const firstName = (profile?.full_name ?? "there").split(" ")[0];

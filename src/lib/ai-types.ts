@@ -6,7 +6,7 @@ export interface AiMessage {
   content: string;
 }
 
-export type AiProviderName = "groq" | "groq-fallback" | "gateway";
+export type AiProviderName = "groq" | "groq-fallback" | "gemini" | "gateway";
 
 export interface AiProviderLog {
   at: string;
