@@ -226,7 +226,6 @@ function Dashboard() {
           </Button>
         </div>
       </section>
-      )}
 
       {/* Shopping list — check items off without losing them */}
       <section className="animate-fade-up mb-4" style={{ animationDelay: "200ms" }}>
