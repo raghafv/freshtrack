@@ -148,7 +148,6 @@ async function callProvider(
   try {
     const openAiBody = {
       model: provider.model,
-      response_format: { type: "json_object" },
       max_completion_tokens: maxTokens,
       temperature: 0.3,
       messages,
