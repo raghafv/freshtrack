@@ -165,7 +165,7 @@ export default function ScanWithModel() {
     }
   }
 
-  const conf = result ? confidenceLabel(result.confidence) : null;
+  
 
   return (
     <PageContainer>
