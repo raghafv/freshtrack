@@ -33,7 +33,7 @@ const PROVIDERS: ProviderDefinition[] = [
   {
     name: "groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-20b",
     headers: () => {
       const key = process.env.GROQ_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
@@ -42,7 +42,7 @@ const PROVIDERS: ProviderDefinition[] = [
   {
     name: "groq-fallback",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.1-8b-instant",
+    model: "openai/gpt-oss-120b",
     headers: () => {
       const key = process.env.GROQ_API_KEY;
       return key ? { Authorization: `Bearer ${key}` } : null;
