@@ -144,7 +144,7 @@ async function callProvider(
   timeoutMs: number,
 ): Promise<Record<string, unknown>> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = provider.name === "gateway" ? null : setTimeout(() => controller.abort(), timeoutMs);
   try {
     const openAiBody = {
       model: provider.model,
@@ -165,7 +165,7 @@ async function callProvider(
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(provider.transport === "gemini" ? geminiBody : openAiBody),
-      signal: controller.signal,
+      signal: provider.name === "gateway" ? undefined : controller.signal,
     });
 
     if (!res.ok) {
@@ -189,7 +189,7 @@ async function callProvider(
       return match ? (JSON.parse(match[0]) as Record<string, unknown>) : { reply: raw };
     }
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 }
 
