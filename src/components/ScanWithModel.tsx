@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
 import { useAuth } from "@/lib/auth";
 import { useRecordScan, uploadPantryImage } from "@/lib/data";
-import { buildCandidate, confidenceLabel, type ScanCandidate } from "@/lib/scan";
+import { buildCandidate, type ScanCandidate } from "@/lib/scan";
 
 declare global {
   interface Window {
@@ -165,7 +165,7 @@ export default function ScanWithModel() {
     }
   }
 
-  const conf = result ? confidenceLabel(result.confidence) : null;
+  
 
   return (
     <PageContainer>
@@ -209,7 +209,7 @@ export default function ScanWithModel() {
               <p className="text-lg font-semibold capitalize">{result.name}</p>
               <p className="text-sm text-muted-foreground">
                 Looks {result.healthy ? "healthy" : "rotten"} · Confidence:{" "}
-                {(result.confidence * 100).toFixed(1)}%{conf ? ` (${conf.label})` : ""}
+                {(result.confidence * 100).toFixed(1)}%
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
