@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
 import { useAuth } from "@/lib/auth";
 import { useRecordScan, uploadPantryImage } from "@/lib/data";
-import { buildCandidate, confidenceLabel, type ScanCandidate } from "@/lib/scan";
+import { buildCandidate, type ScanCandidate } from "@/lib/scan";
 
 declare global {
   interface Window {
