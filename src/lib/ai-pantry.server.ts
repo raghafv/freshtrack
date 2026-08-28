@@ -204,6 +204,7 @@ export function normalizeIdeas(parsed: Record<string, unknown>): DishIdea[] {
 
 function matchesAvailableFood(name: string, pantryNames: string[]) {
   const normalized = name.toLowerCase().trim();
+  if (!isCookingIngredient(normalized)) return false;
   return STAPLES.has(normalized) || pantryNames.some((item) => {
     const pantryName = item.toLowerCase().trim();
     return normalized === pantryName || normalized.includes(pantryName) || pantryName.includes(normalized);
