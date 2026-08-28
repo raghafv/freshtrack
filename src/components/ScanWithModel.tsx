@@ -209,7 +209,7 @@ export default function ScanWithModel() {
               <p className="text-lg font-semibold capitalize">{result.name}</p>
               <p className="text-sm text-muted-foreground">
                 Looks {result.healthy ? "healthy" : "rotten"} · Confidence:{" "}
-                {(result.confidence * 100).toFixed(1)}%{conf ? ` (${conf.label})` : ""}
+                {(result.confidence * 100).toFixed(1)}%
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
