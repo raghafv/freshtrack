@@ -204,7 +204,7 @@ export function QuickAddDialog({
         type="button"
         onClick={() => setActiveCategory(c)}
         className={cn(
-          "press flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2.5 text-[14px] font-medium transition-colors",
+          "press flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-3 text-[15px] font-medium transition-colors",
           active
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border/60 bg-card/60 hover:bg-accent/40",
