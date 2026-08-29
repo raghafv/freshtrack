@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Bookmark, Check, ChefHat, Clock3, Lightbulb, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout";
 import { AppBar } from "@/components/app-bar";
@@ -105,22 +105,31 @@ function Dashboard() {
   const shoppingPreview = shopping.slice(0, 6);
   const [detail, setDetail] = useState<PantryItem | null>(null);
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
-  const now = new Date();
+  // Time-based text (greeting, date, mood) must render only after hydration —
+  // server (UTC) and browser (IST) clocks disagree, which previously crashed
+  // hydration with a removeChild error on first load.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const now = mounted ? new Date() : null;
 
   return (
     <PageContainer>
       <AppBar
-        greeting={`${greetingFor(now)},`}
+        greeting={now ? `${greetingFor(now)},` : "Hello,"}
         name={`${firstName}.`}
-        subtitle={now.toLocaleDateString(undefined, {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        })}
+        subtitle={
+          now
+            ? now.toLocaleDateString(undefined, {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })
+            : " "
+        }
       />
 
       <p className="-mt-2 mb-9 text-[15px] leading-relaxed text-muted-foreground">
-        {moodLine(attention.length, items.length, now)}
+        {now ? moodLine(attention.length, items.length, now) : " "}
       </p>
 
       {/* Needs attention — Wallet-style horizontal cards */}

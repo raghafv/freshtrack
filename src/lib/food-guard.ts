@@ -37,7 +37,7 @@ export const STAPLES = new Set([
 /** Broad edible vocabulary, so home-made and regional dishes still pass. */
 const FOOD_WORDS = [
   "milk", "curd", "dahi", "yogurt", "yoghurt", "paneer", "cheese", "butter", "ghee", "cream",
-  "egg", "chicken", "mutton", "lamb", "beef", "pork", "fish", "prawn", "shrimp", "crab", "meat",
+  "egg", "chicken", "mutton", "lamb", "beef", "pork", "turkey", "duck", "fish", "prawn", "shrimp", "crab", "meat",
   "rice", "atta", "flour", "maida", "suji", "rava", "poha", "bread", "bun", "roti", "chapati",
   "paratha", "naan", "pasta", "noodle", "maggi", "oats", "cereal", "corn", "makai",
   "dal", "daal", "lentil", "chana", "rajma", "moong", "masoor", "toor", "urad", "bean", "pea",
@@ -64,11 +64,21 @@ const FOOD_WORDS = [
 
 const norm = (value: string) => value.toLowerCase().trim();
 
+/**
+ * Word-boundary match so short entries ("car", "pad", "key") don't catch
+ * foods like carrot, papad or turkey, and so multi-word entries
+ * ("id card", "id") behave sensibly.
+ */
+function containsWholePhrase(haystack: string, phrase: string) {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z])${escaped}([^a-z]|$)`).test(haystack);
+}
+
 /** Obvious non-food object? */
 export function isNonFood(name: string) {
   const n = norm(name);
   if (!n) return true;
-  return NON_FOOD.some((bad) => n === bad || n.includes(bad));
+  return NON_FOOD.some((bad) => containsWholePhrase(n, bad));
 }
 
 /** Passes the loose gate used by the camera scanner. */

@@ -204,7 +204,7 @@ export function QuickAddDialog({
         type="button"
         onClick={() => setActiveCategory(c)}
         className={cn(
-          "press flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2.5 text-[14px] font-medium transition-colors",
+          "press flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-3 text-[15px] font-medium transition-colors",
           active
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border/60 bg-card/60 hover:bg-accent/40",
@@ -385,8 +385,8 @@ export function QuickAddDialog({
               />
             </div>
 
-            <div className="-mx-1 overflow-x-auto px-1 pb-1 no-scrollbar">
-              <div className="flex w-max gap-2">
+            <div className="-mx-1 touch-pan-x overflow-x-auto overflow-y-hidden overscroll-x-contain px-1 pb-1 no-scrollbar">
+              <div className="flex w-max gap-2 py-1">
                 {["all", ...CATALOG_CATEGORIES].map((c) => (
                   <CategoryChip key={c} c={c} />
                 ))}
