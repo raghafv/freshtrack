@@ -37,7 +37,7 @@ export const STAPLES = new Set([
 /** Broad edible vocabulary, so home-made and regional dishes still pass. */
 const FOOD_WORDS = [
   "milk", "curd", "dahi", "yogurt", "yoghurt", "paneer", "cheese", "butter", "ghee", "cream",
-  "egg", "chicken", "mutton", "lamb", "beef", "pork", "fish", "prawn", "shrimp", "crab", "meat",
+  "egg", "chicken", "mutton", "lamb", "beef", "pork", "turkey", "duck", "fish", "prawn", "shrimp", "crab", "meat",
   "rice", "atta", "flour", "maida", "suji", "rava", "poha", "bread", "bun", "roti", "chapati",
   "paratha", "naan", "pasta", "noodle", "maggi", "oats", "cereal", "corn", "makai",
   "dal", "daal", "lentil", "chana", "rajma", "moong", "masoor", "toor", "urad", "bean", "pea",
