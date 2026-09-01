@@ -2,7 +2,7 @@ import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell } from "lucide-react";
+import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell, LifeBuoy, Mail, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
