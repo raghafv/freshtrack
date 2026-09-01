@@ -182,7 +182,7 @@ export function foodImage(
   category?: string | null,
   imageUrl?: string | null,
 ): string {
-  return foodPhoto(name, category, imageUrl) ?? CATEGORY_IMAGES[category ?? ""] ?? other;
+  return foodPhoto(name, category, imageUrl) ?? other;
 }
 
 export const FALLBACK_FOOD_IMAGE = other;
