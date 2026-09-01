@@ -125,6 +125,10 @@
     border-color: var(--color-border);
   }
 
+  #lovable-badge {
+  display: none !important;
+}
+
   html {
     -webkit-tap-highlight-color: transparent;
   }
