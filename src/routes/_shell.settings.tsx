@@ -189,6 +189,40 @@ function SettingsPage() {
         </div>
       </Section>
 
+      <Section icon={LifeBuoy} title="Contact support">
+        <p className="mb-4 text-sm text-muted-foreground">
+          Found a bug, or have an idea that would make FreshTrack better? We read every message.
+        </p>
+        <div className="grid gap-2">
+          <a
+            href="mailto:hello@fresh-track.in?subject=FreshTrack%20support%20/%20suggestion"
+            className="press flex items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-4 py-3"
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">Email support</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                hello@fresh-track.in
+              </span>
+            </span>
+            <Mail className="h-4 w-4 shrink-0 text-primary" />
+          </a>
+          <a
+            href="mailto:raghav.goyal909@gmail.com?subject=FreshTrack%20feedback"
+            className="press flex items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-4 py-3"
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">Message the maker</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                raghav.goyal909@gmail.com
+              </span>
+            </span>
+            <MessageSquare className="h-4 w-4 shrink-0 text-primary" />
+          </a>
+        </div>
+      </Section>
+
+
+
       <Section icon={ShieldAlert} title="Danger zone">
         <p className="mb-3 text-sm text-muted-foreground">
           Deleting your account permanently removes your pantry, shopping list, notifications and
