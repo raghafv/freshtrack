@@ -119,13 +119,46 @@ export async function subscribeToPush(
   const registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
   await navigator.serviceWorker.ready;
 
+  const appServerKey = urlBase64ToUint8Array(publicKey) as BufferSource;
   const existing = await registration.pushManager.getSubscription();
-  const sub =
-    existing ??
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-    }));
+
+  // A subscription created with a different VAPID key (or a stale one left by an
+  // old deploy) makes the browser reject `subscribe()` with a generic
+  // "push service error" — drop it and start clean.
+  const keyMatches =
+    existing?.options?.applicationServerKey != null &&
+    new Uint8Array(existing.options.applicationServerKey as ArrayBuffer).toString() ===
+      new Uint8Array(appServerKey as ArrayBuffer).toString();
+
+  let sub = keyMatches ? existing : null;
+  if (!sub) {
+    if (existing) await existing.unsubscribe().catch(() => undefined);
+    try {
+      sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: appServerKey,
+      });
+    } catch (error) {
+      // Retry once with a fresh worker registration — Chrome/Edge often fail the
+      // first subscribe after an update with "Registration failed - push service error".
+      await registration.unregister().catch(() => undefined);
+      const fresh = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
+      await navigator.serviceWorker.ready;
+      try {
+        sub = await fresh.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: appServerKey,
+        });
+      } catch {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          detail.includes("push service")
+            ? "Your browser couldn't reach its push service. This usually happens in private/incognito windows, with notifications disabled at the OS level, or when a browser sync/policy blocks push. Try a normal window, allow notifications in system settings, and retry."
+            : `Couldn't subscribe to notifications: ${detail}`,
+        );
+      }
+    }
+  }
 
   return {
     endpoint: sub.endpoint,
@@ -134,6 +167,7 @@ export async function subscribeToPush(
     userAgent: navigator.userAgent.slice(0, 400),
   };
 }
+
 
 /** Removes the local subscription; returns the endpoint that was removed. */
 export async function unsubscribeFromPush(): Promise<string | null> {
