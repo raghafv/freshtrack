@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { categoryEmoji } from "@/lib/emoji";
+import { categoryImage } from "@/lib/food-image";
 import { FoodThumb } from "@/components/food-thumb";
 import { friendlyMessage } from "@/lib/errors";
 import { useSmartAdd } from "@/lib/smart-add";
@@ -203,14 +203,29 @@ export function QuickAddDialog({
         key={c}
         type="button"
         onClick={() => setActiveCategory(c)}
-        className={cn(
-          "press flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-3 text-[15px] font-medium transition-colors",
+          className={cn(
+          "press flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border py-1.5 pl-1.5 pr-4 text-[15px] font-medium transition-colors",
           active
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border/60 bg-card/60 hover:bg-accent/40",
         )}
       >
-        {c === "all" ? "All" : `${categoryEmoji(c)} ${c}`}
+        {c === "all" ? (
+          "All"
+        ) : (
+          <>
+            <img
+              src={categoryImage(c)}
+              alt=""
+              aria-hidden
+              className={cn(
+                "h-9 w-9 rounded-full object-cover",
+                active && "ring-1 ring-primary-foreground/40",
+              )}
+            />
+            {c}
+          </>
+        )}
       </button>
     );
   }
