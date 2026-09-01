@@ -148,24 +148,29 @@ const CATEGORY_IMAGES: Record<string, string> = {
   Other: other,
 };
 
+/** Cinematic photo for a category (used as category icons + fallbacks). */
+export function categoryImage(category?: string | null): string {
+  return CATEGORY_IMAGES[category ?? ""] ?? other;
+}
+
 /**
- * Photo for an item, but ONLY when we are confident it matches:
- * a real scanned product image, or a specific keyword match on the name.
- * Returns null when we'd otherwise show a misleading generic category photo —
- * callers should render an emoji instead (see <FoodThumb />).
+ * Photo for an item: a real scanned product image wins, then a specific
+ * keyword match on the name, then the category's own cinematic photo so every
+ * item and icon across the app shows a real image.
  */
 export function foodPhoto(
   name?: string | null,
-  _category?: string | null,
+  category?: string | null,
   imageUrl?: string | null,
 ): string | null {
   if (imageUrl) return imageUrl;
   const n = (name ?? "").toLowerCase();
-  if (!n) return null;
-  for (const [keys, src] of NAME_MATCHES) {
-    if (keys.some((k) => n.includes(k))) return src;
+  if (n) {
+    for (const [keys, src] of NAME_MATCHES) {
+      if (keys.some((k) => n.includes(k))) return src;
+    }
   }
-  return null;
+  return categoryImage(category);
 }
 
 /**
@@ -177,7 +182,7 @@ export function foodImage(
   category?: string | null,
   imageUrl?: string | null,
 ): string {
-  return foodPhoto(name, category, imageUrl) ?? CATEGORY_IMAGES[category ?? ""] ?? other;
+  return foodPhoto(name, category, imageUrl) ?? other;
 }
 
 export const FALLBACK_FOOD_IMAGE = other;
