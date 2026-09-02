@@ -2,7 +2,9 @@ import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell, LifeBuoy, Mail, MessageSquare } from "lucide-react";
+import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell, LifeBuoy, Copy } from "lucide-react";
+
+const SUPPORT_EMAIL = "hello@fresh-track.in";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -193,33 +195,26 @@ function SettingsPage() {
         <p className="mb-4 text-sm text-muted-foreground">
           Found a bug, or have an idea that would make FreshTrack better? We read every message.
         </p>
-        <div className="grid gap-2">
-          <a
-            href="mailto:hello@fresh-track.in?subject=FreshTrack%20support%20/%20suggestion"
-            className="press flex items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-4 py-3"
-          >
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold">Email support</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                hello@fresh-track.in
-              </span>
-            </span>
-            <Mail className="h-4 w-4 shrink-0 text-primary" />
-          </a>
-          <a
-            href="mailto:raghav.goyal909@gmail.com?subject=FreshTrack%20feedback"
-            className="press flex items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-4 py-3"
-          >
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold">Message the maker</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                raghav.goyal909@gmail.com
-              </span>
-            </span>
-            <MessageSquare className="h-4 w-4 shrink-0 text-primary" />
-          </a>
-        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(SUPPORT_EMAIL);
+              toast.success("Email copied to clipboard");
+            } catch {
+              toast.error("Couldn't copy — the address is hello@fresh-track.in");
+            }
+          }}
+          className="press flex w-full items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-4 py-3 text-left"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold">Email support</span>
+            <span className="block truncate text-xs text-muted-foreground">{SUPPORT_EMAIL}</span>
+          </span>
+          <Copy className="h-4 w-4 shrink-0 text-primary" />
+        </button>
       </Section>
+
 
 
 
