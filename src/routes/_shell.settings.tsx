@@ -3,8 +3,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell, LifeBuoy, Copy } from "lucide-react";
-
-const SUPPORT_EMAIL = "hello@fresh-track.in";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
