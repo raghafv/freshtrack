@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import breakfast from "@/assets/dishes/breakfast.jpg";
+import curry from "@/assets/dishes/curry.jpg";
+import fallbackDish from "@/assets/dishes/default.jpg";
+import pasta from "@/assets/dishes/pasta.jpg";
+import rice from "@/assets/dishes/rice.jpg";
+import salad from "@/assets/dishes/salad.jpg";
+import soup from "@/assets/dishes/soup.jpg";
+import stirfry from "@/assets/dishes/stirfry.jpg";
 
 /**
  * Deterministic recipe-title → dish photo matching.
@@ -102,6 +110,18 @@ export function dishImageFile(title?: string | null): string | null {
   return null;
 }
 
+export function dishFallbackImage(title?: string | null): string {
+  const value = (title ?? "").toLowerCase();
+  if (/breakfast|egg|omelet|idli|dosa|poha|upma|parath/.test(value)) return breakfast;
+  if (/pasta|spaghetti|macaroni|noodle/.test(value)) return pasta;
+  if (/rice|biryani|pulao|pilaf|khichdi/.test(value)) return rice;
+  if (/salad|chaat/.test(value)) return salad;
+  if (/soup|broth|shorba/.test(value)) return soup;
+  if (/stir|saute|fried/.test(value)) return stirfry;
+  if (/curry|masala|paneer|chicken|rajma|chole|dal/.test(value)) return curry;
+  return fallbackDish;
+}
+
 /** Signed URLs for the whole (small, fixed) library, fetched once per session. */
 let signedUrls: Promise<Record<string, string>> | null = null;
 
@@ -125,21 +145,22 @@ function loadSignedUrls() {
 /** Resolved photo for a recipe title, or null when no dish photo matches. */
 export function useDishImage(title?: string | null): string | null {
   const file = dishImageFile(title);
-  const [url, setUrl] = useState<string | null>(null);
+  const fallback = dishFallbackImage(title);
+  const [url, setUrl] = useState<string | null>(fallback);
 
   useEffect(() => {
     let active = true;
     if (!file) {
-      setUrl(null);
+      setUrl(fallback);
       return;
     }
     loadSignedUrls().then((map) => {
-      if (active) setUrl(map[file] ?? null);
+      if (active) setUrl(map[file] ?? fallback);
     });
     return () => {
       active = false;
     };
-  }, [file]);
+  }, [fallback, file]);
 
   return url;
 }

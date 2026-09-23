@@ -95,10 +95,10 @@ export function isCookingIngredient(name: string) {
   const n = norm(name);
   if (!n || n.length < 2 || isNonFood(n)) return false;
   if (findProduct(n)) return true;
-  if (FOOD_WORDS.some((word) => n.includes(word))) return true;
+  if (FOOD_WORDS.some((word) => containsWholePhrase(n, word))) return true;
   return GROCERY_CATALOG.some((p) => {
     const pn = norm(p.name);
-    return n.includes(pn) || pn.includes(n);
+    return containsWholePhrase(n, pn) || p.aliases?.some((alias) => containsWholePhrase(n, norm(alias)));
   });
 }
 

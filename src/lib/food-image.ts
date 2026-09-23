@@ -148,6 +148,11 @@ const CATEGORY_IMAGES: Record<string, string> = {
   Other: other,
 };
 
+function containsWholePhrase(value: string, phrase: string) {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z])${escaped}([^a-z]|$)`).test(value);
+}
+
 /** Cinematic photo for a category (used as category icons + fallbacks). */
 export function categoryImage(category?: string | null): string {
   return CATEGORY_IMAGES[category ?? ""] ?? other;
@@ -167,7 +172,7 @@ export function foodPhoto(
   const n = (name ?? "").toLowerCase();
   if (n) {
     for (const [keys, src] of NAME_MATCHES) {
-      if (keys.some((k) => n.includes(k))) return src;
+      if (keys.some((k) => containsWholePhrase(n, k))) return src;
     }
   }
   return categoryImage(category);
