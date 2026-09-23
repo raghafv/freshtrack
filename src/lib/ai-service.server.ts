@@ -185,8 +185,16 @@ async function callProvider(
     try {
       return JSON.parse(raw) as Record<string, unknown>;
     } catch {
-      const match = raw.match(/\{[\s\S]*\}/);
-      return match ? (JSON.parse(match[0]) as Record<string, unknown>) : { reply: raw };
+      const unfenced = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      try {
+        return JSON.parse(unfenced) as Record<string, unknown>;
+      } catch {
+        const match = unfenced.match(/\{[\s\S]*\}/);
+        if (match) return JSON.parse(match[0]) as Record<string, unknown>;
+        const err = new Error("Provider returned an invalid JSON response");
+        (err as Error & { transient?: boolean }).transient = true;
+        throw err;
+      }
     }
   } finally {
     if (timer) clearTimeout(timer);

@@ -323,7 +323,7 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   // One recipe per calendar day in IST — it stays put until midnight India time.
   const today = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["tonight-recipe", today],
     queryFn: () => generate({}),
     enabled: hasPantry,
@@ -354,11 +354,28 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
     );
   }
 
-  if (isLoading || !recipe) {
+  if (isLoading) {
     return (
       <div className="surface-card h-56 animate-pulse overflow-hidden">
         <div className="h-full w-full bg-muted/60" />
       </div>
+    );
+  }
+
+  if (isError || !recipe) {
+    return (
+      <Link to="/recipes" className="surface-card press flex min-h-40 items-center gap-4 p-6">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+          <ChefHat className="h-5 w-5" strokeWidth={1.8} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[15px] font-semibold">Choose tonight&apos;s recipe</span>
+          <span className="mt-1 block text-[13px] text-muted-foreground">
+            {isError ? friendlyMessage(error, "Recipe generation is unavailable right now") : "Pick at least three pantry ingredients to create a recipe."}
+          </span>
+        </span>
+        <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />
+      </Link>
     );
   }
 

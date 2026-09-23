@@ -573,6 +573,7 @@ function SavedRecipeCard({
   pantryNames: Set<string>;
 }) {
   const { remove } = useRecipeMutations();
+  const photo = useDishImage(recipe.title);
   const have = recipe.uses.filter((u) => pantryNames.has(u.toLowerCase()));
   const missing = [
     ...recipe.missing,
@@ -582,11 +583,11 @@ function SavedRecipeCard({
   return (
     <li className="surface-card animate-fade-up overflow-hidden shadow-lift">
       <div className="flex items-center gap-4 bg-muted/40 px-6 py-5">
-        <FoodThumb
-          name={recipe.uses[0] ?? recipe.title}
-          className="h-16 w-16 rounded-2xl"
-          emojiClassName="text-3xl"
-        />
+        {photo ? (
+          <img src={photo} alt="" aria-hidden className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+        ) : (
+          <FoodThumb name={recipe.uses[0] ?? recipe.title} className="h-16 w-16 rounded-2xl" emojiClassName="text-3xl" />
+        )}
         <div className="min-w-0 flex-1">
           <h3 className="text-[19px] font-semibold leading-snug tracking-[-0.02em]">
             {recipe.title}

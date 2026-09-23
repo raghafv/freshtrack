@@ -152,7 +152,7 @@ export function historyMessages(rows: { role: string; content: string }[]): AiMe
 }
 
 export const recipeRequest = [
-  "Suggest 4 realistic, COMPLETE home recipes I can cook right now — written so a beginner can follow them end to end with no other source.",
+  "Suggest the requested number of realistic, COMPLETE home recipes I can cook right now — written so a beginner can follow them end to end with no other source.",
   "Every ingredient must already be in my pantry (salt, water, oil and common spices excepted).",
   "Prioritise the ingredients with the smallest days_left.",
   "If a classic version of the dish needs something I do not have, keep the dish and swap in a pantry item instead — list that as a substitution.",
@@ -203,12 +203,18 @@ export function normalizeIdeas(parsed: Record<string, unknown>): DishIdea[] {
 }
 
 function matchesAvailableFood(name: string, pantryNames: string[]) {
+  const normalizeWords = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.length > 3 && word.endsWith("es") ? word.slice(0, -2) : word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word);
   const normalized = name.toLowerCase().trim();
   if (!isCookingIngredient(normalized)) return false;
-  return STAPLES.has(normalized) || pantryNames.some((item) => {
-    const pantryName = item.toLowerCase().trim();
-    return normalized === pantryName || normalized.includes(pantryName) || pantryName.includes(normalized);
-  });
+  if (STAPLES.has(normalized)) return true;
+  const words = new Set(normalizeWords(normalized));
+  return pantryNames.some((item) => normalizeWords(item).some((word) => words.has(word)));
 }
 
 export function keepGroundedIdeas(ideas: DishIdea[], pantryNames: string[]): DishIdea[] {
@@ -218,13 +224,23 @@ export function keepGroundedIdeas(ideas: DishIdea[], pantryNames: string[]): Dis
 }
 
 export function keepGroundedRecipes(recipes: PantryRecipe[], pantryNames: string[]): PantryRecipe[] {
-  return recipes.filter((recipe) =>
-    recipe.uses.length > 0 &&
-    recipe.uses.every((name) => matchesAvailableFood(name, pantryNames)) &&
-    (recipe.ingredients ?? []).every((ingredient) =>
-      !ingredient.inPantry || matchesAvailableFood(ingredient.name, pantryNames),
-    ),
-  );
+  return recipes.filter((recipe) => {
+    const declaredUses = recipe.uses.length > 0
+      ? recipe.uses
+      : (recipe.ingredients ?? []).filter((ingredient) => ingredient.inPantry).map((ingredient) => ingredient.name);
+    const groundedUses = declaredUses.filter((name) => matchesAvailableFood(name, pantryNames));
+    const requiredIngredients = (recipe.ingredients ?? []).filter((ingredient) => ingredient.inPantry);
+    const groundedIngredients = requiredIngredients.filter((ingredient) =>
+      matchesAvailableFood(ingredient.name, pantryNames),
+    );
+    const grounded = groundedUses.length > 0 && groundedIngredients.length === requiredIngredients.length;
+    if (!grounded) {
+      console.info(`[ai:recipes] rejected ungrounded recipe: ${recipe.title}`);
+      return false;
+    }
+    recipe.uses = groundedUses;
+    return true;
+  });
 }
 
 
