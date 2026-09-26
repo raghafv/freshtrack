@@ -90,9 +90,12 @@ export async function saveProduct(product: ProductRecord, userId?: string): Prom
   const existing = await findProductByBarcode(barcode);
 
   if (!existing) {
-    await supabase.from("products").insert({ ...product, barcode, created_by: userId ?? null });
+    const owner = userId ?? (await supabase.auth.getUser()).data.user?.id ?? null;
+    if (!owner) return;
+    await supabase.from("products").insert({ ...product, barcode, created_by: owner });
     return;
   }
+
 
   const patch: Partial<ProductRecord> = {};
   if (!existing.brand && product.brand) patch.brand = product.brand;
