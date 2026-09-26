@@ -177,21 +177,20 @@ export interface AdminUserDetail {
 
 export const OWNER_EMAIL = "raghav.goyal909@gmail.com";
 
-/** True only for the permanent owner account, verified from the signed token. */
+/**
+ * True only for the permanent owner account.
+ * The address is read from the authentication records (never from the editable
+ * profile row or from token metadata) and must be a confirmed address.
+ */
 async function isOwner(context: { supabase: any; userId: string; claims?: any }) {
-  const claimEmail = (context.claims?.email ?? context.claims?.user_metadata?.email) as
-    | string
-    | undefined;
-  if (claimEmail?.toLowerCase() === OWNER_EMAIL) return true;
-
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("email")
-    .eq("id", context.userId)
-    .maybeSingle();
-
-  return profile?.email?.toLowerCase() === OWNER_EMAIL;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+  if (error || !data?.user) return false;
+  const email = (data.user.email ?? "").toLowerCase();
+  const confirmed = Boolean(data.user.email_confirmed_at ?? data.user.confirmed_at);
+  return confirmed && email === OWNER_EMAIL;
 }
+
 
 async function isOwnerOrAdmin(context: { supabase: any; userId: string; claims?: any }) {
   if (await isOwner(context)) return true;
@@ -273,13 +272,22 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
     await assertOwner(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Resolve the account from the authentication records, so an editable
+    // profile email can never point the admin role at a different account.
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("id, email")
+      .select("id")
       .ilike("email", data.email)
       .maybeSingle();
 
-    if (!profile) throw new Error("No FreshTrack account uses that email address.");
+    let targetId: string | null = null;
+    if (profile) {
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+      if ((authUser?.user?.email ?? "").toLowerCase() === data.email) targetId = profile.id;
+    }
+
+    if (!targetId) throw new Error("No FreshTrack account uses that email address.");
+
     if (data.email === OWNER_EMAIL && !data.grant) {
       throw new Error("The owner account cannot lose admin access.");
     }
@@ -287,7 +295,7 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
     if (data.grant) {
       const { error } = await supabaseAdmin
         .from("user_roles")
-        .upsert({ user_id: profile.id, role: "admin" }, { onConflict: "user_id,role" });
+        .upsert({ user_id: targetId, role: "admin" }, { onConflict: "user_id,role" });
       if (error) throw new Error("Could not grant admin access.");
       return { ok: true, message: `${data.email} is now an admin.` };
     }
@@ -295,7 +303,7 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("user_roles")
       .delete()
-      .eq("user_id", profile.id)
+      .eq("user_id", targetId)
       .eq("role", "admin");
     if (error) throw new Error("Could not remove admin access.");
     return { ok: true, message: `${data.email} is no longer an admin.` };
@@ -379,7 +387,14 @@ export const getAdminProducts = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const term = data.search.trim();
+    // Keep the search text as plain text: strip the characters PostgREST reads
+    // as filter syntax so a search can never change the query itself.
+    const term = data.search
+      .trim()
+      .replace(/[,().*\\"'%:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
     let query = supabaseAdmin
       .from("products")
       .select("id, barcode, name, brand, category, size, storage, shelf_life_days, source, created_by, created_at", {
@@ -388,6 +403,7 @@ export const getAdminProducts = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(200);
     if (term) query = query.or(`name.ilike.%${term}%,barcode.ilike.%${term}%,brand.ilike.%${term}%`);
+
 
     const { data: rows, count, error } = await query;
     if (error) throw error;

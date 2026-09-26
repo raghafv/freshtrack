@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getDishImageUrls } from "@/lib/dish-image.functions";
 import breakfast from "@/assets/dishes/breakfast.jpg";
 import curry from "@/assets/dishes/curry.jpg";
 import fallbackDish from "@/assets/dishes/default.jpg";
@@ -127,20 +127,13 @@ let signedUrls: Promise<Record<string, string>> | null = null;
 
 function loadSignedUrls() {
   if (!signedUrls) {
-    signedUrls = supabase.storage
-      .from("foods")
-      .createSignedUrls([...DISH_FILES], 60 * 60 * 6)
-      .then(({ data }) => {
-        const map: Record<string, string> = {};
-        for (const row of data ?? []) {
-          if (row.path && row.signedUrl) map[row.path] = row.signedUrl;
-        }
-        return map;
-      })
-      .catch(() => ({}) as Record<string, string>);
+    signedUrls = getDishImageUrls({ data: { files: [...DISH_FILES] } }).catch(
+      () => ({}) as Record<string, string>,
+    );
   }
   return signedUrls;
 }
+
 
 /** Resolved photo for a recipe title, or null when no dish photo matches. */
 export function useDishImage(title?: string | null): string | null {
