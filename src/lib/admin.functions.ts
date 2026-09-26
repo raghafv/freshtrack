@@ -281,9 +281,17 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
       .maybeSingle();
 
     let targetId: string | null = null;
+    let confirmed = false;
     if (profile) {
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(profile.id);
-      if ((authUser?.user?.email ?? "").toLowerCase() === data.email) targetId = profile.id;
+      if ((authUser?.user?.email ?? "").toLowerCase() === data.email) {
+        targetId = profile.id;
+        confirmed = Boolean(authUser?.user?.email_confirmed_at);
+      }
+    }
+
+    if (targetId && data.grant && !confirmed) {
+      throw new Error("That account hasn't verified its email yet, so it can't be made an admin.");
     }
 
     if (!targetId) throw new Error("No FreshTrack account uses that email address.");

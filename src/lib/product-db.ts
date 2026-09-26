@@ -33,13 +33,13 @@ function normaliseBarcode(code: string): string {
 export async function findProductByBarcode(code: string): Promise<ProductRecord | null> {
   const barcode = normaliseBarcode(code);
   if (!barcode) return null;
-  const { data, error } = await supabase
-    .from("products")
-    .select("barcode,name,brand,category,size,image_url,shelf_life_days,storage,source")
-    .eq("barcode", barcode)
-    .maybeSingle();
-  if (error) return null;
-  return (data as ProductRecord | null) ?? null;
+  try {
+    const { lookupCatalogProduct } = await import("@/lib/product-lookup.functions");
+    const res = await lookupCatalogProduct({ data: { barcode } });
+    return (res.product as ProductRecord | null) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Step 2 — Open Food Facts, saved back into Supabase when found. */
