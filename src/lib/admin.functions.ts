@@ -177,21 +177,20 @@ export interface AdminUserDetail {
 
 export const OWNER_EMAIL = "raghav.goyal909@gmail.com";
 
-/** True only for the permanent owner account, verified from the signed token. */
+/**
+ * True only for the permanent owner account.
+ * The address is read from the authentication records (never from the editable
+ * profile row or from token metadata) and must be a confirmed address.
+ */
 async function isOwner(context: { supabase: any; userId: string; claims?: any }) {
-  const claimEmail = (context.claims?.email ?? context.claims?.user_metadata?.email) as
-    | string
-    | undefined;
-  if (claimEmail?.toLowerCase() === OWNER_EMAIL) return true;
-
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("email")
-    .eq("id", context.userId)
-    .maybeSingle();
-
-  return profile?.email?.toLowerCase() === OWNER_EMAIL;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+  if (error || !data?.user) return false;
+  const email = (data.user.email ?? "").toLowerCase();
+  const confirmed = Boolean(data.user.email_confirmed_at ?? data.user.confirmed_at);
+  return confirmed && email === OWNER_EMAIL;
 }
+
 
 async function isOwnerOrAdmin(context: { supabase: any; userId: string; claims?: any }) {
   if (await isOwner(context)) return true;
