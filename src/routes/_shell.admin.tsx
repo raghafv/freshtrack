@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/layout";
+import { SupportInbox } from "@/components/support-inbox";
 import { friendlyMessage } from "@/lib/errors";
 import { amIOwner, getAdminOverview, listAdmins, setAdminByEmail } from "@/lib/admin.functions";
 
@@ -293,6 +294,8 @@ function AdminPage() {
               ))}
             </div>
           </section>
+
+          <SupportInbox />
 
           {ownerData?.owner ? <AdminRolesPanel /> : null}
         </div>

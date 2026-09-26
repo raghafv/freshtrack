@@ -102,7 +102,12 @@ export function useUpdateTicket() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; status?: string; admin_reply?: string }) => {
-      const patch: Record<string, unknown> = {};
+      const patch: {
+        status?: string;
+        admin_reply?: string;
+        replied_at?: string;
+      } = {};
+
       if (input.status) patch['status'] = input.status;
       if (input.admin_reply !== undefined) {
         patch['admin_reply'] = input.admin_reply;

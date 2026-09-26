@@ -2,7 +2,17 @@ import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell, LifeBuoy, Copy } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Palette,
+  Ruler,
+  ShieldAlert,
+  Bell,
+  LifeBuoy,
+  MessageSquare,
+} from "lucide-react";
+
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,13 +36,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PageContainer } from "@/components/layout";
 import { PushSettingsRow } from "@/components/push-prompt";
+import { SupportDialog } from "@/components/support-dialog";
+
 
 import { useSettings, useUpdateSettings } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 import { deleteAccount } from "@/lib/account.functions";
 import { STORAGE_TYPES, UNITS } from "@/lib/freshtrack";
 
-const SUPPORT_EMAIL = "hello@fresh-track.in";
 
 export const Route = createFileRoute("/_shell/settings")({
   head: () => ({
@@ -61,6 +72,8 @@ function SettingsPage() {
   const removeAccount = useServerFn(deleteAccount);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+
 
   async function handleDelete() {
     setDeleting(true);
@@ -193,27 +206,25 @@ function SettingsPage() {
 
       <Section icon={LifeBuoy} title="Contact support">
         <p className="mb-4 text-sm text-muted-foreground">
-          Found a bug, or have an idea that would make FreshTrack better? We read every message.
+          Found a bug, or have an idea that would make FreshTrack better? Write to us right here —
+          you can attach screenshots and see our reply in the app.
         </p>
         <button
           type="button"
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(SUPPORT_EMAIL);
-              toast.success("Email copied to clipboard");
-            } catch {
-              toast.error("Couldn't copy — the address is hello@fresh-track.in");
-            }
-          }}
+          onClick={() => setSupportOpen(true)}
           className="press flex w-full items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-4 py-3 text-left"
         >
           <span className="min-w-0">
-            <span className="block text-sm font-semibold">Email support</span>
-            <span className="block truncate text-xs text-muted-foreground">{SUPPORT_EMAIL}</span>
+            <span className="block text-sm font-semibold">Message the team</span>
+            <span className="block truncate text-xs text-muted-foreground">
+              Report a problem or send feedback
+            </span>
           </span>
-          <Copy className="h-4 w-4 shrink-0 text-primary" />
+          <MessageSquare className="h-4 w-4 shrink-0 text-primary" />
         </button>
+        <SupportDialog open={supportOpen} onOpenChange={setSupportOpen} />
       </Section>
+
 
 
 
