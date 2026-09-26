@@ -61,6 +61,8 @@ function SettingsPage() {
   const removeAccount = useServerFn(deleteAccount);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+
 
   async function handleDelete() {
     setDeleting(true);
