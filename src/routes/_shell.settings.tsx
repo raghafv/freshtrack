@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PageContainer } from "@/components/layout";
 import { PushSettingsRow } from "@/components/push-prompt";
+import { SupportDialog } from "@/components/support-dialog";
+
 
 import { useSettings, useUpdateSettings } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
