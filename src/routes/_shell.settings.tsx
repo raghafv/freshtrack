@@ -44,7 +44,6 @@ import { useAuth } from "@/lib/auth";
 import { deleteAccount } from "@/lib/account.functions";
 import { STORAGE_TYPES, UNITS } from "@/lib/freshtrack";
 
-const SUPPORT_EMAIL = "hello@fresh-track.in";
 
 export const Route = createFileRoute("/_shell/settings")({
   head: () => ({
