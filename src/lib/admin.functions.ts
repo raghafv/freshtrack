@@ -295,7 +295,7 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
     if (data.grant) {
       const { error } = await supabaseAdmin
         .from("user_roles")
-        .upsert({ user_id: profile.id, role: "admin" }, { onConflict: "user_id,role" });
+        .upsert({ user_id: targetId, role: "admin" }, { onConflict: "user_id,role" });
       if (error) throw new Error("Could not grant admin access.");
       return { ok: true, message: `${data.email} is now an admin.` };
     }
@@ -303,7 +303,7 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("user_roles")
       .delete()
-      .eq("user_id", profile.id)
+      .eq("user_id", targetId)
       .eq("role", "admin");
     if (error) throw new Error("Could not remove admin access.");
     return { ok: true, message: `${data.email} is no longer an admin.` };
