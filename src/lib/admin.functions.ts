@@ -272,13 +272,22 @@ export const setAdminByEmail = createServerFn({ method: "POST" })
     await assertOwner(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Resolve the account from the authentication records, so an editable
+    // profile email can never point the admin role at a different account.
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("id, email")
+      .select("id")
       .ilike("email", data.email)
       .maybeSingle();
 
-    if (!profile) throw new Error("No FreshTrack account uses that email address.");
+    let targetId: string | null = null;
+    if (profile) {
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+      if ((authUser?.user?.email ?? "").toLowerCase() === data.email) targetId = profile.id;
+    }
+
+    if (!targetId) throw new Error("No FreshTrack account uses that email address.");
+
     if (data.email === OWNER_EMAIL && !data.grant) {
       throw new Error("The owner account cannot lose admin access.");
     }
