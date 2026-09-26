@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getDishImageUrls } from "@/lib/dish-image.functions";
 import breakfast from "@/assets/dishes/breakfast.jpg";
 import curry from "@/assets/dishes/curry.jpg";
 import fallbackDish from "@/assets/dishes/default.jpg";
