@@ -387,7 +387,14 @@ export const getAdminProducts = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const term = data.search.trim();
+    // Keep the search text as plain text: strip the characters PostgREST reads
+    // as filter syntax so a search can never change the query itself.
+    const term = data.search
+      .trim()
+      .replace(/[,().*\\"'%:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
     let query = supabaseAdmin
       .from("products")
       .select("id, barcode, name, brand, category, size, storage, shelf_life_days, source, created_by, created_at", {
@@ -396,6 +403,7 @@ export const getAdminProducts = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(200);
     if (term) query = query.or(`name.ilike.%${term}%,barcode.ilike.%${term}%,brand.ilike.%${term}%`);
+
 
     const { data: rows, count, error } = await query;
     if (error) throw error;
