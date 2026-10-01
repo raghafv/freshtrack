@@ -27,6 +27,7 @@ import { learnProduct, lookupLearned } from "@/lib/custom-products";
 import { findMyPendingProduct } from "@/lib/pending-products";
 import { categoryForName, shelfDaysForCategory, storageForCategory } from "@/lib/product-meta";
 import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
+import { scanSuccessFeedback } from "@/lib/feedback";
 
 import { useAuth } from "@/lib/auth";
 import {
@@ -184,6 +185,7 @@ function ScannerPage() {
         ),
       );
       setPendingMethod("camera");
+      scanSuccessFeedback();
       toast.success(`${items.length} item${items.length === 1 ? "" : "s"} detected`);
     } catch (e) {
       toast.error(friendlyMessage(e, "Scan failed"));
@@ -196,6 +198,7 @@ function ScannerPage() {
   /* --------------------------------- barcode --------------------------------- */
 
   async function lookupBarcode(code: string, frame?: Blob) {
+    scanSuccessFeedback();
     setBusy("Looking up barcode…");
     try {
       const learned = lookupLearned(code, user?.id);
