@@ -1,7 +1,7 @@
 import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Check, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Check, Plus, Share2, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,21 @@ export const Route = createFileRoute("/_shell/shopping")({
   }),
   component: ShoppingPage,
 });
+
+/** Formats the open items as a tidy WhatsApp message and opens sharing. */
+function shareList(items: ShoppingItem[]) {
+  const open = items.filter((i) => !i.checked);
+  const byCat = new Map<string, ShoppingItem[]>();
+  for (const i of open) byCat.set(i.category, [...(byCat.get(i.category) ?? []), i]);
+  const lines = ["🛒 *Shopping list* (FreshTrack)", ""];
+  for (const [cat, list] of [...byCat.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    lines.push(`*${cat}*`);
+    for (const i of list) lines.push(`• ${i.name} — ${formatQty(Number(i.quantity), i.unit)}`);
+    lines.push("");
+  }
+  const text = lines.join("\n").trim();
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+}
 
 function ShoppingPage() {
   const { data: items = [], isLoading } = useShoppingItems();
@@ -95,17 +110,31 @@ function ShoppingPage() {
             : `${remaining} of ${items.length} still to buy`
         }
         action={
-          checkedIds.length > 0 ? (
-            <Button
-              variant="secondary"
-              className="rounded-2xl"
-              onClick={async () => {
-                await remove.mutateAsync(checkedIds);
-                toast.success("Cleared purchased items");
-              }}
-            >
-              <Check className="h-4 w-4" /> Clear done
-            </Button>
+          items.length > 0 ? (
+            <div className="flex gap-2">
+              {remaining > 0 && (
+                <Button
+                  variant="secondary"
+                  className="rounded-2xl"
+                  aria-label="Share list on WhatsApp"
+                  onClick={() => shareList(items)}
+                >
+                  <Share2 className="h-4 w-4" /> Share
+                </Button>
+              )}
+              {checkedIds.length > 0 && (
+                <Button
+                  variant="secondary"
+                  className="rounded-2xl"
+                  onClick={async () => {
+                    await remove.mutateAsync(checkedIds);
+                    toast.success("Cleared purchased items");
+                  }}
+                >
+                  <Check className="h-4 w-4" /> Clear done
+                </Button>
+              )}
+            </div>
           ) : undefined
         }
       />

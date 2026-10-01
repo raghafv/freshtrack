@@ -35,6 +35,7 @@ export type {
 
 import type { AssistantReply, PantryRecipe, ShoppingSuggestion, AiProviderLog } from "./ai-types";
 import { splitIngredients } from "./food-guard";
+import { fallbackRecipe } from "./fallback-recipe";
 
 /** Records one AI call for the owner-only usage dashboard. Never throws. */
 async function logUsage(feature: string, userId: string | null, chars: number) {
@@ -289,7 +290,16 @@ const RecipeInput = z.object({
   mode: z.enum(["surprise", "selected"]).default("surprise"),
   ingredients: z.array(z.string().min(1).max(80)).max(20).default([]),
   dish: z.string().min(1).max(120).optional(),
+  style: z.enum(["any", "quick", "veg", "protein", "zerowaste"]).default("any"),
 });
+
+const STYLE_HINT: Record<string, string> = {
+  any: "",
+  quick: "\nThe dish MUST be ready in 20 minutes or less in total.",
+  veg: "\nThe dish MUST be fully vegetarian — no meat, fish or eggs.",
+  protein: "\nMake the dish high in protein, leaning on paneer, eggs, dal, legumes, curd or meat if available.",
+  zerowaste: "\nBuild the dish around the ingredients with the smallest days_left so nothing goes to waste.",
+};
 
 const BASIC_STAPLES = new Set([
   "salt",
@@ -336,16 +346,29 @@ export const suggestRecipes = createServerFn({ method: "POST" })
         ? `\nThe user chose these ingredients: ${chosen.join(", ")}. Build the dish STRICTLY around them — use ONLY these ingredients plus salt, water, oil and common spices, and do NOT pull in any other pantry item. Return EXACTLY ONE recipe (the "recipes" array must contain a single object) and make it insanely detailed: a rich description, exact measurements for every ingredient, 8-14 numbered steps with heat levels, timings and visual cues, plating notes, tips, storage advice and nutrition. If something essential is genuinely missing, keep the dish and list it as a substitution rather than adding unrelated pantry items.`
         : "\nSurprise the user with 4-5 varied dishes.";
 
-    const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: dataSystemPrompt(ctx) },
-      { role: "user", content: recipeRequest + focus },
-    ]);
-
     const single = Boolean(data.dish) || chosen.length > 0;
-    const recipes = keepGroundedRecipes(
-      normalizeRecipes(parsed),
-      chosen.length > 0 ? chosen : ctx.items.map((item) => item.name),
-    ).slice(0, single ? 1 : 5);
+    let recipes: PantryRecipe[] = [];
+    try {
+      const parsed = await generateAIResponse("recipes", [
+        { role: "system", content: dataSystemPrompt(ctx) },
+        { role: "user", content: recipeRequest + focus + (STYLE_HINT[data.style] ?? "") },
+      ]);
+      recipes = keepGroundedRecipes(
+        normalizeRecipes(parsed),
+        chosen.length > 0 ? chosen : ctx.items.map((item) => item.name),
+      ).slice(0, single ? 1 : 5);
+    } catch (error) {
+      console.error("[recipes] AI failed, using offline recipe", error);
+    }
+    // Instant offline recipe so "Write my recipe" never comes back empty.
+    if (recipes.length === 0 && !data.dish) {
+      const source =
+        chosen.length > 0
+          ? chosen.map((name) => ({ name, days_left: 0 }))
+          : ctx.items;
+      const fb = fallbackRecipe(source);
+      if (fb) recipes = [fb];
+    }
     await logUsage("recipes", context.userId, JSON.stringify(recipes).length);
 
     // Recipes are not auto-saved — the user explicitly saves the ones they like.
@@ -402,21 +425,28 @@ export const getDailyRecipe = createServerFn({ method: "POST" })
     const ctx = await loadPantryContext(supabase);
     if (ctx.items.length === 0) return { recipe: null };
 
-    const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: dataSystemPrompt(ctx) },
-      {
-        role: "user",
-        content:
-          recipeRequest +
-          "\nReturn EXACTLY ONE outstanding dinner recipe for tonight, prioritising the ingredients closest to expiry. Make it richly detailed with exact measurements and numbered steps.",
-      },
-    ]);
-
-    const recipe = keepGroundedRecipes(
-      normalizeRecipes(parsed),
-      ctx.items.map((item) => item.name),
-    )[0] ?? null;
-    await logUsage("recipes", context.userId, JSON.stringify(recipe ?? {}).length);
+    let recipe: PantryRecipe | null = null;
+    try {
+      const parsed = await generateAIResponse("recipes", [
+        { role: "system", content: dataSystemPrompt(ctx) },
+        {
+          role: "user",
+          content:
+            recipeRequest +
+            "\nReturn EXACTLY ONE outstanding dinner recipe for tonight, prioritising the ingredients closest to expiry. Make it richly detailed with exact measurements and numbered steps.",
+        },
+      ]);
+      recipe =
+        keepGroundedRecipes(
+          normalizeRecipes(parsed),
+          ctx.items.map((item) => item.name),
+        )[0] ?? null;
+      await logUsage("recipes", context.userId, JSON.stringify(recipe ?? {}).length);
+    } catch (error) {
+      console.error("[tonight] AI failed, using offline recipe", error);
+    }
+    // Never leave the home screen empty — fall back to an instant pantry recipe.
+    recipe ??= fallbackRecipe(ctx.items);
     if (!recipe) return { recipe: null };
 
     await supabase

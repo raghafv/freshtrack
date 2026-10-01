@@ -157,6 +157,15 @@ function difficultyFor(recipe: SavedRecipe) {
   return m ? "Involved" : "Easy";
 }
 
+type RecipeStyle = "any" | "quick" | "veg" | "protein" | "zerowaste";
+const STYLE_CHIPS: { id: RecipeStyle; label: string }[] = [
+  { id: "any", label: "Any style" },
+  { id: "quick", label: "Quick · under 20 min" },
+  { id: "veg", label: "Vegetarian" },
+  { id: "protein", label: "High protein" },
+  { id: "zerowaste", label: "Use expiring first" },
+];
+
 function RecipesPage() {
   const { data: items = [] } = usePantryItems();
   const { data: settings } = useSettings();
@@ -174,9 +183,10 @@ function RecipesPage() {
   const priority = items.filter((i) => getStatus(i, soonDays) !== "fresh").slice(0, 10);
   const pantryNames = useMemo(() => new Set(items.map((i) => i.name.toLowerCase())), [items]);
 
+  const [style, setStyle] = useState<RecipeStyle>("any");
   const gen = useMutation({
     mutationFn: (vars: { mode: "surprise" | "selected"; ingredients: string[]; dish?: string }) =>
-      suggestRecipes({ data: vars }),
+      suggestRecipes({ data: { ...vars, style } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["saved-recipes"] });
       requestAnimationFrame(() =>
@@ -403,6 +413,24 @@ function RecipesPage() {
             )}
             Surprise me
           </Button>
+        </div>
+        <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar">
+          {STYLE_CHIPS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              aria-pressed={style === c.id}
+              onClick={() => setStyle(c.id)}
+              className={cn(
+                "press shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] font-medium transition-colors",
+                style === c.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-primary-soft text-primary",
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
         {chosen.length > 0 && chosen.length < 3 && (
           <p className="mt-3 text-[12.5px] text-muted-foreground">
