@@ -35,6 +35,7 @@ export type {
 
 import type { AssistantReply, PantryRecipe, ShoppingSuggestion, AiProviderLog } from "./ai-types";
 import { splitIngredients } from "./food-guard";
+import { fallbackRecipe } from "./fallback-recipe";
 
 /** Records one AI call for the owner-only usage dashboard. Never throws. */
 async function logUsage(feature: string, userId: string | null, chars: number) {
@@ -402,21 +403,28 @@ export const getDailyRecipe = createServerFn({ method: "POST" })
     const ctx = await loadPantryContext(supabase);
     if (ctx.items.length === 0) return { recipe: null };
 
-    const parsed = await generateAIResponse("recipes", [
-      { role: "system", content: dataSystemPrompt(ctx) },
-      {
-        role: "user",
-        content:
-          recipeRequest +
-          "\nReturn EXACTLY ONE outstanding dinner recipe for tonight, prioritising the ingredients closest to expiry. Make it richly detailed with exact measurements and numbered steps.",
-      },
-    ]);
-
-    const recipe = keepGroundedRecipes(
-      normalizeRecipes(parsed),
-      ctx.items.map((item) => item.name),
-    )[0] ?? null;
-    await logUsage("recipes", context.userId, JSON.stringify(recipe ?? {}).length);
+    let recipe: PantryRecipe | null = null;
+    try {
+      const parsed = await generateAIResponse("recipes", [
+        { role: "system", content: dataSystemPrompt(ctx) },
+        {
+          role: "user",
+          content:
+            recipeRequest +
+            "\nReturn EXACTLY ONE outstanding dinner recipe for tonight, prioritising the ingredients closest to expiry. Make it richly detailed with exact measurements and numbered steps.",
+        },
+      ]);
+      recipe =
+        keepGroundedRecipes(
+          normalizeRecipes(parsed),
+          ctx.items.map((item) => item.name),
+        )[0] ?? null;
+      await logUsage("recipes", context.userId, JSON.stringify(recipe ?? {}).length);
+    } catch (error) {
+      console.error("[tonight] AI failed, using offline recipe", error);
+    }
+    // Never leave the home screen empty — fall back to an instant pantry recipe.
+    recipe ??= fallbackRecipe(ctx.items);
     if (!recipe) return { recipe: null };
 
     await supabase

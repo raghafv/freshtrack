@@ -57,6 +57,8 @@ function AnalyticsPage() {
         />
       </section>
 
+      <SavedVsWasted activity={activity} wasted={stats.wastedValue} />
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading analytics…</p>
       ) : items.length === 0 ? (
