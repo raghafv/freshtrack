@@ -3,7 +3,7 @@ import { CircleDollarSign, Package, Timer, TrendingUp } from "lucide-react";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { DashboardAnalytics } from "@/components/dashboard-analytics";
 import { useActivity, usePantryItems, useSettings } from "@/lib/data";
-import { computeStats, formatCurrency } from "@/lib/freshtrack";
+import { computeStats, formatCurrency, type ActivityEntry } from "@/lib/freshtrack";
 
 export const Route = createFileRoute("/_shell/analytics")({
   head: () => ({
@@ -87,5 +87,41 @@ function Mini({
       <p className="text-lg font-bold leading-none">{value}</p>
       <p className="mt-1 text-[11px] text-muted-foreground">{label}</p>
     </div>
+  );
+}
+
+/** Estimated money rescued (items used up) versus money lost to expiry. */
+function SavedVsWasted({ activity, wasted }: { activity: ActivityEntry[]; wasted: number }) {
+  const AVG = 120;
+  const since = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const used = activity.filter(
+    (a) =>
+      (a.action === "used" || (a.action === "deleted" && /finished/i.test(a.detail ?? ""))) &&
+      new Date(a.created_at).getTime() >= since,
+  ).length;
+  const saved = used * AVG;
+  const total = saved + wasted;
+  const pct = total > 0 ? Math.round((saved / total) * 100) : 0;
+  return (
+    <section className="surface-card mb-5 p-5">
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-[16px] font-semibold tracking-[-0.02em]">Saved vs wasted · 30 days</h2>
+        <span className="text-[12px] text-muted-foreground">{pct}% rescued</span>
+      </div>
+      <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+        <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-destructive/70" style={{ width: `${total > 0 ? 100 - pct : 0}%` }} />
+      </div>
+      <div className="mt-3 flex justify-between text-[13px]">
+        <span>
+          <span className="font-semibold text-primary">{formatCurrency(saved)}</span>{" "}
+          <span className="text-muted-foreground">used before expiry (est.)</span>
+        </span>
+        <span>
+          <span className="font-semibold text-destructive">{formatCurrency(wasted)}</span>{" "}
+          <span className="text-muted-foreground">wasted</span>
+        </span>
+      </div>
+    </section>
   );
 }
