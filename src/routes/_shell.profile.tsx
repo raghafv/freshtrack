@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   BarChart3,
   ChevronRight,
+  LifeBuoy,
   LogOut,
   Package,
   Pencil,
@@ -28,6 +29,8 @@ import { computeStats } from "@/lib/freshtrack";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { amIAdmin } from "@/lib/admin.functions";
+import { SupportDialog } from "@/components/support-dialog";
+import { tapFeedback } from "@/lib/feedback";
 
 export const Route = createFileRoute("/_shell/profile")({
   head: () => ({
@@ -66,6 +69,7 @@ function ProfilePage() {
   const isAdmin = adminCheck?.admin === true;
 
   const [editing, setEditing] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [name, setName] = useState("");
 
   useEffect(() => {
@@ -168,6 +172,27 @@ function ProfilePage() {
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
 
+      <button
+        type="button"
+        onClick={() => {
+          tapFeedback();
+          setSupportOpen(true);
+        }}
+        className="surface-card press mb-3 flex w-full items-center justify-between p-4 text-left"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <LifeBuoy className="h-5 w-5" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold">Support</span>
+            <span className="block text-xs text-muted-foreground">Message the team, attach screenshots</span>
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </button>
+      <SupportDialog open={supportOpen} onOpenChange={setSupportOpen} />
+
       {isAdmin ? (
         <Link to="/admin" className="surface-card press mb-3 flex items-center justify-between p-4">
           <span className="flex items-center gap-3">
@@ -184,7 +209,7 @@ function ProfilePage() {
 
       <Button
         variant="secondary"
-        className="press h-12 w-full rounded-2xl text-destructive"
+        className="press mb-8 mt-2 h-12 w-full rounded-2xl text-destructive"
         onClick={async () => {
           await signOut();
           navigate({ to: "/", replace: true });
