@@ -17,6 +17,8 @@ interface Props {
   onCapture?: (blob: Blob) => void;
   onBarcode?: (code: string, frame?: Blob) => void;
   onPickFile?: (file: File) => void;
+  /** Keep the camera running after each barcode (batch scanning). */
+  continuous?: boolean;
 }
 
 /** Live camera viewport with capture, gallery upload and optional barcode reading. */
@@ -29,6 +31,7 @@ export function ScanCamera({
   onCapture,
   onBarcode,
   onPickFile,
+  continuous = false,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -87,6 +90,13 @@ export function ScanCamera({
         const value = codes[0]?.rawValue?.replace(/\D/g, "");
         if (value && value.length >= 6) {
           firedRef.current = true;
+          if (continuous) {
+            onBarcode?.(value);
+            window.setTimeout(() => {
+              firedRef.current = false;
+            }, 1200);
+            return;
+          }
           const frame = await grabFrame();
           stop();
           onBarcode?.(value, frame ?? undefined);
@@ -99,7 +109,7 @@ export function ScanCamera({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [mode, on, onBarcode]);
+  }, [mode, on, onBarcode, continuous]);
 
   async function grabFrame(): Promise<Blob | null> {
     const video = videoRef.current;
