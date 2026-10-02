@@ -646,6 +646,42 @@ function ScannerPage() {
             onBarcode={lookupBarcode}
             onCapture={decodeBarcodeImage}
           />
+          {batchMode && batch.length > 0 ? (
+            <div className="surface-card mt-3 p-4">
+              <p className="mb-2 text-sm font-semibold">
+                {batch.length} item{batch.length === 1 ? "" : "s"} scanned
+              </p>
+              <ul className="mb-3 max-h-56 space-y-1.5 overflow-y-auto">
+                {batch.map((c, i) => (
+                  <li
+                    key={`${c.key}-${i}`}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 truncate">
+                      {c.name}
+                      <span className="ml-1 text-xs text-muted-foreground">· {c.storage}</span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${c.name}`}
+                      onClick={() => setBatch((b) => b.filter((_, idx) => idx !== i))}
+                      className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                className="press h-12 w-full rounded-2xl"
+                disabled={savingBatch}
+                onClick={saveBatch}
+              >
+                {savingBatch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Add all {batch.length} to pantry
+              </Button>
+            </div>
+          ) : null}
           <p className="mt-3 rounded-2xl bg-primary-soft px-4 py-2.5 text-xs font-medium text-primary">
             When scanning a barcode also make sure to include the MFG / expiry date printed on the
             pack — if that isn&apos;t possible the AI will automatically estimate the expiry!
