@@ -237,7 +237,7 @@ export function useShoppingMutations() {
       const { error } = await supabase.from("shopping_items").delete().in("id", ids);
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: () => { deleteFeedback(); invalidate(); },
   });
 
   return { add, toggle, remove };
