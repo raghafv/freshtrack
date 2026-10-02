@@ -634,3 +634,28 @@ export const deleteAdminProduct = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+/** Admin-only: permanently erase a support ticket and its screenshots. */
+export const deleteSupportTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => {
+    if (!data?.id || typeof data.id !== "string") throw new Error("id required");
+    return { id: data.id };
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ticket } = await supabaseAdmin
+      .from("support_tickets")
+      .select("image_urls")
+      .eq("id", data.id)
+      .maybeSingle();
+    const paths = ((ticket?.image_urls as string[] | null) ?? [])
+      .map((u) => u.match(/support-images\/([^?]+)/)?.[1])
+      .filter((p): p is string => !!p)
+      .map((p) => decodeURIComponent(p));
+    if (paths.length) await supabaseAdmin.storage.from("support-images").remove(paths);
+    const { error } = await supabaseAdmin.from("support_tickets").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });

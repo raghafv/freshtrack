@@ -1,3 +1,4 @@
+import { addedFeedback, bookmarkFeedback, completeFeedback, deleteFeedback, tapFeedback } from "@/lib/feedback";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -73,7 +74,7 @@ export function useAddPantryItem() {
       );
       return data as PantryItem;
     },
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: () => { addedFeedback(); invalidateAll(qc); },
   });
 }
 
@@ -91,7 +92,7 @@ export function useUpdatePantryItem() {
       await logActivity("edited", data.name, "Item details updated");
       return data as PantryItem;
     },
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: () => { tapFeedback(); invalidateAll(qc); },
   });
 }
 
@@ -125,7 +126,7 @@ export function useAdjustQuantity() {
       );
       return { removed: false, quantity: next };
     },
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: () => { tapFeedback(); invalidateAll(qc); },
   });
 }
 
@@ -164,7 +165,7 @@ export function useMergePantryItem() {
         "info",
       );
     },
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: () => { addedFeedback(); invalidateAll(qc); },
   });
 }
 
@@ -181,7 +182,7 @@ export function useDeletePantryItems() {
         "Removed from pantry",
       );
     },
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: () => { deleteFeedback(); invalidateAll(qc); },
   });
 }
 
@@ -220,7 +221,7 @@ export function useShoppingMutations() {
         .insert({ ...item, user_id: user!.id });
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: () => { addedFeedback(); invalidate(); },
   });
 
   const toggle = useMutation({
@@ -228,7 +229,7 @@ export function useShoppingMutations() {
       const { error } = await supabase.from("shopping_items").update({ checked }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: (_d, v) => { if (v.checked) completeFeedback(); else tapFeedback(); invalidate(); },
   });
 
   const remove = useMutation({
@@ -236,7 +237,7 @@ export function useShoppingMutations() {
       const { error } = await supabase.from("shopping_items").delete().in("id", ids);
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: () => { deleteFeedback(); invalidate(); },
   });
 
   return { add, toggle, remove };
@@ -572,7 +573,7 @@ export function useRecipeMutations() {
       });
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: () => { bookmarkFeedback(); invalidate(); },
   });
 
   return { remove, clearAll, save };

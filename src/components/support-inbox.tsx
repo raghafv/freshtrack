@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Inbox, Loader2 } from "lucide-react";
+import { Copy, Inbox, Loader2, Mail, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteSupportTicket } from "@/lib/admin.functions";
+import { deleteFeedback } from "@/lib/feedback";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { friendlyMessage } from "@/lib/errors";
@@ -10,6 +14,24 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
   const [reply, setReply] = useState(ticket.admin_reply ?? "");
   const [open, setOpen] = useState(false);
   const update = useUpdateTicket();
+  const qc = useQueryClient();
+  const del = useServerFn(deleteSupportTicket);
+  const [deleting, setDeleting] = useState(false);
+
+  async function remove() {
+    if (!window.confirm("Delete this ticket forever? It can't be recovered.")) return;
+    setDeleting(true);
+    try {
+      await del({ data: { id: ticket.id } });
+      deleteFeedback();
+      toast.success("Ticket deleted");
+      await qc.invalidateQueries({ queryKey: ["support-tickets"] });
+    } catch (e) {
+      toast.error(friendlyMessage(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function save(status?: string) {
     try {
@@ -22,10 +44,32 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
 
   return (
     <div className="rounded-2xl bg-muted/40 p-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="truncate text-sm font-semibold">{ticket.user_email ?? "Unknown user"}</p>
-        <span className="shrink-0 text-[11px] uppercase tracking-wide text-muted-foreground">
-          {ticket.status}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          title="Copy email"
+          onClick={() => {
+            if (!ticket.user_email) return;
+            void navigator.clipboard?.writeText(ticket.user_email);
+            toast.success("Email copied");
+          }}
+          className="flex min-w-0 items-center gap-1.5 text-left text-sm font-semibold"
+        >
+          <Mail className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <span className="truncate">{ticket.user_email ?? `User ${ticket.user_id.slice(0, 8)}`}</span>
+          {ticket.user_email ? <Copy className="h-3 w-3 shrink-0 text-muted-foreground" /> : null}
+        </button>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{ticket.status}</span>
+          <button
+            type="button"
+            aria-label="Delete ticket"
+            disabled={deleting}
+            onClick={remove}
+            className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10"
+          >
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
         </span>
       </div>
       <p className="mt-0.5 text-xs text-muted-foreground">

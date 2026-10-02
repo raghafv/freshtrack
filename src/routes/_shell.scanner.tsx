@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowLeft, Barcode, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
+import { useRef, useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, Barcode, Layers, X, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +28,7 @@ import { learnProduct, lookupLearned } from "@/lib/custom-products";
 import { findMyPendingProduct } from "@/lib/pending-products";
 import { categoryForName, shelfDaysForCategory, storageForCategory } from "@/lib/product-meta";
 import { lookupBarcode as lookupBarcodeDb } from "@/lib/product-db";
-import { scanSuccessFeedback } from "@/lib/feedback";
+import { errorFeedback, scanSuccessFeedback } from "@/lib/feedback";
 
 import { useAuth } from "@/lib/auth";
 import {
@@ -102,7 +103,23 @@ function ScannerPage() {
   /** Index of the receipt line currently being edited in the confirm dialog. */
   const [receiptEditIndex, setReceiptEditIndex] = useState<number | null>(null);
 
-  const [confirming, setConfirming] = useState<ScanCandidate | null>(null);
+  const [confirmingRaw, setConfirmingRaw] = useState<ScanCandidate | null>(null);
+  const confirming = confirmingRaw;
+  const [batchMode, setBatchMode] = useState(false);
+  const batchRef = useRef(false);
+  batchRef.current = batchMode;
+  const [batch, setBatch] = useState<ScanCandidate[]>([]);
+  const [savingBatch, setSavingBatch] = useState(false);
+  const lastCodeRef = useRef<{ code: string; at: number } | null>(null);
+  const batchCodeRef = useRef<string | null>(null);
+  /** In batch mode scanned products go to the tray instead of the confirm sheet. */
+  function setConfirming(c: ScanCandidate | null) {
+    if (c && batchRef.current && batchCodeRef.current) {
+      setBatch((b) => [...b, c]);
+      return;
+    }
+    setConfirmingRaw(c);
+  }
   const [manualOpen, setManualOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
@@ -198,8 +215,13 @@ function ScannerPage() {
   /* --------------------------------- barcode --------------------------------- */
 
   async function lookupBarcode(code: string, frame?: Blob) {
+    const now = Date.now();
+    if (lastCodeRef.current?.code === code && now - lastCodeRef.current.at < 2500) return;
+    lastCodeRef.current = { code, at: now };
     scanSuccessFeedback();
-    setBusy("Looking up barcode…");
+    batchCodeRef.current = batchRef.current ? code : null;
+    if (batchRef.current) frame = undefined;
+    if (!batchRef.current) setBusy("Looking up barcode…");
     try {
       const learned = lookupLearned(code, user?.id);
       if (learned) {
@@ -241,6 +263,11 @@ function ScannerPage() {
           );
 
           toast.success(`${pending.name} — saved from your earlier scan`);
+          return;
+        }
+        if (batchRef.current) {
+          errorFeedback();
+          toast.error(`Barcode ${code} isn't known yet — turn off batch mode to add it`);
           return;
         }
         setLearnBarcode(code);
@@ -376,6 +403,40 @@ function ScannerPage() {
       toast.error(friendlyMessage(e, "Import failed"));
     } finally {
       setImporting(false);
+    }
+  }
+
+  async function saveBatch() {
+    if (batch.length === 0) return;
+    setSavingBatch(true);
+    const purchase = new Date().toISOString().slice(0, 10);
+    let added = 0;
+    try {
+      for (const c of batch) {
+        await addItem.mutateAsync({
+          name: c.name,
+          brand: c.brand,
+          category: c.category,
+          quantity: c.quantity,
+          unit: c.unit,
+          purchase_date: purchase,
+          expiry_date: candidateExpiry(c, c.storage, purchase),
+          storage: c.storage as StorageType,
+          image_url: c.image_url,
+          source: "barcode",
+          price: null,
+        });
+        added++;
+      }
+      await recordScan.mutateAsync({ method: "barcode", items_added: added });
+      toast.success(`${added} item${added === 1 ? "" : "s"} added to your pantry`);
+      setBatch([]);
+    } catch (e) {
+      errorFeedback();
+      toast.error(friendlyMessage(e, "Could not add all items"));
+      setBatch((b) => b.slice(added));
+    } finally {
+      setSavingBatch(false);
     }
   }
 
@@ -564,7 +625,20 @@ function ScannerPage() {
 
         {/* -------------------------------- barcode ------------------------------- */}
         <TabsContent value="barcode" className="mt-4">
+          <label className="surface-card mb-3 flex items-center justify-between gap-3 p-4">
+            <span className="flex items-center gap-3">
+              <Layers className="h-5 w-5 text-primary" />
+              <span>
+                <span className="block text-sm font-semibold">Batch mode</span>
+                <span className="block text-xs text-muted-foreground">
+                  Scan many products in a row, add them all at once
+                </span>
+              </span>
+            </span>
+            <Switch checked={batchMode} onCheckedChange={setBatchMode} />
+          </label>
           <ScanCamera
+            continuous={batchMode}
             mode="barcode"
             busy={busy === "Looking up barcode…" || busy === "Reading label dates…"}
             busyLabel={busy ?? "Looking up barcode…"}
@@ -572,6 +646,42 @@ function ScannerPage() {
             onBarcode={lookupBarcode}
             onCapture={decodeBarcodeImage}
           />
+          {batchMode && batch.length > 0 ? (
+            <div className="surface-card mt-3 p-4">
+              <p className="mb-2 text-sm font-semibold">
+                {batch.length} item{batch.length === 1 ? "" : "s"} scanned
+              </p>
+              <ul className="mb-3 max-h-56 space-y-1.5 overflow-y-auto">
+                {batch.map((c, i) => (
+                  <li
+                    key={`${c.key}-${i}`}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 truncate">
+                      {c.name}
+                      <span className="ml-1 text-xs text-muted-foreground">· {c.storage}</span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${c.name}`}
+                      onClick={() => setBatch((b) => b.filter((_, idx) => idx !== i))}
+                      className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                className="press h-12 w-full rounded-2xl"
+                disabled={savingBatch}
+                onClick={saveBatch}
+              >
+                {savingBatch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Add all {batch.length} to pantry
+              </Button>
+            </div>
+          ) : null}
           <p className="mt-3 rounded-2xl bg-primary-soft px-4 py-2.5 text-xs font-medium text-primary">
             When scanning a barcode also make sure to include the MFG / expiry date printed on the
             pack — if that isn&apos;t possible the AI will automatically estimate the expiry!
