@@ -1,3 +1,4 @@
+import { scaleAmount } from "@/lib/pantry-export";
 import { friendlyMessage } from "@/lib/errors";
 import { takeTonightRecipe } from "@/lib/tonight-store";
 
