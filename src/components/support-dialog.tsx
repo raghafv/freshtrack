@@ -165,7 +165,11 @@ export function SupportDialog({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 Your messages
               </p>
-              {tickets.slice(0, 5).map((t) => (
+              {tickets.slice(0, 5).map((t) => t.status === "deleted_by_admin" ? (
+                <div key={t.id} className="rounded-2xl bg-muted/40 p-3 text-sm italic text-muted-foreground">
+                  {t.category} · Admin deleted your ticket
+                </div>
+              ) : (
                 <div key={t.id} className="rounded-2xl bg-muted/40 p-3 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate font-medium">{t.category}</span>

@@ -69,7 +69,7 @@ export function useAllTickets() {
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
-      return (data ?? []) as SupportTicket[];
+      return ((data ?? []) as SupportTicket[]).filter((t) => t.status !== "deleted_by_admin");
     },
   });
 }

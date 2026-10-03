@@ -655,7 +655,11 @@ export const deleteSupportTicket = createServerFn({ method: "POST" })
       .filter((p): p is string => !!p)
       .map((p) => decodeURIComponent(p));
     if (paths.length) await supabaseAdmin.storage.from("support-images").remove(paths);
-    const { error } = await supabaseAdmin.from("support_tickets").delete().eq("id", data.id);
+    // Wipe content; keep a stub so the sender sees "Admin deleted your ticket".
+    const { error } = await supabaseAdmin
+      .from("support_tickets")
+      .update({ status: "deleted_by_admin", message: "", image_urls: [], admin_reply: null })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
