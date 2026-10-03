@@ -12,9 +12,10 @@ export const lookupCatalogProduct = createServerFn({ method: "POST" })
     if (barcode.length < 6) throw new Error("Invalid barcode");
     return { barcode };
   })
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
+  .handler(async ({ data, context }) => {
+    // Query as the signed-in user so the products RLS policy applies:
+    // callers only see rows they created (admins see all).
+    const { data: row, error } = await context.supabase
       .from("products")
       .select("barcode,name,brand,category,size,image_url,shelf_life_days,storage,source")
       .eq("barcode", data.barcode)
