@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EmptyState, PageContainer, PageHeader } from "@/components/layout";
+import { exportPantryCsv } from "@/lib/pantry-export";
 import { StatusBadge } from "@/components/status-badge";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { QuickAddDialog } from "@/components/quick-add-dialog";
@@ -139,6 +140,19 @@ function PantryPage() {
         title="My Pantry"
         subtitle={`${items.length} item${items.length === 1 ? "" : "s"} tracked`}
         action={
+          <div className="flex gap-2">
+          {items.length > 0 ? (
+            <Button
+              variant="secondary"
+              className="press rounded-2xl"
+              onClick={() => {
+                exportPantryCsv(items);
+                toast.success("Pantry downloaded");
+              }}
+            >
+              Export
+            </Button>
+          ) : null}
           <Button
             className="press rounded-2xl"
             onClick={() => {
@@ -148,6 +162,7 @@ function PantryPage() {
           >
             <Plus className="h-4 w-4" /> Add
           </Button>
+          </div>
         }
       />
 

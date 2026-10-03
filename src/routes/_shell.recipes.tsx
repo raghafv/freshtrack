@@ -1,3 +1,4 @@
+import { scaleAmount } from "@/lib/pantry-export";
 import { friendlyMessage } from "@/lib/errors";
 import { takeTonightRecipe } from "@/lib/tonight-store";
 
@@ -696,6 +697,16 @@ function RecipeCard({
   onSave: () => void;
 }) {
   const photo = useDishImage(recipe.title);
+  const [factor, setFactor] = useState(1);
+  const noteKey = `ft-recipe-note:${recipe.title.toLowerCase()}`;
+  const [note, setNote] = useState("");
+  useEffect(() => {
+    try {
+      setNote(localStorage.getItem(noteKey) ?? "");
+    } catch {
+      /* ignore */
+    }
+  }, [noteKey]);
   return (
     <li className="surface-card animate-fade-up overflow-hidden">
       {photo ? (
@@ -773,19 +784,47 @@ function RecipeCard({
 
       {recipe.ingredients && recipe.ingredients.length > 0 && (
         <div className="mb-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Ingredients
-          </p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Ingredients{recipe.servings ? ` · serves ${Math.round(recipe.servings * factor * 10) / 10}` : ""}
+            </p>
+            <div className="flex gap-1">
+              {[0.5, 1, 2, 4].map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFactor(f)}
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${factor === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {f === 0.5 ? "½×" : `${f}×`}
+                </button>
+              ))}
+            </div>
+          </div>
           <ul className="space-y-1.5">
             {recipe.ingredients.map((ing) => (
               <li key={ing.name} className="flex justify-between gap-3 text-[13.5px]">
                 <span>{ing.name}</span>
-                <span className="shrink-0 text-muted-foreground">{ing.amount}</span>
+                <span className="shrink-0 text-muted-foreground">{scaleAmount(ing.amount, factor)}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      <textarea
+        value={note}
+        onChange={(e) => {
+          setNote(e.target.value);
+          try {
+            localStorage.setItem(noteKey, e.target.value);
+          } catch {
+            /* ignore */
+          }
+        }}
+        placeholder="Your notes (e.g. less chilli, added peas)…"
+        className="mb-4 min-h-16 w-full rounded-2xl border border-border/60 bg-muted/40 px-3 py-2 text-[13px] outline-none focus:border-primary"
+      />
 
       {recipe.equipment && recipe.equipment.length > 0 && (
         <p className="mb-3 text-[12.5px] text-muted-foreground">

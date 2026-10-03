@@ -5,5 +5,5 @@
 - [x] Batch barcode scanning
 - [ ] Daily push digest scheduler (needs external cron hitting /api/public/push-digest)
 - [ ] Offline actions queue
-- [ ] Pantry CSV export
-- [ ] Recipe servings scaling + notes
+- [x] Pantry CSV export
+- [x] Recipe servings scaling + notes
