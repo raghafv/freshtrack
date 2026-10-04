@@ -382,25 +382,21 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   return (
     <article className="surface-card overflow-hidden shadow-lift">
       <div className="gradient-hero relative px-6 pb-5 pt-8 text-primary-foreground">
-        {dishPhoto && (
-          <img
-            src={dishPhoto}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
-          />
-        )}
         <div className="relative">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12">
             <ChefHat className="h-5 w-5" strokeWidth={1.8} />
           </span>
           <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.16em] opacity-70">
-            Tonight&apos;s recipe · made from your pantry
+            Tonight&apos;s recipe · {techniqueFor(recipe.title, recipe.steps).label}
           </p>
           <h3 className="mt-1 text-[21px] font-semibold leading-snug tracking-[-0.025em]">
             {recipe.title}
           </h3>
         </div>
+      </div>
+
+      <div className="border-b border-border/50 px-6 pb-3 pt-3">
+        <IngredientStrip uses={recipe.uses} size="sm" />
       </div>
 
       <div className="p-6">
