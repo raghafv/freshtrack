@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { friendlyMessage } from "@/lib/errors";
 import { setTonightRecipe } from "@/lib/tonight-store";
-import { useDishImage } from "@/lib/dish-image";
+import { IngredientStrip, techniqueFor } from "@/components/recipe-visual";
 import { useRecipeMutations } from "@/lib/data";
 
 export const Route = createFileRoute("/_shell/home")({
@@ -333,7 +333,6 @@ function TonightCard({ hasPantry }: { hasPantry: boolean }) {
   });
 
   const recipe = data?.recipe;
-  const dishPhoto = useDishImage(recipe?.title);
 
 
 
