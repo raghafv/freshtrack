@@ -41,7 +41,7 @@ import {
   type DishIdea,
   type PantryRecipe,
 } from "@/lib/ai.functions";
-import { useDishImage } from "@/lib/dish-image";
+import { IngredientStrip, RecipeSpecBar, techniqueFor } from "@/components/recipe-visual";
 
 /** One "Surprise me" suggestion — name, one-liner and a matching dish photo. */
 function DishIdeaCard({
@@ -55,17 +55,17 @@ function DishIdeaCard({
   disabled: boolean;
   onCook: () => void;
 }) {
-  const photo = useDishImage(idea.title);
+  const tech = techniqueFor(idea.title);
   return (
     <li className="surface-card overflow-hidden">
-      {photo ? (
-        <img src={photo} alt="" aria-hidden className="h-32 w-full object-cover" />
-      ) : (
-        <div aria-hidden className="gradient-hero flex h-32 w-full items-center justify-center text-4xl">
-          🍽️
-        </div>
-      )}
+      <div className="flex items-center gap-2 border-b border-border/50 bg-muted/30 px-5 py-3">
+        <tech.icon className="h-4 w-4 text-primary" strokeWidth={1.9} />
+        <span className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          {tech.label}
+        </span>
+      </div>
       <div className="p-5">
+        <IngredientStrip uses={idea.uses} size="sm" className="mb-3" />
         <h3 className="text-[16px] font-semibold tracking-[-0.02em]">{idea.title}</h3>
         {idea.oneLiner && (
           <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{idea.oneLiner}</p>
@@ -602,7 +602,7 @@ function SavedRecipeCard({
   pantryNames: Set<string>;
 }) {
   const { remove } = useRecipeMutations();
-  const photo = useDishImage(recipe.title);
+  const tech = techniqueFor(recipe.title, recipe.steps);
   const have = recipe.uses.filter((u) => pantryNames.has(u.toLowerCase()));
   const missing = [
     ...recipe.missing,
@@ -612,11 +612,9 @@ function SavedRecipeCard({
   return (
     <li className="surface-card animate-fade-up overflow-hidden shadow-lift">
       <div className="flex items-center gap-4 bg-muted/40 px-6 py-5">
-        {photo ? (
-          <img src={photo} alt="" aria-hidden className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
-        ) : (
-          <FoodThumb name={recipe.uses[0] ?? recipe.title} className="h-16 w-16 rounded-2xl" emojiClassName="text-3xl" />
-        )}
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+          <tech.icon className="h-7 w-7" strokeWidth={1.7} />
+        </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-[19px] font-semibold leading-snug tracking-[-0.02em]">
             {recipe.title}
@@ -646,6 +644,17 @@ function SavedRecipeCard({
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
+      </div>
+
+      <div className="px-6 pt-4">
+        <IngredientStrip uses={recipe.uses} pantryNames={pantryNames} size="sm" />
+        <RecipeSpecBar
+          className="mt-3"
+          title={recipe.title}
+          steps={recipe.steps}
+          minutes={recipe.minutes}
+          fromPantry={have.length}
+        />
       </div>
 
       <div className="p-6">
@@ -696,7 +705,6 @@ function RecipeCard({
   saving: boolean;
   onSave: () => void;
 }) {
-  const photo = useDishImage(recipe.title);
   const [factor, setFactor] = useState(1);
   const noteKey = `ft-recipe-note:${recipe.title.toLowerCase()}`;
   const [note, setNote] = useState("");
@@ -709,13 +717,20 @@ function RecipeCard({
   }, [noteKey]);
   return (
     <li className="surface-card animate-fade-up overflow-hidden">
-      {photo ? (
-        <img src={photo} alt="" aria-hidden className="h-40 w-full object-cover" />
-      ) : (
-        <div aria-hidden className="gradient-hero flex h-40 w-full items-center justify-center text-5xl">
-          🍽️
-        </div>
-      )}
+      <div className="border-b border-border/50 bg-muted/30 px-6 pb-4 pt-5">
+        <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          What goes in
+        </p>
+        <IngredientStrip uses={recipe.uses} />
+        <RecipeSpecBar
+          className="mt-3"
+          title={recipe.title}
+          steps={recipe.steps}
+          minutes={recipe.minutes}
+          fromPantry={recipe.uses.length}
+          savesWaste={Boolean(recipe.savesWaste) || recipe.priority.length > 0}
+        />
+      </div>
       <div className="p-6">
       <div className="mb-3 flex items-start justify-between gap-3">
         <h3 className="text-[20px] font-semibold leading-snug tracking-[-0.025em]">
