@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ScanMyModelRouteImport } from './routes/scan-my-model'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShellAdminRouteImport } from './routes/_shell.admin'
 import { Route as ShellAdminBarcodesRouteImport } from './routes/_shell.admin-barcodes'
@@ -23,7 +24,6 @@ import { Route as ShellNotificationsRouteImport } from './routes/_shell.notifica
 import { Route as ShellPantryRouteImport } from './routes/_shell.pantry'
 import { Route as ShellProfileRouteImport } from './routes/_shell.profile'
 import { Route as ShellRecipesRouteImport } from './routes/_shell.recipes'
-import { Route as ShellScanMyModelRouteImport } from './routes/_shell.scan-my-model'
 import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
 import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
@@ -45,6 +45,11 @@ const ShellRoute = ShellRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanMyModelRoute = ScanMyModelRouteImport.update({
+  id: '/scan-my-model',
+  path: '/scan-my-model',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -102,11 +107,6 @@ const ShellRecipesRoute = ShellRecipesRouteImport.update({
   path: '/recipes',
   getParentRoute: () => ShellRoute,
 } as any)
-const ShellScanMyModelRoute = ShellScanMyModelRouteImport.update({
-  id: '/scan-my-model',
-  path: '/scan-my-model',
-  getParentRoute: () => ShellRoute,
-} as any)
 const ShellScannerRoute = ShellScannerRouteImport.update({
   id: '/scanner',
   path: '/scanner',
@@ -152,6 +152,7 @@ const LovableEmailTransactionalPreviewRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/scan-my-model': typeof ScanMyModelRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof ShellAdminRoute
   '/admin-barcodes': typeof ShellAdminBarcodesRoute
@@ -163,7 +164,6 @@ export interface FileRoutesByFullPath {
   '/pantry': typeof ShellPantryRoute
   '/profile': typeof ShellProfileRoute
   '/recipes': typeof ShellRecipesRoute
-  '/scan-my-model': typeof ShellScanMyModelRoute
   '/scanner': typeof ShellScannerRoute
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
@@ -176,6 +176,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/scan-my-model': typeof ScanMyModelRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof ShellAdminRoute
   '/admin-barcodes': typeof ShellAdminBarcodesRoute
@@ -187,7 +188,6 @@ export interface FileRoutesByTo {
   '/pantry': typeof ShellPantryRoute
   '/profile': typeof ShellProfileRoute
   '/recipes': typeof ShellRecipesRoute
-  '/scan-my-model': typeof ShellScanMyModelRoute
   '/scanner': typeof ShellScannerRoute
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
@@ -202,6 +202,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_shell': typeof ShellRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/scan-my-model': typeof ScanMyModelRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_shell/admin': typeof ShellAdminRoute
   '/_shell/admin-barcodes': typeof ShellAdminBarcodesRoute
@@ -213,7 +214,6 @@ export interface FileRoutesById {
   '/_shell/pantry': typeof ShellPantryRoute
   '/_shell/profile': typeof ShellProfileRoute
   '/_shell/recipes': typeof ShellRecipesRoute
-  '/_shell/scan-my-model': typeof ShellScanMyModelRoute
   '/_shell/scanner': typeof ShellScannerRoute
   '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
@@ -228,6 +228,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/reset-password'
+    | '/scan-my-model'
     | '/sitemap.xml'
     | '/admin'
     | '/admin-barcodes'
@@ -239,7 +240,6 @@ export interface FileRouteTypes {
     | '/pantry'
     | '/profile'
     | '/recipes'
-    | '/scan-my-model'
     | '/scanner'
     | '/settings'
     | '/shopping'
@@ -252,6 +252,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/reset-password'
+    | '/scan-my-model'
     | '/sitemap.xml'
     | '/admin'
     | '/admin-barcodes'
@@ -263,7 +264,6 @@ export interface FileRouteTypes {
     | '/pantry'
     | '/profile'
     | '/recipes'
-    | '/scan-my-model'
     | '/scanner'
     | '/settings'
     | '/shopping'
@@ -277,6 +277,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_shell'
     | '/reset-password'
+    | '/scan-my-model'
     | '/sitemap.xml'
     | '/_shell/admin'
     | '/_shell/admin-barcodes'
@@ -288,7 +289,6 @@ export interface FileRouteTypes {
     | '/_shell/pantry'
     | '/_shell/profile'
     | '/_shell/recipes'
-    | '/_shell/scan-my-model'
     | '/_shell/scanner'
     | '/_shell/settings'
     | '/_shell/shopping'
@@ -303,6 +303,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ShellRoute: typeof ShellRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ScanMyModelRoute: typeof ScanMyModelRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicPushDigestRoute: typeof ApiPublicPushDigestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -331,6 +332,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan-my-model': {
+      id: '/scan-my-model'
+      path: '/scan-my-model'
+      fullPath: '/scan-my-model'
+      preLoaderRoute: typeof ScanMyModelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -410,13 +418,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellRecipesRouteImport
       parentRoute: typeof ShellRoute
     }
-    '/_shell/scan-my-model': {
-      id: '/_shell/scan-my-model'
-      path: '/scan-my-model'
-      fullPath: '/scan-my-model'
-      preLoaderRoute: typeof ShellScanMyModelRouteImport
-      parentRoute: typeof ShellRoute
-    }
     '/_shell/scanner': {
       id: '/_shell/scanner'
       path: '/scanner'
@@ -487,7 +488,6 @@ interface ShellRouteChildren {
   ShellPantryRoute: typeof ShellPantryRoute
   ShellProfileRoute: typeof ShellProfileRoute
   ShellRecipesRoute: typeof ShellRecipesRoute
-  ShellScanMyModelRoute: typeof ShellScanMyModelRoute
   ShellScannerRoute: typeof ShellScannerRoute
   ShellSettingsRoute: typeof ShellSettingsRoute
   ShellShoppingRoute: typeof ShellShoppingRoute
@@ -505,7 +505,6 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellPantryRoute: ShellPantryRoute,
   ShellProfileRoute: ShellProfileRoute,
   ShellRecipesRoute: ShellRecipesRoute,
-  ShellScanMyModelRoute: ShellScanMyModelRoute,
   ShellScannerRoute: ShellScannerRoute,
   ShellSettingsRoute: ShellSettingsRoute,
   ShellShoppingRoute: ShellShoppingRoute,
@@ -518,6 +517,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ShellRoute: ShellRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ScanMyModelRoute: ScanMyModelRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicPushDigestRoute: ApiPublicPushDigestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
