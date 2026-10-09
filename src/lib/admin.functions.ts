@@ -647,13 +647,17 @@ export const deleteSupportTicket = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: ticket } = await supabaseAdmin
       .from("support_tickets")
-      .select("image_urls")
+      .select("image_urls, user_id")
       .eq("id", data.id)
       .maybeSingle();
+    // Only remove objects inside the ticket sender's own folder; any stored
+    // path pointing at another user's files is ignored.
+    const ownerPrefix = ticket?.user_id ? `${ticket.user_id}/` : null;
     const paths = ((ticket?.image_urls as string[] | null) ?? [])
       .map((u) => u.match(/support-images\/([^?]+)/)?.[1])
       .filter((p): p is string => !!p)
-      .map((p) => decodeURIComponent(p));
+      .map((p) => decodeURIComponent(p))
+      .filter((p) => ownerPrefix !== null && p.startsWith(ownerPrefix) && !p.includes(".."));
     if (paths.length) await supabaseAdmin.storage.from("support-images").remove(paths);
     // Wipe content; keep a stub so the sender sees "Admin deleted your ticket".
     const { error } = await supabaseAdmin
