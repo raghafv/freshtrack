@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  RotateCcw,
+  Cpu,
+  Layers3,
+  ShieldCheck,
+  ChartNoAxesCombined,
+  ScanLine,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ScanCamera } from "@/components/scan-camera";
 import { ScanConfirmDialog } from "@/components/scan-confirm-dialog";
@@ -169,64 +179,204 @@ export default function ScanWithModel() {
 
   return (
     <PageContainer>
-      <div className="mx-auto flex w-full max-w-md flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0"
-            onClick={() => window.history.back()}
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold">Add using My AI Model</h1>
-            <p className="text-sm text-muted-foreground">
-              Uses our self-trained AI model to detect freshness.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Works with: Apple, Banana, Bellpepper, Carrot, Cucumber, Grape, Guava, Jujube, Mango,
-              Orange, Pomegranate, Potato, Strawberry, Tomato (healthy or rotten).
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 pb-10">
+        <header className="border-b border-border pb-6">
+          <div className="mb-4 flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() => window.history.back()}
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
+              <Layers3 className="h-3.5 w-3.5" />
+              FRESHTRACK · CAPSTONE PROJECT
+            </span>
+          </div>
+          <div className="pl-1">
+            <h1 className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
+              My produce freshness model
+            </h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
+              I built and trained this computer-vision model as part of my FreshTrack capstone. It
+              looks at a produce photo and predicts both the item and whether it appears healthy or
+              rotten. Try it below, then explore the training and evaluation results.
             </p>
           </div>
-        </div>
+          <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
+            <ProjectStat icon={ScanLine} value="14" label="produce types" />
+            <ProjectStat icon={Layers3} value="28" label="item + condition classes" />
+            <ProjectStat icon={Cpu} value="160 × 160" label="RGB image input" />
+            <ProjectStat icon={ShieldCheck} value="In browser" label="model prediction" />
+          </div>
+        </header>
 
-        <ScanCamera
-          mode="photo"
-          busy={busy}
-          busyLabel="Running our trained model…"
-          hint="Point the camera at a fruit or vegetable and capture."
-          captureLabel="Capture item"
-          onCapture={handleCapture}
-          onPickFile={handleCapture}
-        />
+        <section aria-labelledby="try-model-heading" className="flex flex-col gap-4">
+          <SectionHeading
+            icon={ScanLine}
+            eyebrow="LIVE DEMO"
+            title="Try my model"
+            description="Capture a photo or choose one from your device. The model compares it with its 28 learned labels."
+          />
+          <div className="surface-card flex flex-col gap-4 p-4 sm:p-5">
+            <ScanCamera
+              mode="photo"
+              busy={busy}
+              busyLabel="Running my trained model…"
+              hint="Frame one fruit or vegetable clearly, then capture."
+              captureLabel="Capture item"
+              onCapture={handleCapture}
+              onPickFile={handleCapture}
+            />
 
-        {result && (
-          <div className="surface-card flex flex-col gap-3 p-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Result</p>
-              <p className="text-lg font-semibold capitalize">{result.name}</p>
-              <p className="text-sm text-muted-foreground">
-                Looks {result.healthy ? "healthy" : "rotten"} · Confidence:{" "}
-                {(result.confidence * 100).toFixed(1)}%
+            {result && (
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Model prediction
+                </p>
+                <p className="mt-1 text-xl font-semibold capitalize">{result.name}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Looks {result.healthy ? "healthy" : "rotten"} · Model score: {" "}
+                  {(result.confidence * 100).toFixed(1)}%
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button className="flex-1" onClick={addToPantry} disabled={busy}>
+                    <Check className="mr-2 h-4 w-4" />
+                    Add to pantry
+                  </Button>
+                  <Button variant="outline" onClick={() => setResult(null)} disabled={busy}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Try another photo
+                  </Button>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                  This score is the model’s confidence for its top label, not a guarantee of food
+                  safety. You can review and edit the item before saving it.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section aria-labelledby="how-it-works-heading" className="flex flex-col gap-4">
+          <SectionHeading
+            icon={Cpu}
+            eyebrow="HOW IT WORKS"
+            title="From photo to prediction"
+            description="A compact image-classification pipeline designed to run inside the FreshTrack web app."
+          />
+          <ol className="grid gap-3 sm:grid-cols-3">
+            <ProcessStep
+              number="01"
+              title="Prepare the photo"
+              text="The captured image is resized to 160 × 160 pixels and represented as three RGB color channels."
+            />
+            <ProcessStep
+              number="02"
+              title="Normalize pixels"
+              text="Pixel values are scaled from 0–255 to approximately −1 to +1, matching the model’s expected input."
+            />
+            <ProcessStep
+              number="03"
+              title="Choose a class"
+              text="The model scores 28 labels: 14 produce types, each with Healthy and Rotten conditions. The highest score is shown."
+            />
+          </ol>
+          <p className="text-sm leading-6 text-muted-foreground">
+            TensorFlow.js loads the trained model in the browser and performs the prediction there.
+            If you choose to add the result to your pantry, FreshTrack continues through its normal
+            item-saving flow; saving the photo may upload it with that pantry item.
+          </p>
+        </section>
+
+        <section aria-labelledby="training-results-heading" className="flex flex-col gap-4">
+          <SectionHeading
+            icon={ChartNoAxesCombined}
+            eyebrow="TRAINING RESULTS"
+            title="How learning progressed"
+            description="These curves plot training and validation accuracy and loss over 13 epochs. The dashed marker identifies where fine-tuning begins."
+          />
+          <ChartFigure
+            src="/accuracy_curve.png"
+            alt="Training chart showing accuracy and loss across epochs 0 to 12, with a dashed line marking the start of fine-tuning at epoch 7."
+            caption="Accuracy and loss during training"
+            linkLabel="Open accuracy and loss chart"
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ExplainBlock title="Accuracy: how often the class was right">
+              <p>
+                Accuracy is the share of examples assigned the correct label. The validation line
+                rises to roughly 95% and stays near that level, while training accuracy improves
+                overall. A validation score is useful as a check on examples not used for the
+                training updates, but it does not promise the same result for every real-world
+                photo.
               </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button className="flex-1" onClick={addToPantry} disabled={busy}>
-                <Check className="mr-2 h-4 w-4" />
-                Add to pantry
-              </Button>
-              <Button variant="outline" onClick={() => setResult(null)} disabled={busy}>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Rescan
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              You can edit the name, amount, purchase date, storage and price on the next step.
-            </p>
+            </ExplainBlock>
+            <ExplainBlock title="Loss: how wrong the predictions were">
+              <p>
+                Loss penalizes incorrect predictions, with larger penalties for more confident
+                mistakes. Lower is generally better. The validation loss trends down across the
+                run. Around epoch 8, the training curves visibly jump after fine-tuning begins,
+                then recover; that instability is worth noting rather than hiding.
+              </p>
+            </ExplainBlock>
           </div>
-        )}
+          <p className="text-xs leading-5 text-muted-foreground">
+            Read the validation curves alongside accuracy: a good-looking training score alone can
+            hide weak generalization. These plots describe this training run, not a food-safety
+            test or a guarantee of performance in every lighting, angle, variety, or stage of
+            spoilage.
+          </p>
+        </section>
+
+        <section aria-labelledby="confusion-heading" className="flex flex-col gap-4">
+          <SectionHeading
+            icon={ChartNoAxesCombined}
+            eyebrow="CLASS-BY-CLASS CHECK"
+            title="Where the model gets confused"
+            description="The confusion matrix breaks results out across all 28 item-and-condition labels."
+          />
+          <ChartFigure
+            src="/confusion_matrix.png"
+            alt="A 28 by 28 confusion matrix for fourteen produce types, each split into Healthy and Rotten classes. Most counts appear along the main diagonal, with some off-diagonal errors."
+            caption="Confusion matrix · 28 produce-condition classes"
+            linkLabel="Open full-size confusion matrix"
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ExplainBlock title="How to read it">
+              <p>
+                Each row is the actual label and each column is the model’s predicted label. Counts
+                on the main diagonal are correct classifications. Counts away from the diagonal
+                show which labels were mixed up—for example, a healthy item predicted as rotten.
+              </p>
+            </ExplainBlock>
+            <ExplainBlock title="What to look for">
+              <p>
+                The matrix is strongly concentrated along its diagonal, while the remaining cells
+                reveal specific mistakes to investigate. Row totals differ, so raw counts should
+                not be compared as if every class had the same number of examples; a normalized
+                matrix would make per-class rates easier to compare.
+              </p>
+            </ExplainBlock>
+          </div>
+          <p className="text-xs leading-5 text-muted-foreground">
+            This chart does not identify the cause of a mistake. Similar colors, bruising, lighting,
+            background, and class imbalance are possible factors to investigate with more
+            examples—not conclusions proved by this matrix alone.
+          </p>
+        </section>
+
+        <footer className="border-t border-border pt-5 text-sm leading-6 text-muted-foreground">
+          <p className="font-semibold text-foreground">A student-built prototype</p>
+          <p className="mt-1">
+            I built this custom-trained image classifier for my FreshTrack capstone project. It is
+            an educational demo—not a substitute for checking produce yourself or following food
+            safety guidance.
+          </p>
+        </footer>
       </div>
 
       <ScanConfirmDialog
@@ -241,5 +391,97 @@ export default function ScanWithModel() {
         }}
       />
     </PageContainer>
+  );
+}
+
+function ProjectStat({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof Cpu;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="bg-background p-3 sm:p-4">
+      <Icon className="mb-2 h-4 w-4 text-primary" aria-hidden="true" />
+      <p className="text-lg font-semibold leading-tight">{value}</p>
+      <p className="mt-1 text-xs leading-4 text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  eyebrow,
+  title,
+  description,
+}: {
+  icon: typeof Cpu;
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-primary">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        {eyebrow}
+      </p>
+      <h2 className="text-2xl font-bold leading-tight">{title}</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function ProcessStep({ number, title, text }: { number: string; title: string; text: string }) {
+  return (
+    <li className="border-l-2 border-primary/40 pl-4 py-1">
+      <p className="text-xs font-semibold text-primary">{number}</p>
+      <h3 className="mt-1 text-sm font-semibold">{title}</h3>
+      <p className="mt-1 text-sm leading-5 text-muted-foreground">{text}</p>
+    </li>
+  );
+}
+
+function ChartFigure({
+  src,
+  alt,
+  caption,
+  linkLabel,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+  linkLabel: string;
+}) {
+  return (
+    <figure className="overflow-hidden rounded-lg border border-border bg-card">
+      <figcaption className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 text-sm font-semibold">
+        <span>{caption}</span>
+        <a
+          href={src}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {linkLabel}
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+      </figcaption>
+      <div className="bg-background p-2 sm:p-4">
+        <img src={src} alt={alt} loading="lazy" className="mx-auto h-auto w-full" />
+      </div>
+    </figure>
+  );
+}
+
+function ExplainBlock({ children, title }: { children: React.ReactNode; title: string }) {
+  return (
+    <div className="border-t border-border pt-3">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="mt-1 text-sm leading-6 text-muted-foreground">{children}</div>
+    </div>
   );
 }

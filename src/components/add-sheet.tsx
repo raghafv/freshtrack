@@ -24,7 +24,12 @@ const OPTIONS: Option[] = [
   { key: "barcode", icon: Barcode, label: "Scan Barcode", hint: "Packaged products" },
   { key: "receipt", icon: Receipt, label: "Scan Receipt", hint: "Scan your grocery bill" },
   { key: "manual", icon: PencilLine, label: "Manual Add", hint: "Search the grocery catalog" },
-  { key: "mymodel", icon: Sparkles, label: "Add using Camera", hint: "Uses our self trained AI model" },
+  {
+    key: "mymodel",
+    icon: Sparkles,
+    label: "My Capstone Freshness Model",
+    hint: "My custom-trained model · 14 produce types",
+  },
 ];
 
 /**
