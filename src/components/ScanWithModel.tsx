@@ -386,6 +386,15 @@ export default function ScanWithModel() {
             an educational demo—not a substitute for checking produce yourself or following food
             safety guidance.
           </p>
+          <a
+            href="/FreshTrack_Technical_Explainer.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Read the full technical explainer (PDF)
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
         </footer>
       </div>
 
