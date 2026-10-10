@@ -27,8 +27,8 @@ const OPTIONS: Option[] = [
   {
     key: "mymodel",
     icon: Sparkles,
-    label: "My Capstone Freshness Model",
-    hint: "My custom-trained model · 14 produce types",
+    label: "Our Capstone Freshness Model",
+    hint: "Team-trained model · 14 produce types",
   },
 ];
 

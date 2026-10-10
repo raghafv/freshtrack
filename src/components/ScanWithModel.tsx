@@ -203,17 +203,18 @@ export default function ScanWithModel() {
             </Button>
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
               <Layers3 className="h-3.5 w-3.5" />
-              FRESHTRACK · CAPSTONE PROJECT
+              FRESHTRACK · CBSE CLASS 12 CAPSTONE
             </span>
           </div>
           <div className="pl-1">
             <h1 className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
-              My produce freshness model
+              Our produce freshness model
             </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-              I built and trained this computer-vision model as part of my FreshTrack capstone. It
-              looks at a produce photo and predicts both the item and whether it appears healthy or
-              rotten. Try it below, then explore the training and evaluation results.
+              We built and trained this computer-vision model as part of our FreshTrack CBSE Class
+              12 capstone project. It looks at a produce photo and predicts both the item and
+              whether it appears healthy or rotten. Try it below, then explore our training and
+              evaluation results.
             </p>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
@@ -228,14 +229,14 @@ export default function ScanWithModel() {
           <SectionHeading
             icon={ScanLine}
             eyebrow="LIVE DEMO"
-            title="Try my model"
+            title="Try our model"
             description="Capture a photo or choose one from your device. The model compares it with its 28 learned labels."
           />
           <div className="surface-card flex flex-col gap-4 p-4 sm:p-5">
             <ScanCamera
               mode="photo"
               busy={busy}
-              busyLabel="Running my trained model…"
+              busyLabel="Running our trained model…"
               hint="Frame one fruit or vegetable clearly, then capture."
               captureLabel="Capture item"
               onCapture={handleCapture}
@@ -380,11 +381,11 @@ export default function ScanWithModel() {
         </section>
 
         <footer className="border-t border-border pt-5 text-sm leading-6 text-muted-foreground">
-          <p className="font-semibold text-foreground">A student-built prototype</p>
+          <p className="font-semibold text-foreground">A CBSE Class 12 team project</p>
           <p className="mt-1">
-            I built this custom-trained image classifier for my FreshTrack capstone project. It is
-            an educational demo—not a substitute for checking produce yourself or following food
-            safety guidance.
+            We developed this custom-trained image classifier as a team for our FreshTrack CBSE
+            Class 12 capstone project. It is an educational prototype—not a substitute for checking
+            produce yourself or following food safety guidance.
           </p>
           <a
             href="/FreshTrack_Technical_Explainer.pdf"
