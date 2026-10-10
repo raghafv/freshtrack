@@ -5,3 +5,13 @@
 - [x] Batch barcode scanning
 - [x] Pantry CSV export
 - [x] Recipe servings scaling + notes
+- [x] Delete dead code: dish images, dish-image helpers, push-digest route, empty recipe-images folder
+- [x] Remove duplicate support block from Settings (Profile is the single home)
+- [x] /scan-my-model: public route, capstone metadata, guest guard on Add to Pantry, back-button fallback, PDF explainer link
+
+## Untested on real devices (needs a phone/browser pass)
+- Audio chimes + vibration on actions
+- Batch barcode scanning flow
+- CSV export edge cases
+- Recipe scaling + notes in browser
+- Admin ticket deletion with a real ticket
