@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Check,
@@ -80,6 +81,7 @@ function parseLabel(raw: string): { name: string; healthy: boolean } {
 
 export default function ScanWithModel() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const recordScan = useRecordScan();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Prediction | null>(null);
