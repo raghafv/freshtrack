@@ -149,6 +149,11 @@ export default function ScanWithModel() {
   /** Hands the prediction to the normal FreshTrack add-to-pantry flow. */
   async function addToPantry() {
     if (!result) return;
+    if (!user) {
+      toast.info("Sign in to save items to your pantry.");
+      navigate({ to: "/" });
+      return;
+    }
     setBusy(true);
     let imageUrl: string | null = null;
     try {
@@ -188,7 +193,10 @@ export default function ScanWithModel() {
               variant="ghost"
               size="icon"
               className="shrink-0"
-              onClick={() => window.history.back()}
+              onClick={() => {
+                if (window.history.length > 1) window.history.back();
+                else navigate({ to: "/" });
+              }}
               aria-label="Back"
             >
               <ArrowLeft className="h-5 w-5" />
