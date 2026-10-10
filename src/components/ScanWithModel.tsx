@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Check,
@@ -80,6 +81,7 @@ function parseLabel(raw: string): { name: string; healthy: boolean } {
 
 export default function ScanWithModel() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const recordScan = useRecordScan();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Prediction | null>(null);
@@ -147,6 +149,11 @@ export default function ScanWithModel() {
   /** Hands the prediction to the normal FreshTrack add-to-pantry flow. */
   async function addToPantry() {
     if (!result) return;
+    if (!user) {
+      toast.info("Sign in to save items to your pantry.");
+      navigate({ to: "/" });
+      return;
+    }
     setBusy(true);
     let imageUrl: string | null = null;
     try {
@@ -186,7 +193,10 @@ export default function ScanWithModel() {
               variant="ghost"
               size="icon"
               className="shrink-0"
-              onClick={() => window.history.back()}
+              onClick={() => {
+                if (window.history.length > 1) window.history.back();
+                else navigate({ to: "/" });
+              }}
               aria-label="Back"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -376,6 +386,15 @@ export default function ScanWithModel() {
             an educational demo—not a substitute for checking produce yourself or following food
             safety guidance.
           </p>
+          <a
+            href="/FreshTrack_Technical_Explainer.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Read the full technical explainer (PDF)
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
         </footer>
       </div>
 

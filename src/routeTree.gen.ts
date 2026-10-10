@@ -28,7 +28,6 @@ import { Route as ShellScannerRouteImport } from './routes/_shell.scanner'
 import { Route as ShellSettingsRouteImport } from './routes/_shell.settings'
 import { Route as ShellShoppingRouteImport } from './routes/_shell.shopping'
 import { Route as ShellAdminUserUserIdRouteImport } from './routes/_shell.admin-user.$userId'
-import { Route as ApiPublicPushDigestRouteImport } from './routes/api/public/push-digest'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -127,11 +126,6 @@ const ShellAdminUserUserIdRoute = ShellAdminUserUserIdRouteImport.update({
   path: '/admin-user/$userId',
   getParentRoute: () => ShellRoute,
 } as any)
-const ApiPublicPushDigestRoute = ApiPublicPushDigestRouteImport.update({
-  id: '/api/public/push-digest',
-  path: '/api/public/push-digest',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -168,7 +162,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
   '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
-  '/api/public/push-digest': typeof ApiPublicPushDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -192,7 +185,6 @@ export interface FileRoutesByTo {
   '/settings': typeof ShellSettingsRoute
   '/shopping': typeof ShellShoppingRoute
   '/admin-user/$userId': typeof ShellAdminUserUserIdRoute
-  '/api/public/push-digest': typeof ApiPublicPushDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -218,7 +210,6 @@ export interface FileRoutesById {
   '/_shell/settings': typeof ShellSettingsRoute
   '/_shell/shopping': typeof ShellShoppingRoute
   '/_shell/admin-user/$userId': typeof ShellAdminUserUserIdRoute
-  '/api/public/push-digest': typeof ApiPublicPushDigestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -244,7 +235,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shopping'
     | '/admin-user/$userId'
-    | '/api/public/push-digest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -268,7 +258,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shopping'
     | '/admin-user/$userId'
-    | '/api/public/push-digest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -293,7 +282,6 @@ export interface FileRouteTypes {
     | '/_shell/settings'
     | '/_shell/shopping'
     | '/_shell/admin-user/$userId'
-    | '/api/public/push-digest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -305,7 +293,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ScanMyModelRoute: typeof ScanMyModelRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ApiPublicPushDigestRoute: typeof ApiPublicPushDigestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -446,13 +433,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAdminUserUserIdRouteImport
       parentRoute: typeof ShellRoute
     }
-    '/api/public/push-digest': {
-      id: '/api/public/push-digest'
-      path: '/api/public/push-digest'
-      fullPath: '/api/public/push-digest'
-      preLoaderRoute: typeof ApiPublicPushDigestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -519,7 +499,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ScanMyModelRoute: ScanMyModelRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ApiPublicPushDigestRoute: ApiPublicPushDigestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
