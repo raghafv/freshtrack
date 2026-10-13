@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageContainer } from "@/components/layout";
+import { DemoModeCard } from "@/components/demo-mode-card";
 import { PushSettingsRow } from "@/components/push-prompt";
 
 
@@ -197,6 +198,8 @@ function SettingsPage() {
 
 
 
+
+      <DemoModeCard />
 
       <Section icon={ShieldAlert} title="Danger zone">
         <p className="mb-3 text-sm text-muted-foreground">
