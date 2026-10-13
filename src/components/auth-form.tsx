@@ -1,14 +1,22 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { freshtrackAuth } from "@/integrations/auth/index";
 import { friendlyMessage } from "@/lib/errors";
+import { evaluatorSignIn } from "@/lib/evaluator.functions";
 
 function PasswordInput({
   id,
@@ -56,6 +64,40 @@ export function AuthForm({ idPrefix = "af" }: { idPrefix?: string }) {
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
+
+  // Evaluator passcode state
+  const [evaluatorOpen, setEvaluatorOpen] = useState(false);
+  const [evaluatorCode, setEvaluatorCode] = useState("");
+  const [evaluatorBusy, setEvaluatorBusy] = useState(false);
+
+  async function handleEvaluatorLogin(e: React.FormEvent) {
+    e.preventDefault();
+    const code = evaluatorCode.trim();
+    if (!code) {
+      toast.error("Please enter the evaluator passcode.");
+      return;
+    }
+    setEvaluatorBusy(true);
+    try {
+      const res = await evaluatorSignIn({ data: { code } });
+      if (!res?.ok || !res.tokenHash) {
+        toast.error("Invalid evaluator passcode. Check with the CBSE team.");
+        return;
+      }
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: res.tokenHash,
+        type: "magiclink",
+      });
+      if (error) throw error;
+      toast.success("Welcome, Evaluator! Demo pantry loaded.");
+      setEvaluatorOpen(false);
+      navigate({ to: "/home", replace: true });
+    } catch (err) {
+      toast.error(friendlyMessage(err, "Evaluator access failed"));
+    } finally {
+      setEvaluatorBusy(false);
+    }
+  }
 
   async function signInWithGoogle() {
     setGoogleBusy(true);
@@ -265,6 +307,55 @@ export function AuthForm({ idPrefix = "af" }: { idPrefix?: string }) {
           </p>
         </TabsContent>
       </Tabs>
+
+      {/* Evaluator Access Gate */}
+      <div className="mt-5 border-t border-border/60 pt-4 text-center">
+        <button
+          type="button"
+          onClick={() => setEvaluatorOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <KeyRound className="h-3.5 w-3.5" />
+          Have an evaluator passcode?
+        </button>
+      </div>
+
+      <Dialog open={evaluatorOpen} onOpenChange={setEvaluatorOpen}>
+        <DialogContent className="max-w-sm rounded-3xl p-6">
+          <DialogHeader className="text-left">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <KeyRound className="h-5 w-5 text-primary" />
+              Evaluator Demo Sign In
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Enter the project passcode to instantly explore FreshTrack with realistic demo pantry data without creating an account.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleEvaluatorLogin} className="mt-3 grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="evaluator-passcode">Passcode</Label>
+              <Input
+                id="evaluator-passcode"
+                type="text"
+                autoFocus
+                value={evaluatorCode}
+                onChange={(e) => setEvaluatorCode(e.target.value)}
+                placeholder="e.g. tester2027"
+                disabled={evaluatorBusy}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="press mt-1 w-full rounded-2xl"
+              disabled={evaluatorBusy || !evaluatorCode.trim()}
+            >
+              {evaluatorBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enter Demo Mode"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
