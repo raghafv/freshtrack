@@ -81,7 +81,7 @@ export function AuthForm({ idPrefix = "af" }: { idPrefix?: string }) {
     try {
       const res = await evaluatorSignIn({ data: { code } });
       if (!res?.ok || !res.tokenHash) {
-        toast.error("Invalid evaluator passcode. Check with the CBSE team.");
+        toast.error("Invalid passcode. Ask the team for a code.");
         return;
       }
       const { error } = await supabase.auth.verifyOtp({
@@ -336,14 +336,15 @@ export function AuthForm({ idPrefix = "af" }: { idPrefix?: string }) {
             <div className="grid gap-1.5">
               <Label htmlFor="evaluator-passcode">Passcode</Label>
               <Input
-                id="evaluator-passcode"
-                type="text"
-                autoFocus
-                value={evaluatorCode}
-                onChange={(e) => setEvaluatorCode(e.target.value)}
-                placeholder="e.g. tester2027"
-                disabled={evaluatorBusy}
-              />
+  id="evaluator-passcode"
+  type="password"
+  autoFocus
+  value={evaluatorCode}
+  onChange={(e) => setEvaluatorCode(e.target.value)}
+  placeholder="Enter passcode"
+  disabled={evaluatorBusy}
+/>
+
             </div>
 
             <Button
