@@ -390,7 +390,8 @@ export function useUpdateSettings() {
     mutationFn: async (patch: Partial<UserSettings>) => {
       const { error } = await supabase
         .from("user_settings")
-        .upsert({ user_id: user!.id, ...patch }, { onConflict: "user_id" });
+        .update(patch)
+        .eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", user?.id] }),
