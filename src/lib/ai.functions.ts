@@ -82,6 +82,20 @@ function isBanned(question: string) {
 const OFFTOPIC_LIMIT = 4;
 const COOLDOWN_MINUTES = 15;
 
+async function writeAssistantCooldown(
+  userId: string,
+  values: { assistant_offtopic_count: number; assistant_blocked_until: string | null },
+) {
+  // These fields are deliberately not writable through the user's normal
+  // settings permissions. This trusted write is only called after the
+  // authenticated assistant handler derives the values itself.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("user_settings")
+    .upsert({ user_id: userId, ...values }, { onConflict: "user_id" });
+  if (error) console.error("[assistant] cooldown update failed", error);
+}
+
 /** Natural-language pantry assistant grounded in the user's live pantry. */
 export const askAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -117,16 +131,12 @@ export const askAssistant = createServerFn({ method: "POST" })
     if (isBanned(data.question)) {
       const nextCount = offtopicCount + 1;
       const blocked = nextCount >= OFFTOPIC_LIMIT;
-      await supabase.from("user_settings").upsert(
-        {
-          user_id: context.userId,
-          assistant_offtopic_count: blocked ? 0 : nextCount,
-          assistant_blocked_until: blocked
-            ? new Date(Date.now() + COOLDOWN_MINUTES * 60_000).toISOString()
-            : null,
-        },
-        { onConflict: "user_id" },
-      );
+      await writeAssistantCooldown(context.userId, {
+        assistant_offtopic_count: blocked ? 0 : nextCount,
+        assistant_blocked_until: blocked
+          ? new Date(Date.now() + COOLDOWN_MINUTES * 60_000).toISOString()
+          : null,
+      });
       return {
         reply:
           "I only help with your pantry, food and cooking — I can't write that. Want a recipe from what's expiring soon instead?",
@@ -164,10 +174,10 @@ export const askAssistant = createServerFn({ method: "POST" })
           : null,
     };
     if (offTopic || offtopicCount > 0) {
-      const { error: throttleError } = await supabase
-        .from("user_settings")
-        .upsert(patch, { onConflict: "user_id" });
-      if (throttleError) console.error("[assistant] throttle update failed", throttleError);
+      await writeAssistantCooldown(context.userId, {
+        assistant_offtopic_count: patch.assistant_offtopic_count as number,
+        assistant_blocked_until: patch.assistant_blocked_until as string | null,
+      });
     }
 
 
