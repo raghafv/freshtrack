@@ -8,13 +8,13 @@ import { useAuth } from "@/lib/auth";
 
 const DEMO_SOURCE = "demo";
 
-function day(offset: number) {
+export function day(offset: number) {
   const d = new Date();
   d.setDate(d.getDate() + offset);
   return d.toISOString().slice(0, 10);
 }
 
-const DEMO_ITEMS = [
+export const DEMO_ITEMS = [
   { name: "Milk", brand: "Amul Taaza", category: "Dairy", quantity: 500, unit: "mL", storage: "Fridge", p: -4, e: -1, price: 28 },
   { name: "Paneer", brand: "Amul Malai", category: "Dairy", quantity: 200, unit: "g", storage: "Fridge", p: -3, e: 1, price: 90 },
   { name: "Tomato", brand: null, category: "Vegetables", quantity: 500, unit: "g", storage: "Fridge", p: -4, e: 2, price: 20 },
