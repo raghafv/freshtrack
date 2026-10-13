@@ -15,12 +15,12 @@ function day(offset: number) {
 }
 
 const DEMO_ITEMS = [
-  { name: "Milk", brand: "Amul Taaza", category: "Dairy", quantity: 500, unit: "ml", storage: "Fridge", p: -4, e: -1, price: 28 },
+  { name: "Milk", brand: "Amul Taaza", category: "Dairy", quantity: 500, unit: "mL", storage: "Fridge", p: -4, e: -1, price: 28 },
   { name: "Paneer", brand: "Amul Malai", category: "Dairy", quantity: 200, unit: "g", storage: "Fridge", p: -3, e: 1, price: 90 },
   { name: "Tomato", brand: null, category: "Vegetables", quantity: 500, unit: "g", storage: "Fridge", p: -4, e: 2, price: 20 },
-  { name: "Atta", brand: "Aashirvaad", category: "Grains", quantity: 5, unit: "kg", storage: "Pantry", p: -10, e: 120, price: 260 },
-  { name: "Basmati Rice", brand: "India Gate", category: "Grains", quantity: 1, unit: "kg", storage: "Pantry", p: -10, e: 300, price: 150 },
-  { name: "Toor Dal", brand: "Tata Sampann", category: "Pulses", quantity: 1, unit: "kg", storage: "Pantry", p: -10, e: 180, price: 170 },
+  { name: "Atta", brand: "Aashirvaad", category: "Grains & Pasta", quantity: 5, unit: "kg", storage: "Pantry", p: -10, e: 120, price: 260 },
+  { name: "Basmati Rice", brand: "India Gate", category: "Grains & Pasta", quantity: 1, unit: "kg", storage: "Pantry", p: -10, e: 300, price: 150 },
+  { name: "Toor Dal", brand: "Tata Sampann", category: "Grains & Pasta", quantity: 1, unit: "kg", storage: "Pantry", p: -10, e: 180, price: 170 },
   { name: "Onion", brand: null, category: "Vegetables", quantity: 1, unit: "kg", storage: "Pantry", p: -2, e: 20, price: 40 },
 ];
 
