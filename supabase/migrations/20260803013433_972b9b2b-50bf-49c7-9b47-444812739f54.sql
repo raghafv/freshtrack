@@ -1,0 +1,1 @@
+ALTER TABLE public.pending_products ADD COLUMN IF NOT EXISTS shelf_life_days integer;

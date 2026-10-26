@@ -1,0 +1,295 @@
+/**
+ * Centralised AI service.
+ *
+ * Every text AI feature in FreshTrack goes through `generateAIResponse()`.
+ * Text generation uses Groq directly for low-latency assistant and recipe
+ * responses. Image/OCR work uses the separate vision provider chain.
+ *
+ * Adding a provider = push one more entry into PROVIDERS below.
+ */
+import type { AiMessage, AiProviderLog, AiProviderName } from "./ai-types";
+
+const CACHE_TTL_MS = 60_000;
+const MAX_LOGS = 100;
+
+export class AiUnavailableError extends Error {
+  constructor() {
+    super("AI is temporarily unavailable. Please try again in a few minutes.");
+    this.name = "AiUnavailableError";
+  }
+}
+
+interface ProviderDefinition {
+  name: AiProviderName;
+  /** OpenAI-compatible chat completions endpoint. */
+  url: string;
+  model: string;
+  /** Returns null when the provider has no key configured -> skipped. */
+  headers: () => Record<string, string> | null;
+  transport?: "openai" | "gemini";
+}
+
+const PROVIDERS: ProviderDefinition[] = [
+  {
+    name: "groq",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "openai/gpt-oss-20b",
+    headers: () => {
+      const key = process.env.GROQ_API_KEY;
+      return key ? { Authorization: `Bearer ${key}` } : null;
+    },
+  },
+  {
+    name: "groq-fallback",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    model: "openai/gpt-oss-120b",
+    headers: () => {
+      const key = process.env.GROQ_API_KEY;
+      return key ? { Authorization: `Bearer ${key}` } : null;
+    },
+  },
+  {
+    name: "gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
+    model: "gemini-3.1-flash-lite",
+    transport: "gemini",
+    headers: () => {
+      const key = process.env.GEMINI_API_KEY;
+      return key ? { "x-goog-api-key": key } : null;
+    },
+  },
+  {
+    name: "gateway",
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    model: "google/gemini-3.6-flash",
+    headers: () => {
+      const key = process.env.LOVABLE_API_KEY;
+      return key ? { "Lovable-API-Key": key } : null;
+    },
+  },
+];
+
+function featureMaxTokens(feature: string): number {
+  switch (feature) {
+    case "assistant":
+      return 1200;
+    case "recipe-ideas":
+      return 800;
+    case "recipes":
+      return 2500;
+    case "shopping":
+      return 1200;
+    default:
+      return 1500;
+  }
+}
+
+function featureTimeoutMs(feature: string): number {
+  switch (feature) {
+    case "assistant":
+      return 16_000;
+    case "recipe-ideas":
+      return 12_000;
+    case "recipes":
+      return 30_000;
+    case "shopping":
+      return 14_000;
+    default:
+      return 20_000;
+  }
+}
+
+
+/* ------------------------------------------------------------------ logs */
+
+const logs: AiProviderLog[] = [];
+
+function record(entry: AiProviderLog) {
+  logs.push(entry);
+  if (logs.length > MAX_LOGS) logs.shift();
+  const tag = entry.ok ? "ok" : "fail";
+  console.info(
+    `[ai:${entry.feature}] ${entry.provider} attempt=${entry.attempt} ${tag} ${entry.ms}ms` +
+      (entry.fallback ? " (fallback)" : "") +
+      (entry.error ? ` — ${entry.error}` : ""),
+  );
+}
+
+/** Debug-only view of recent provider activity. */
+export function getProviderLogs(): AiProviderLog[] {
+  return [...logs].reverse();
+}
+
+/* --------------------------------------------------------- cache + dedupe */
+
+type CacheEntry = { at: number; value: Record<string, unknown> };
+const cache = new Map<string, CacheEntry>();
+const inFlight = new Map<string, Promise<Record<string, unknown>>>();
+
+function cacheKey(feature: string, messages: AiMessage[]) {
+  return `${feature}::${JSON.stringify(messages)}`;
+}
+
+/* ------------------------------------------------------------- transport */
+
+function isTransient(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+async function callProvider(
+  provider: ProviderDefinition,
+  headers: Record<string, string>,
+  messages: AiMessage[],
+  maxTokens: number,
+  timeoutMs: number,
+): Promise<Record<string, unknown>> {
+  const controller = new AbortController();
+  const timer = provider.name === "gateway" ? null : setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const openAiBody = {
+      model: provider.model,
+      max_completion_tokens: maxTokens,
+      temperature: 0.3,
+      messages,
+    };
+    const geminiBody = {
+      systemInstruction: {
+        parts: messages.filter((message) => message.role === "system").map((message) => ({ text: message.content })),
+      },
+      contents: messages
+        .filter((message) => message.role !== "system")
+        .map((message) => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens, temperature: 0.3 },
+    };
+    const res = await fetch(provider.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(provider.transport === "gemini" ? geminiBody : openAiBody),
+      signal: provider.name === "gateway" ? undefined : controller.signal,
+    });
+
+    if (!res.ok) {
+      const body = (await res.text()).slice(0, 300);
+      const err = new Error(`${res.status} ${body}`);
+      (err as Error & { transient?: boolean }).transient = isTransient(res.status);
+      throw err;
+    }
+
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const raw = provider.transport === "gemini"
+      ? json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "{}"
+      : json.choices?.[0]?.message?.content ?? "{}";
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      const unfenced = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      try {
+        return JSON.parse(unfenced) as Record<string, unknown>;
+      } catch {
+        const match = unfenced.match(/\{[\s\S]*\}/);
+        if (match) return JSON.parse(match[0]) as Record<string, unknown>;
+        const err = new Error("Provider returned an invalid JSON response");
+        (err as Error & { transient?: boolean }).transient = true;
+        throw err;
+      }
+    }
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+
+/* ---------------------------------------------------------------- public */
+
+const JSON_SYSTEM_APPEND = "\nReturn only valid JSON matching the requested schema. No markdown, no explanations, no text outside the JSON.";
+
+function withJsonGuard(messages: AiMessage[]): AiMessage[] {
+  if (messages.length === 0) return [{ role: "system", content: JSON_SYSTEM_APPEND.trim() }];
+  const first = messages[0];
+  if (first.role === "system") {
+    return [{ ...first, content: first.content + JSON_SYSTEM_APPEND }, ...messages.slice(1)];
+  }
+  return [{ role: "system", content: JSON_SYSTEM_APPEND.trim() }, ...messages];
+}
+
+/**
+ * The single entry point for every text AI feature.
+ * Always resolves to a parsed JSON object, or throws `AiUnavailableError`.
+ */
+export async function generateAIResponse(
+  feature: string,
+  messages: AiMessage[],
+  options?: { maxTokens?: number; timeoutMs?: number },
+): Promise<Record<string, unknown>> {
+  const guarded = withJsonGuard(messages);
+  const key = cacheKey(feature, guarded);
+  const maxTokens = Math.min(options?.maxTokens ?? featureMaxTokens(feature), 4000);
+  const timeoutMs = options?.timeoutMs ?? featureTimeoutMs(feature);
+
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
+
+  const running = inFlight.get(key);
+  if (running) return running;
+
+  const task = (async () => {
+    let usedFallback = false;
+
+    for (const provider of PROVIDERS) {
+      const headers = provider.headers();
+      if (!headers) continue; // not configured -> skip silently
+
+      // Fall through quickly rather than stacking retries on an interactive request.
+      const attempts = 1;
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        const started = Date.now();
+        try {
+          const value = await callProvider(provider, headers, guarded, maxTokens, timeoutMs);
+          record({
+            at: new Date().toISOString(),
+            feature,
+            provider: provider.name,
+            attempt,
+            ms: Date.now() - started,
+            ok: true,
+            fallback: usedFallback,
+          });
+          cache.set(key, { at: Date.now(), value });
+          return value;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          const transient =
+            (error as { transient?: boolean }).transient === true ||
+            (error as { name?: string }).name === "AbortError" ||
+            error instanceof TypeError;
+          record({
+            at: new Date().toISOString(),
+            feature,
+            provider: provider.name,
+            attempt,
+            ms: Date.now() - started,
+            ok: false,
+            error: message,
+            fallback: usedFallback,
+          });
+          if (!transient) break;
+          if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+      usedFallback = true;
+    }
+
+    throw new AiUnavailableError();
+  })();
+
+  inFlight.set(key, task);
+  try {
+    return await task;
+  } finally {
+    inFlight.delete(key);
+  }
+}
+
