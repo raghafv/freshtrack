@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Next-Generation Perishable Inventory Intelligence & Zero-Waste Operating System</strong><br>
-  <em>Engineered for Indian Households Today • Scalable for Cloud Kitchens & FSSAI Compliance Tomorrow</em>
+  <em>Built for Indian Households </em>
 </p>
 
 <p align="center">
@@ -26,9 +26,9 @@
 
 ---
 
-## 📌 Executive Summary
+## Project Summary
 
-In India, household food waste exceeds **68 million tonnes every year** (UNEP Food Waste Index). Perishable groceries—vegetables, fruits, dairy, and cooked meals—are routinely forgotten at the bottom of refrigerator drawers and pantry shelves until they spoil. Meanwhile, commercial kitchens struggle with paper-based tracking, causing inventory losses and risking **FSSAI (Food Safety and Standards Authority of India)** violations.
+In India, household food waste exceeds **68 million tonnes ($6.8 \times 10^{10}$ kg) every year** (UNEP Food Waste Index). Perishable groceries—vegetables, fruits, dairy, and cooked meals—are routinely forgotten at the bottom of refrigerator drawers and pantry shelves until they spoil. Meanwhile, commercial kitchens struggle with paper-based tracking, causing inventory losses and risking **FSSAI (Food Safety and Standards Authority of India)** violations.
 
 Standard grocery apps fail because manual data entry is tedious, produce lacks printed barcodes, and static checklists don't help you cook what you already have.
 
@@ -36,7 +36,7 @@ Standard grocery apps fail because manual data entry is tedious, produce lacks p
 
 ---
 
-## 🏗️ System Architecture & Workflow
+##  System Architecture & Workflow
 
 ```text
                              ADD GROCERIES
@@ -68,7 +68,7 @@ AI Recipes (Groq)           Pantry Assistant             Shopping List
 
 ---
 
-## ⚡ Complete Feature Matrix
+##  Complete Feature Matrix
 
 ### 1. Multi-Modal Intake Engine (Add Anything in Seconds)
 * **Custom On-Device Produce Freshness ML**: Point your camera at fresh produce to classify freshness and spoilage locally in real-time. Powered by a custom TensorFlow.js model running client-side with zero cloud latency and complete user privacy.
@@ -81,7 +81,7 @@ AI Recipes (Groq)           Pantry Assistant             Shopping List
 
 ### 2. Smart Expiry & Dynamic Storage Engine
 * **Zone-Aware Shelf Life Recalculation**: Expiry dates adapt dynamically based on where an item is placed:
-  * **Pantry / Ambient (18°C – 32°C)**: Baseline room-temperature storage.
+  * **Pantry (18°C – 32°C)**: Baseline room-temperature storage.
   * **Refrigerator (2°C – 4°C)**: Extends lifespan for dairy, fresh greens, and leftovers.
   * **Deep Freezer (-18°C)**: Long-term preservation with food-specific rules (preserves staples, while preventing unrealistic extensions for delicate salad greens).
 * **Storage Location Shifting**: Move an item from Pantry to Fridge with one tap; the system recalculates remaining days on the fly.
@@ -118,7 +118,7 @@ AI Recipes (Groq)           Pantry Assistant             Shopping List
 ---
 
 ### 6. Enterprise Security & Examiner Sandbox Gate
-* **Evaluator Sandbox Gate**: Built for CBSE examiners and culinary evaluators. Enter passcode `fresh2026` on the login screen to access a fully pre-seeded Indian kitchen demonstration without creating an account.
+* **Evaluator Sandbox Gate**: Built for CBSE examiners. Enter passcode (Ask the team!) on the login screen to access a fully pre-seeded Indian kitchen demonstration without creating an account.
 * **PostgreSQL Row-Level Security (RLS)**: Cryptographic multi-tenant isolation ensures no user can view or alter another user's inventory.
 * **Admin Triage & In-App Support**:
   * Barcode review queue for newly registered FMCG products.
@@ -126,7 +126,7 @@ AI Recipes (Groq)           Pantry Assistant             Shopping List
 
 ---
 
-## 🔬 CBSE Class 12 Capstone ML Model
+## Self-Made ML Model For The Project
 
 FreshTrack features an independently-trained computer vision model built as an academic capstone showcase:
 
@@ -138,17 +138,17 @@ FreshTrack features an independently-trained computer vision model built as an a
 
 ---
 
-## 🔮 What's Next: Physical Device & Commercial FSSAI Platform
+##  What's Next: Physical Device & Commercial FSSAI Platform
 
 ### 1. The FreshTrack Fridge IoT Device
-The long-term hardware vision for FreshTrack extends beyond a smartphone app to a dedicated, low-power camera unit installed inside the refrigerator.
+The long-term hardware vision for FreshTrack extends beyond a smartphone app to a dedicated, low-power camera unit which sticks on the refrigerator door using magnets.
 
 <p align="center">
   <img src="docs/freshtrack-device-concept.jpg" alt="FreshTrack fridge camera device concept" width="800">
 </p>
 
-* **Automated Visual Tracking**: Wide-angle interior cameras capture inventory shifts every time the door opens and closes.
-* **Autonomous Shelf Auditing**: Edge vision models identify new, depleted, or aging items without requiring manual scanning.
+* **Automated Visual Tracking**: Wide-angle interior cameras capture items being put in/taken out of the refrigerator by touching the (+) or (-) buttons
+* **Autonomous Shelf Auditing**: Edge vision models identify new, depleted, or aging items without requiring manual scanning and automatically updates the FreshTrack account inventory.
 
 ---
 
@@ -179,7 +179,7 @@ High-volume cloud kitchens and restaurants handle large quantities of perishable
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 | Layer | Technologies | Description |
 |---|---|---|
@@ -193,13 +193,13 @@ High-volume cloud kitchens and restaurants handle large quantities of perishable
 
 ---
 
-## 🧪 Evaluator & Examiner Quickstart
+##  Evaluator & Examiner Quickstart
 
 To evaluate the live deployment:
 
 1. Open the application: [https://fresh-track.in](https://fresh-track.in)
 2. On the sign-in screen, click **"Evaluator Sandbox / Test Account"**.
-3. Enter access passcode (Ask for it from the team)
+3. Enter access passcode
 4. The system will seed a realistic Indian kitchen inventory (Atta, Paneer, Tomatoes, Coriander, Dal, etc.) allowing you to test:
    * Real-time Pantry Health Score calculations
    * Dynamic storage switching (Pantry ↔ Fridge ↔ Freezer)
@@ -209,7 +209,7 @@ To evaluate the live deployment:
 
 ---
 
-## 👨‍💻 Engineering Team & Attribution
+##  Credits & Attribution
 
-Developed as a **CBSE Class 12 Computer Science Capstone Project (2026–2027)**.  
-Designed and engineered by Raghav Goyal and the FreshTrack Engineering Team.
+Developed as a **CBSE Class 12 AI Capstone Project (2026–2027)**.  
+Designed by Raghav Goyal and Team
