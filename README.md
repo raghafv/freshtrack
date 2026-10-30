@@ -209,6 +209,14 @@ To evaluate the live deployment:
 
 ---
 
+## Originality & Prior Art Notice
+- **Original Domain & Launch:** fresh-track.in (Registered July 31, 2026)
+- **Academic Capstone:** Developed as an original CBSE Class 12 AIcapstone project.
+- **Brand & Identity:** All original graphics, logo, UI architecture, and custom TensorFlow.js MobileNetV2 produce classifiers are proprietary to the FreshTrack team.
+- **Unauthorized Clones:** Third-party websites registered post-launch (such as myfreshtrack.app, registered September 2026) are unauthorized replications and are not affiliated with this project.
+
+---
+
 ##  Credits & Attribution
 
 Developed as a **CBSE Class 12 AI Capstone Project (2026–2027)**.  
