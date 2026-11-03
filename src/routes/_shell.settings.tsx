@@ -1,7 +1,8 @@
 import { friendlyMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isEvaluatorSession, isEvaluatorUser } from "@/lib/evaluator";
 import { ArrowLeft, Loader2, Palette, Ruler, ShieldAlert, Bell } from "lucide-react";
 
 import { toast } from "sonner";
@@ -60,7 +61,11 @@ function SettingsPage() {
   const navigate = useNavigate();
   const { data: settings } = useSettings();
   const update = useUpdateSettings();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const [evaluatorOn, setEvaluatorOn] = useState(false);
+  useEffect(() => {
+    setEvaluatorOn(isEvaluatorUser(user?.email) || isEvaluatorSession());
+  }, [user?.email]);
   const removeAccount = useServerFn(deleteAccount);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
