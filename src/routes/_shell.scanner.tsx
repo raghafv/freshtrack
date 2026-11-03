@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Barcode, Layers, X, Camera, Check, Cpu, Loader2, Receipt, Search, Sparkles } from "lucide-react";
@@ -476,6 +476,7 @@ function ScannerPage() {
   /* ----------------------------------- ui ------------------------------------ */
 
   const activeTab: "camera" | "barcode" | "receipt" | "device" = Route.useSearch().tab ?? "camera";
+  const scanNavigate = useNavigate();
   const TOOL_META = {
     camera: {
       icon: Camera,
@@ -521,6 +522,34 @@ function ScannerPage() {
             {meta.subtitle}
           </p>
         </div>
+      </div>
+
+      <div
+        role="tablist"
+        aria-label="Scan mode"
+        className="mb-2 grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1"
+      >
+        {(
+          [
+            ["camera", "Fruit & veg photo"],
+            ["barcode", "Barcode"],
+            ["receipt", "Receipt"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === key}
+            onClick={() => scanNavigate({ to: "/scanner", search: { tab: key }, replace: true })}
+            className={cn(
+              "press rounded-xl px-2 py-2 text-[12.5px] font-semibold transition-colors",
+              activeTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <Tabs value={activeTab}>

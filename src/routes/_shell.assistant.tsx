@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useAssistantMessages, useClearAssistant, type AssistantMessage } from "@/lib/data";
@@ -50,12 +50,23 @@ function AssistantPage() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const [failed, setFailed] = useState<{ question: string; message: string } | null>(null);
+  // Replies that were answered but not saved to the chat history (for
+  // example the "kitchen topics only" notice). Kept locally so a message is
+  // never silently swallowed.
+  const [localTurns, setLocalTurns] = useState<{ id: string; question: string; reply: string }[]>(
+    [],
+  );
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const ask = useMutation({
     mutationFn: (question: string) => askAssistant({ data: { question } }),
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ["assistant", user?.id] });
+    onSuccess: async (res, question) => {
+      await qc.invalidateQueries({ queryKey: ["assistant", user?.id] });
+      const saved = qc.getQueryData<AssistantMessage[]>(["assistant", user?.id]) ?? [];
+      if (res.reply && !saved.some((m) => m.role === "assistant" && m.content === res.reply)) {
+        setLocalTurns((t) => [...t, { id: crypto.randomUUID(), question, reply: res.reply }]);
+      }
       setFailed(null);
       const removed = res.removed ?? [];
       const checked = res.checked ?? [];
@@ -74,34 +85,20 @@ function AssistantPage() {
       if (checked.length > 0) toast.success(`Marked as bought: ${checked.join(", ")}`);
     },
 
-    onError: (e) => {
-      // The failed question must stay on screen - otherwise it looks like the
-      // message was never sent at all.
+    onError: (e, question) => {
       setFailed({
-        question: String(ask.variables ?? ""),
+        question: String(question ?? ""),
         message: friendlyMessage(e, "Your message didn't send"),
       });
     },
     onSettled: () => setPending(null),
   });
 
-  // Open at the top of the chat and never steal focus - the phone keyboard
-  // should only appear when the user taps the input themselves.
+  // Keep the newest message in view inside the chat area.
   useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, []);
-
-  // Scrolling up dismisses the keyboard.
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < last - 8) inputRef.current?.blur();
-      last = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages.length, pending, failed, localTurns.length, ask.isPending]);
 
   function send(question: string) {
     const q = question.trim();
@@ -113,17 +110,20 @@ function AssistantPage() {
   }
 
   return (
-    <PageContainer>
+    <div className="mx-auto flex h-[calc(100dvh-7.5rem)] w-full max-w-2xl animate-fade-up flex-col overflow-hidden px-6 pb-2 pt-9">
       <PageHeader
         title="Assistant"
         subtitle="This chat clears when you close FreshTrack | shopping list changes are saved, and recipes you save stay on the Recipes page."
         action={
-          messages.length > 0 ? (
+          messages.length > 0 || localTurns.length > 0 ? (
             <Button
               variant="ghost"
               size="sm"
               className="rounded-xl text-muted-foreground"
-              onClick={() => clear.mutate()}
+              onClick={() => {
+                setLocalTurns([]);
+                clear.mutate();
+              }}
               disabled={clear.isPending}
             >
               <Trash2 className="h-4 w-4" /> Clear
@@ -132,7 +132,11 @@ function AssistantPage() {
         }
       />
 
-      <section className="space-y-3">
+      <section
+        ref={scrollRef}
+        onScroll={() => inputRef.current?.blur()}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-2"
+      >
         {isLoading ? (
           <p className="surface-card p-4 text-sm text-muted-foreground">Loading your chat…</p>
         ) : messages.length === 0 && !pending ? (
@@ -149,6 +153,21 @@ function AssistantPage() {
         ) : (
           messages.map((m) => <Bubble key={m.id} message={m} />)
         )}
+
+        {localTurns.map((t) => (
+          <div key={t.id} className="space-y-3">
+            <Bubble
+              message={{ id: `${t.id}-q`, role: "user", content: t.question, created_at: "" }}
+            />
+            <Bubble
+              message={{ id: `${t.id}-a`, role: "assistant", content: t.reply, created_at: "" }}
+            />
+            <p className="pl-2 text-[11.5px] text-muted-foreground">
+              Not saved to your chat. Try asking about your food, recipes or shopping list.
+            </p>
+          </div>
+        ))}
+
 
         {pending && (
           <Bubble
@@ -195,14 +214,14 @@ function AssistantPage() {
         )}
       </section>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-2 flex shrink-0 gap-2 overflow-x-auto pb-1">
         {SUGGESTIONS.map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => send(s)}
             disabled={ask.isPending}
-            className="press rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+            className="press shrink-0 whitespace-nowrap rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
           >
             {s}
           </button>
@@ -210,7 +229,7 @@ function AssistantPage() {
       </div>
 
       <form
-        className="mt-4 flex items-end gap-2"
+        className="mt-2 flex shrink-0 items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
@@ -244,7 +263,7 @@ function AssistantPage() {
           )}
         </Button>
       </form>
-    </PageContainer>
+    </div>
   );
 }
 

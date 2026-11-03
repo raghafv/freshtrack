@@ -102,6 +102,7 @@ export default function ScanWithModel() {
   const [confirming, setConfirming] = useState<ScanCandidate | null>(null);
   const lastBlob = useRef<Blob | null>(null);
   const warmedUp = useRef(false);
+  const [showProduce, setShowProduce] = useState(false);
 
   // Evaluator gate: null while auth is still loading, true when the visitor may
   // see the showcase, false when the passcode screen should show instead.
@@ -249,10 +250,6 @@ export default function ScanWithModel() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
-              <Layers3 className="h-3.5 w-3.5" />
-              FRESHTRACK · CBSE CLASS 12 CAPSTONE
-            </span>
           </div>
           <div className="pl-1">
             <h1 className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
@@ -266,11 +263,27 @@ export default function ScanWithModel() {
             </p>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
-            <ProjectStat icon={ScanLine} value="14" label="produce types" />
+            <button
+              type="button"
+              onClick={() => setShowProduce((v) => !v)}
+              aria-expanded={showProduce}
+              className="press text-left"
+            >
+              <ProjectStat
+                icon={ScanLine}
+                value="14"
+                label={showProduce ? "produce types · tap to hide" : "produce types · tap to see"}
+              />
+            </button>
             <ProjectStat icon={Layers3} value="28" label="item + condition classes" />
             <ProjectStat icon={Cpu} value="160 × 160" label="RGB image input" />
             <ProjectStat icon={ShieldCheck} value="In browser" label="model prediction" />
           </div>
+          {showProduce && (
+            <div className="mt-3">
+              <ProduceExplorer />
+            </div>
+          )}
         </header>
 
         <section aria-labelledby="try-model-heading" className="flex flex-col gap-4">
