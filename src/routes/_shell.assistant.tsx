@@ -154,6 +154,24 @@ function AssistantPage() {
           messages.map((m) => <Bubble key={m.id} message={m} />)
         )}
 
+        {localTurns.map((t) => (
+          <div key={t.id} className="space-y-3">
+            <Bubble
+              message={{ id: `${t.id}-q`, role: "user", content: t.question, created_at: "" }}
+            />
+            <Bubble
+              message={{ id: `${t.id}-a`, role: "assistant", content: t.reply, created_at: "" }}
+            />
+            <p className="pl-2 text-[11.5px] text-muted-foreground">
+              Not saved to your chat. Try asking about your food, recipes or shopping list.
+            </p>
+          </div>
+        ))}
+
+        {false && (
+          <span />
+        )}
+
         {pending && (
           <Bubble
             message={{
@@ -199,7 +217,7 @@ function AssistantPage() {
         )}
       </section>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-2 flex shrink-0 gap-2 overflow-x-auto pb-1">
         {SUGGESTIONS.map((s) => (
           <button
             key={s}
@@ -214,7 +232,7 @@ function AssistantPage() {
       </div>
 
       <form
-        className="mt-4 flex items-end gap-2"
+        className="mt-2 flex shrink-0 items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
