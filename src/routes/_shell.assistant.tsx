@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useAssistantMessages, useClearAssistant, type AssistantMessage } from "@/lib/data";
@@ -110,7 +110,7 @@ function AssistantPage() {
   }
 
   return (
-    <PageContainer className="flex h-[calc(100dvh-7.5rem)] flex-col overflow-hidden pb-2">
+    <div className="mx-auto flex h-[calc(100dvh-7.5rem)] w-full max-w-2xl animate-fade-up flex-col overflow-hidden px-6 pb-2 pt-9">
       <PageHeader
         title="Assistant"
         subtitle="This chat clears when you close FreshTrack | shopping list changes are saved, and recipes you save stay on the Recipes page."
@@ -221,7 +221,7 @@ function AssistantPage() {
             type="button"
             onClick={() => send(s)}
             disabled={ask.isPending}
-            className="press rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+            className="press shrink-0 whitespace-nowrap rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
           >
             {s}
           </button>
@@ -263,7 +263,7 @@ function AssistantPage() {
           )}
         </Button>
       </form>
-    </PageContainer>
+    </div>
   );
 }
 
