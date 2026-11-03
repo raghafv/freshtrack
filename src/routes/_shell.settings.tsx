@@ -200,13 +200,18 @@ function SettingsPage() {
 
 
 
-      <DemoModeCard />
+      {evaluatorOn && <DemoModeCard />}
 
       <Section icon={ShieldAlert} title="Evaluator access">
         <p className="mb-3 text-sm text-muted-foreground">
           Evaluator? Enter your code to unlock the capstone model page.
         </p>
-        <EvaluatorUnlock onUnlocked={() => toast.success("Open Scan My Model from the menu.")} />
+        <EvaluatorUnlock
+          onUnlocked={() => {
+            setEvaluatorOn(true);
+            toast.success("Evaluator tools unlocked.");
+          }}
+        />
       </Section>
 
       <Section icon={ShieldAlert} title="Danger zone">
