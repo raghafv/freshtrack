@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Barcode, Camera, PencilLine, Receipt, Sparkles } from "lucide-react";
+import { Camera, PencilLine, Sparkles } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -11,6 +11,8 @@ import {
 import { QuickAddDialog } from "@/components/quick-add-dialog";
 import { ItemFormDialog, type ItemFormPrefill } from "@/components/item-form-dialog";
 import { useSettings } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
+import { isEvaluatorSession, isEvaluatorUser } from "@/lib/evaluator";
 
 type Option = {
   key: string;
@@ -19,23 +21,27 @@ type Option = {
   hint: string;
 };
 
-const OPTIONS: Option[] = [
-  { key: "camera", icon: Camera, label: "Add using Camera", hint: "Point at your groceries" },
-  { key: "barcode", icon: Barcode, label: "Scan Barcode", hint: "Packaged products" },
-  { key: "receipt", icon: Receipt, label: "Scan Receipt", hint: "Scan your grocery bill" },
-  { key: "manual", icon: PencilLine, label: "Manual Add", hint: "Search the grocery catalog" },
+const BASE_OPTIONS: Option[] = [
   {
-    key: "mymodel",
-    icon: Sparkles,
-    label: "Our Capstone Freshness Model",
-    hint: "Team-trained model · 14 produce types",
+    key: "camera",
+    icon: Camera,
+    label: "Scan items",
+    hint: "Fruit & veg photo, barcode or receipt",
   },
+  { key: "manual", icon: PencilLine, label: "Manual add", hint: "Search the grocery catalog" },
 ];
 
+const MODEL_OPTION: Option = {
+  key: "mymodel",
+  icon: Sparkles,
+  label: "Our Capstone Freshness Model",
+  hint: "Team-trained model · 14 produce types",
+};
+
 /**
- * Apple-Maps style action sheet behind the centre "Add" button.
- * Scanning options deep-link into the scanner tabs; manual add opens the
- * existing quick-add flow so nothing about the underlying logic changes.
+ * Action sheet behind the centre "Add" button. Two choices: one scanner with
+ * mode switching inside it, and manual add. The capstone model only appears
+ * for evaluators.
  */
 export function AddSheet({
   open,
@@ -45,12 +51,20 @@ export function AddSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: settings } = useSettings();
   const [quickOpen, setQuickOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [prefill, setPrefill] = useState<ItemFormPrefill | undefined>();
+  const [evaluator, setEvaluator] = useState(false);
 
- function choose(key: string) {
+  useEffect(() => {
+    if (open) setEvaluator(isEvaluatorUser(user?.email) || isEvaluatorSession());
+  }, [open, user?.email]);
+
+  const options = evaluator ? [...BASE_OPTIONS, MODEL_OPTION] : BASE_OPTIONS;
+
+  function choose(key: string) {
     onOpenChange(false);
     if (key === "manual") {
       setTimeout(() => setQuickOpen(true), 180);
@@ -60,10 +74,7 @@ export function AddSheet({
       setTimeout(() => navigate({ to: "/scan-my-model" }), 140);
       return;
     }
-    setTimeout(
-      () => navigate({ to: "/scanner", search: { tab: key as "camera" | "barcode" | "receipt" } }),
-      140,
-    );
+    setTimeout(() => navigate({ to: "/scanner", search: { tab: "camera" } }), 140);
   }
 
   return (
@@ -78,7 +89,7 @@ export function AddSheet({
           </DrawerHeader>
 
           <div className="grid gap-3 px-4 pt-2">
-            {OPTIONS.map(({ key, icon: Icon, label, hint }, i) => (
+            {options.map(({ key, icon: Icon, label, hint }, i) => (
               <button
                 key={key}
                 type="button"
