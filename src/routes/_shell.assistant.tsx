@@ -168,9 +168,6 @@ function AssistantPage() {
           </div>
         ))}
 
-        {false && (
-          <span />
-        )}
 
         {pending && (
           <Bubble
