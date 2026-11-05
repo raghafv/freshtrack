@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { submitPendingProduct } from "@/lib/pending-products";
-import { uploadCatalogSubmissionImage } from "@/lib/data";
+import { deletePantryImage, uploadCatalogSubmissionImage } from "@/lib/data";
 import { friendlyMessage } from "@/lib/errors";
 
 interface Props {
@@ -139,11 +139,18 @@ export function UnknownBarcodeDialog({
     e.preventDefault();
     if (!barcode || !canSubmit) return;
     setSaving(true);
+    const uploadedPaths: string[] = [];
     try {
       let frontUrl: string | null = imageUrl ?? null;
       let backUrl: string | null = null;
-      if (userId && front) frontUrl = await uploadCatalogSubmissionImage(userId, front.file);
-      if (userId && back) backUrl = await uploadCatalogSubmissionImage(userId, back.file);
+      if (userId && front) {
+        frontUrl = await uploadCatalogSubmissionImage(userId, front.file);
+        uploadedPaths.push(frontUrl);
+      }
+      if (userId && back) {
+        backUrl = await uploadCatalogSubmissionImage(userId, back.file);
+        uploadedPaths.push(backUrl);
+      }
 
       const result = await submitPendingProduct({
         barcode,
@@ -158,8 +165,10 @@ export function UnknownBarcodeDialog({
       if (result.status === "submitted") {
         toast.success("Thanks! Sent for review - it'll help every FreshTrack user.");
       } else if (result.status === "duplicate") {
+        await Promise.all(uploadedPaths.map(deletePantryImage));
         toast.info("This product is already awaiting approval.");
       } else {
+        await Promise.all(uploadedPaths.map(deletePantryImage));
         toast.error(result.message);
         return;
       }
@@ -171,6 +180,7 @@ export function UnknownBarcodeDialog({
         imageUrl: frontUrl,
       });
     } catch (err) {
+      await Promise.all(uploadedPaths.map(deletePantryImage));
       toast.error(friendlyMessage(err, "Could not upload the product photos"));
     } finally {
       setSaving(false);
