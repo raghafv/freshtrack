@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type RecipeTab = "cook" | "saved";
+export type RecipeTab = "cook" | "cookbook" | "saved";
 
 /** Segmented switch between writing a new recipe and the saved recipe book. */
 export function RecipeTabs({
@@ -23,6 +23,16 @@ export function RecipeTabs({
         )}
       >
         Cook
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("cookbook")}
+        className={cn(
+          base,
+          active === "cookbook" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
+        )}
+      >
+        Cookbook
       </button>
       <button
         type="button"
