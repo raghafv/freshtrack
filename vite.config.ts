@@ -16,6 +16,20 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    // Public (publishable) backend values baked into the client so published builds
+    // work even when no .env file exists on the build machine.
+    define: {
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
+        process.env.VITE_SUPABASE_URL || "https://mzdgkqkyifcdvltkbtfi.supabase.co",
+      ),
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
+        process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+          "sb_publishable_NqHQwgvHbMlTr8EMs9WhMQ_pbC2vdQg",
+      ),
+      "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(
+        process.env.VITE_SUPABASE_PROJECT_ID || "mzdgkqkyifcdvltkbtfi",
+      ),
+    },
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(
