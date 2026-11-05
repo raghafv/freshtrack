@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { RecipeTabs, type RecipeTab } from "@/components/recipe-tabs";
+import { Cookbook } from "@/components/cookbook";
 import { FoodThumb } from "@/components/food-thumb";
 import { cn } from "@/lib/utils";
 import { splitIngredients } from "@/lib/food-guard";
@@ -286,11 +287,13 @@ function RecipesPage() {
     <PageContainer>
       <RecipeTabs active={tab} onChange={setTab} />
       <PageHeader
-        title={tab === "cook" ? "Cook" : "Saved recipes"}
+        title={tab === "cook" ? "Cook" : tab === "cookbook" ? "Cookbook" : "Saved recipes"}
         subtitle={
           tab === "cook"
             ? "Pick your ingredients for one deeply detailed recipe, or hit Surprise me for a spread of ideas."
-            : "Everything you saved, kept forever."
+            : tab === "cookbook"
+              ? "Tested home recipes, matched to your pantry."
+              : "Everything you saved, kept forever."
         }
         action={
           tab === "saved" && saved.length > 0 ? (
@@ -555,6 +558,8 @@ function RecipesPage() {
       )}
        </>
       )}
+
+      {tab === "cookbook" && <Cookbook />}
 
       {/* Saved recipe book */}
       {tab === "saved" && (
