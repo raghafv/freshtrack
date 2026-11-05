@@ -535,15 +535,11 @@ export async function uploadPantryImage(userId: string, file: File | Blob, ext =
 }
 
 /**
- * Upload a photo for a barcode submission. Admins review it and approved
- * photos become part of the shared catalog, so this keeps a durable link.
+ * Upload a private photo for a barcode submission. Store only the object path;
+ * admins receive a short-lived signed link while reviewing the submission.
  */
 export async function uploadCatalogSubmissionImage(userId: string, file: File | Blob, ext = "jpg") {
-  const path = await uploadToPantryBucket(userId, file, ext);
-  const { data } = await supabase.storage
-    .from("pantry-images")
-    .createSignedUrl(path, 60 * 60 * 24 * 365);
-  return data?.signedUrl ?? null;
+  return uploadToPantryBucket(userId, file, ext);
 }
 
 /** True when the value refers to a private pantry photo (path or legacy signed link). */
