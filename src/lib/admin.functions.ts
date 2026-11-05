@@ -432,6 +432,34 @@ export interface PendingProductRow {
   created_at: string;
 }
 
+const PENDING_PHOTO_LINK_TTL_SECONDS = 5 * 60;
+const CATALOG_PHOTO_LINK_TTL_SECONDS = 60 * 60 * 24 * 365;
+
+function pendingPhotoPath(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const match = value.match(/pantry-images\/([^?#]+)/);
+  if (match?.[1]) {
+    try {
+      return decodeURIComponent(match[1]);
+    } catch {
+      return null;
+    }
+  }
+  return /^[0-9a-f-]{36}\/[\w-]+\.[a-z0-9]+$/i.test(value) ? value : null;
+}
+
+function ownedPendingPhotoPaths(row: {
+  submitted_by: string | null;
+  image_url: string | null;
+  back_image_url: string | null;
+}): string[] {
+  if (!row.submitted_by) return [];
+  const prefix = `${row.submitted_by}/`;
+  return [...new Set([row.image_url, row.back_image_url]
+    .map(pendingPhotoPath)
+    .filter((path): path is string => !!path && path.startsWith(prefix) && !path.includes("..")))];
+}
+
 /** Owner-only queue of user-submitted barcodes awaiting approval. */
 export const getPendingProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -457,12 +485,26 @@ export const getPendingProducts = createServerFn({ method: "GET" })
       for (const p of profiles ?? []) emails.set(p.id, p.email);
     }
 
-    return {
-      rows: (rows ?? []).map((r) => ({
+    const reviewedRows = await Promise.all((rows ?? []).map(async (r) => {
+      const signPhoto = async (value: string | null) => {
+        if (!value) return null;
+        const path = pendingPhotoPath(value);
+        if (!path) return value;
+        if (!r.submitted_by || !path.startsWith(`${r.submitted_by}/`) || path.includes("..")) return null;
+        const { data: signed, error: signError } = await supabaseAdmin.storage
+          .from("pantry-images")
+          .createSignedUrl(path, PENDING_PHOTO_LINK_TTL_SECONDS);
+        return signError ? null : signed?.signedUrl ?? null;
+      };
+      return {
         ...r,
+        image_url: await signPhoto(r.image_url),
+        back_image_url: await signPhoto(r.back_image_url),
         submitter_email: r.submitted_by ? (emails.get(r.submitted_by) ?? null) : null,
-      })) as PendingProductRow[],
-    };
+      };
+    }));
+
+    return { rows: reviewedRows as PendingProductRow[] };
   });
 
 /** Approve a submission: move it into the global products catalog. */
@@ -506,6 +548,20 @@ export const approvePendingProduct = createServerFn({ method: "POST" })
           ? submittedShelf
           : shelfDaysForCategory(category, name);
 
+    let catalogImageUrl = row.image_url;
+    const submittedPhotoPath = pendingPhotoPath(row.image_url);
+    if (submittedPhotoPath) {
+      if (row.submitted_by && submittedPhotoPath.startsWith(`${row.submitted_by}/`) && !submittedPhotoPath.includes("..")) {
+        const { data: signed, error: signError } = await supabaseAdmin.storage
+          .from("pantry-images")
+          .createSignedUrl(submittedPhotoPath, CATALOG_PHOTO_LINK_TTL_SECONDS);
+        if (signError) throw signError;
+        catalogImageUrl = signed.signedUrl;
+      } else {
+        catalogImageUrl = null;
+      }
+    }
+
 
     const { data: existing } = await supabaseAdmin
       .from("products")
@@ -526,7 +582,7 @@ export const approvePendingProduct = createServerFn({ method: "POST" })
         brand,
         category,
         size,
-        image_url: row.image_url,
+        image_url: catalogImageUrl,
         storage,
         shelf_life_days: shelf,
         source: "Community",
@@ -551,11 +607,27 @@ export const rejectPendingProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error: readError } = await supabaseAdmin
+      .from("pending_products")
+      .select("id, submitted_by, image_url, back_image_url")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!row) throw new Error("Submission not found");
+
+    const paths = ownedPendingPhotoPaths(row);
+    if (paths.length) {
+      const { error: removeError } = await supabaseAdmin.storage.from("pantry-images").remove(paths);
+      if (removeError) throw removeError;
+    }
+
     const { error } = await supabaseAdmin
       .from("pending_products")
       .update({
         status: "rejected",
         note: data.note ?? null,
+        image_url: null,
+        back_image_url: null,
         reviewed_by: context.userId,
         reviewed_at: new Date().toISOString(),
       })
