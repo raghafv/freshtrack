@@ -472,8 +472,14 @@ function RecipesPage() {
                 busy={gen.isPending && gen.variables?.dish === idea.title}
                 disabled={gen.isPending}
                 onCook={() => {
-                  setIdeas([]);
-                  gen.mutate({ mode: "surprise", ingredients: [], dish: idea.title });
+                  gen.mutate(
+                    { mode: "surprise", ingredients: [], dish: idea.title },
+                    {
+                      onSuccess: (res) => {
+                        if ((res.recipes ?? []).length > 0) setIdeas([]);
+                      },
+                    },
+                  );
                 }}
               />
             ))}
