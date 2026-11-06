@@ -100,6 +100,14 @@ export function LandingHero() {
             >
               See how it works
             </a>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-[12px] text-white/80">
+              <span aria-hidden className="flex h-3 w-4 flex-col overflow-hidden rounded-[2px]">
+                <span className="flex-1 bg-[#FF9933]" />
+                <span className="flex-1 bg-white" />
+                <span className="flex-1 bg-[#138808]" />
+              </span>
+              Made in India for kitchens worldwide
+            </span>
           </div>
         </div>
       </div>

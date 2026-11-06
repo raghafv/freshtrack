@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Barcode, Bell, CalendarClock, ChefHat, LineChart, ScanLine } from "lucide-react";
-import { ImageSlot } from "@/components/landing/image-slot";
 
 const FEATURES = [
   {
@@ -15,7 +14,7 @@ const FEATURES = [
     icon: Barcode,
     title: "Barcode scanner",
     description:
-      "Scan packaged goods against a self-learning global product database built around Indian brands.",
+      "Scan packaged goods against a barcode catalog that grows with every scan. When a product is missing, your photo helps add it for everyone.",
     image: { name: "feature-barcode.jpg", label: "Barcode scan on a packet" },
   },
   {
@@ -84,7 +83,6 @@ export function LandingFeatures() {
                 whileHover={{ y: -6 }}
                 className="group overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-xl"
               >
-                <ImageSlot name={f.image.name} label={f.image.label} className="h-44 w-full" />
                 <div className="p-6">
                   <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" strokeWidth={1.9} />

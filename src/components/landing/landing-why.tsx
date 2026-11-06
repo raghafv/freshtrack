@@ -5,8 +5,8 @@ import { ArrowRight, IndianRupee, Sparkles, Smartphone } from "lucide-react";
 const POINTS = [
   {
     icon: IndianRupee,
-    title: "Built for Indian kitchens",
-    body: "Prices in rupees, Indian brands in the barcode database, and shelf-life estimates tuned to local staples.",
+    title: "Made in India, for kitchens everywhere",
+    body: "Built in India around local staples and brands, with shelf-life rules that work in any home kitchen.",
   },
   {
     icon: Sparkles,
@@ -15,8 +15,8 @@ const POINTS = [
   },
   {
     icon: Smartphone,
-    title: "Installs like an app",
-    body: "Add FreshTrack to your home screen and get push reminders before anything turns. No store download needed.",
+    title: "Installs like an app, opens offline",
+    body: "Add FreshTrack to your home screen. Your pantry, catalog and cookbook open fast even with weak signal. No store download needed.",
   },
 ];
 
