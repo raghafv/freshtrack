@@ -8,6 +8,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Share2,
   Square,
   Trash2,
   X,
@@ -43,6 +44,7 @@ import { FoodThumb } from "@/components/food-thumb";
 import { friendlyMessage } from "@/lib/errors";
 import { smartFilter } from "@/lib/pantry-search";
 import { stepForUnit } from "@/lib/grocery-catalog";
+import { daysUntil } from "@/lib/freshtrack";
 import {
   CATEGORIES,
   STORAGE_TYPES,
@@ -71,6 +73,40 @@ export const Route = createFileRoute("/_shell/pantry")({
   }),
   component: PantryPage,
 });
+
+/** Shares items expiring within a week as a WhatsApp-friendly message. */
+async function shareExpiring(items: PantryItem[]) {
+  const soon = items
+    .map((i) => ({ name: i.name, d: daysUntil(i.expiry_date) }))
+    .filter((x) => x.d >= 0 && x.d <= 7)
+    .sort((a, b) => a.d - b.d);
+  if (soon.length === 0) {
+    toast("Nothing expiring this week");
+    return;
+  }
+  const when = (d: number) => (d === 0 ? "today" : d === 1 ? "tomorrow" : `${d} days`);
+  const text = [
+    `FreshTrack: ${soon.length} item${soon.length > 1 ? "s" : ""} to use this week`,
+    "",
+    ...soon.map((x) => `• ${x.name} (${when(x.d)})`),
+    "",
+    "https://fresh-track.in",
+  ].join("\n");
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+      return;
+    }
+  } catch (e) {
+    if ((e as Error).name === "AbortError") return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Copied. Paste it into WhatsApp");
+  } catch {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+  }
+}
 
 type SortKey = "expiry" | "name" | "added" | "category";
 
@@ -141,6 +177,16 @@ function PantryPage() {
         subtitle={`${items.length} item${items.length === 1 ? "" : "s"} tracked`}
         action={
           <div className="flex gap-2">
+          {items.some((i) => daysUntil(i.expiry_date) <= 7) ? (
+            <Button
+              variant="secondary"
+              className="press rounded-2xl"
+              aria-label="Share expiring items with family"
+              onClick={() => shareExpiring(items)}
+            >
+              <Share2 className="h-4 w-4" /> Share
+            </Button>
+          ) : null}
           {items.length > 0 ? (
             <Button
               variant="secondary"
