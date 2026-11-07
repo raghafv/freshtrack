@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, ChefHat, Clock, Flame, ShoppingCart, Sparkles, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,9 @@ export function Cookbook() {
       </ul>
       {(() => {
         const sel = list.find((x) => x.r.title === open);
-        return sel ? <RecipeDetail r={sel.r} m={sel.m} onClose={() => setOpen(null)} /> : null;
+        return sel && typeof document !== "undefined"
+          ? createPortal(<RecipeDetail r={sel.r} m={sel.m} onClose={() => setOpen(null)} />, document.body)
+          : null;
       })()}
     </section>
   );
@@ -161,8 +164,8 @@ function RecipeDetail({ r, m, onClose }: {
 
   return (
     <div role="dialog" aria-modal="true" aria-label={r.title}
-      className="fixed inset-0 z-50 overflow-y-auto bg-background animate-in slide-in-from-right-8 fade-in duration-200">
-      <div className="mx-auto max-w-2xl pb-16">
+      className="fixed inset-0 z-[60] h-[100dvh] overflow-y-auto overscroll-contain bg-background [-webkit-overflow-scrolling:touch]">
+      <div className="mx-auto max-w-2xl pb-28">
         <div className="sticky top-0 z-10 flex items-center bg-background/90 px-4 py-3 backdrop-blur">
           <button type="button" onClick={onClose} aria-label="Back to cookbook"
             className="press inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-2 text-[13px] font-medium">
