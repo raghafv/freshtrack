@@ -8,6 +8,13 @@
       "when": 1791907930734,
       "tag": "0000_protect_assistant_cooldown_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794038594736,
+      "tag": "0001_add_currency_to_settings",
+      "breakpoints": true
     }
   ]
 }
