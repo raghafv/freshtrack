@@ -1,3 +1,4 @@
+import { getBarcodeDetector } from "@/lib/barcode-detector";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Switch } from "@/components/ui/switch";
@@ -322,9 +323,7 @@ function ScannerPage() {
 
   /** Fallback when the live reader isn't available: decode a captured photo. */
   async function decodeBarcodeImage(blob: Blob) {
-    const Ctor = (
-      window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike }
-    ).BarcodeDetector;
+    const Ctor = await getBarcodeDetector();
     if (!Ctor) {
       openManual("This browser can't read barcodes - search manually.");
       return;
