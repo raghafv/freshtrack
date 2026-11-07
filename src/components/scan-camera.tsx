@@ -71,20 +71,21 @@ export function ScanCamera({
   // Barcode reading loop.
   useEffect(() => {
     if (mode !== "barcode" || !on) return;
-    const Ctor = (
-      window as unknown as { BarcodeDetector?: new (o?: unknown) => BarcodeDetectorLike }
-    ).BarcodeDetector;
-    if (!Ctor) {
-      setSupportsBarcode(false);
-      return;
-    }
-    const detector = new Ctor({
-      formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"],
-    });
     let cancelled = false;
+    let detector: { detect: (s: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>> } | null = null;
+    void getBarcodeDetector().then((Ctor) => {
+      if (cancelled) return;
+      if (!Ctor) {
+        setSupportsBarcode(false);
+        return;
+      }
+      detector = new Ctor({
+        formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"],
+      });
+    });
     const timer = window.setInterval(async () => {
       const video = videoRef.current;
-      if (cancelled || !video || video.readyState < 2 || firedRef.current) return;
+      if (cancelled || !detector || !video || video.readyState < 2 || firedRef.current) return;
       try {
         const codes = await detector.detect(video);
         const value = codes[0]?.rawValue?.replace(/\D/g, "");
