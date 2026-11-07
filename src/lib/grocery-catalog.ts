@@ -11,21 +11,21 @@ export interface ShelfLife {
 export type ProductForm = "solid" | "liquid" | "count";
 
 export function formForUnit(unit: string): ProductForm {
-  if (unit === "mL" || unit === "L") return "liquid";
-  if (unit === "g" || unit === "kg") return "solid";
+  if (unit === "mL" || unit === "L" || unit === "cup") return "liquid";
+  if (unit === "g" || unit === "kg" || unit === "lb" || unit === "oz") return "solid";
   return "count";
 }
 
 /** Measure units offered for a product form - weight/volume plus piece count. */
 export function unitOptionsFor(form: ProductForm): string[] {
-  if (form === "liquid") return ["mL", "L", "pcs"];
-  if (form === "solid") return ["g", "kg", "pcs"];
-  return ["pcs", "g", "kg"];
+  if (form === "liquid") return ["mL", "L", "cup", "pcs"];
+  if (form === "solid") return ["g", "kg", "lb", "oz", "pcs"];
+  return ["pcs", "g", "kg", "lb", "oz"];
 }
 
 export function stepForUnit(unit: string): number {
   if (unit === "g" || unit === "mL") return 50;
-  if (unit === "kg" || unit === "L") return 0.5;
+  if (unit === "kg" || unit === "L" || unit === "lb" || unit === "cup") return 0.5;
   return 1;
 }
 

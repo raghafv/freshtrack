@@ -35,7 +35,14 @@ import { PushSettingsRow } from "@/components/push-prompt";
 import { useSettings, useUpdateSettings } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 import { deleteAccount } from "@/lib/account.functions";
-import { STORAGE_TYPES, UNITS } from "@/lib/freshtrack";
+import {
+  CURRENCIES,
+  STORAGE_TYPES,
+  UNITS,
+  getCurrency,
+  setCurrency,
+  type CurrencyCode,
+} from "@/lib/freshtrack";
 
 
 export const Route = createFileRoute("/_shell/settings")({
@@ -63,6 +70,8 @@ function SettingsPage() {
   const update = useUpdateSettings();
   const { signOut, user } = useAuth();
   const [evaluatorOn, setEvaluatorOn] = useState(false);
+  const [currency, setCurrencyState] = useState<CurrencyCode>("INR");
+  useEffect(() => setCurrencyState(getCurrency()), []);
   useEffect(() => {
     setEvaluatorOn(isEvaluatorUser(user?.email) || isEvaluatorSession());
   }, [user?.email]);
@@ -174,6 +183,28 @@ function SettingsPage() {
                 {STORAGE_TYPES.map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-sm">Currency</Label>
+            <Select
+              value={currency}
+              onValueChange={(v) => {
+                setCurrency(v as CurrencyCode);
+                setCurrencyState(v as CurrencyCode);
+                toast.success("Currency updated");
+              }}
+            >
+              <SelectTrigger className="rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.label}
                   </SelectItem>
                 ))}
               </SelectContent>

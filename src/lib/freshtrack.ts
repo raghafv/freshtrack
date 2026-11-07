@@ -15,7 +15,29 @@ export const CATEGORIES = [
 ] as const;
 
 export const STORAGE_TYPES = ["Fridge", "Freezer", "Pantry"] as const;
-export const UNITS = ["kg", "g", "L", "mL", "pcs"] as const;
+export const UNITS = ["kg", "g", "L", "mL", "pcs", "lb", "oz", "cup"] as const;
+
+export const CURRENCIES = [
+  { code: "INR", label: "₹ Indian Rupee", locale: "en-IN" },
+  { code: "USD", label: "$ US Dollar", locale: "en-US" },
+  { code: "GBP", label: "£ British Pound", locale: "en-GB" },
+  { code: "EUR", label: "€ Euro", locale: "de-DE" },
+  { code: "CAD", label: "C$ Canadian Dollar", locale: "en-CA" },
+  { code: "AUD", label: "A$ Australian Dollar", locale: "en-AU" },
+] as const;
+export type CurrencyCode = (typeof CURRENCIES)[number]["code"];
+const CURRENCY_KEY = "ft-currency";
+
+/** Saved display currency for this device (INR by default). */
+export function getCurrency(): CurrencyCode {
+  if (typeof window === "undefined") return "INR";
+  const v = window.localStorage.getItem(CURRENCY_KEY);
+  return (CURRENCIES.find((c) => c.code === v)?.code ?? "INR") as CurrencyCode;
+}
+
+export function setCurrency(code: CurrencyCode) {
+  window.localStorage.setItem(CURRENCY_KEY, code);
+}
 
 export type Category = (typeof CATEGORIES)[number];
 export type StorageType = (typeof STORAGE_TYPES)[number];
@@ -112,9 +134,11 @@ const AVG_ITEM_VALUE = 120;
 
 /** Formats a number as Indian Rupees. */
 export function formatCurrency(value: number, maximumFractionDigits = 0): string {
-  return new Intl.NumberFormat("en-IN", {
+  const code = getCurrency();
+  const locale = CURRENCIES.find((c) => c.code === code)?.locale ?? "en-IN";
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "INR",
+    currency: code,
     maximumFractionDigits,
   }).format(value);
 }

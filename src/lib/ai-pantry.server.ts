@@ -255,7 +255,7 @@ export const shoppingRequest = [
   'Reply with JSON only: {"suggestions":[{"name":"","quantity":1,"unit":"pcs","category":"","reason":"short reason"}]}, at most 12 items.',
 ].join("\n");
 
-const UNITS = ["g", "kg", "mL", "L", "pcs"];
+const UNITS = ["g", "kg", "mL", "L", "pcs", "lb", "oz", "cup"];
 
 export function normalizeShoppingAdds(parsed: Record<string, unknown>, existing: Set<string>) {
   const raw = Array.isArray(parsed.shoppingAdds) ? parsed.shoppingAdds : [];
