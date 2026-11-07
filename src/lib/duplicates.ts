@@ -19,6 +19,9 @@ const UNIT_BASE: Record<string, { base: string; factor: number }> = {
   mL: { base: "mL", factor: 1 },
   L: { base: "mL", factor: 1000 },
   pcs: { base: "pcs", factor: 1 },
+  lb: { base: "g", factor: 453.592 },
+  oz: { base: "g", factor: 28.3495 },
+  cup: { base: "mL", factor: 240 },
 };
 
 export function unitsCompatible(a: string, b: string): boolean {
