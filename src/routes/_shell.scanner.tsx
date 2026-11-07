@@ -1,3 +1,4 @@
+import { getBarcodeDetector } from "@/lib/barcode-detector";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Switch } from "@/components/ui/switch";

@@ -1,3 +1,4 @@
+import { getBarcodeDetector } from "@/lib/barcode-detector";
 import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Loader2, ScanLine, X } from "lucide-react";
 import { toast } from "sonner";
