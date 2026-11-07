@@ -445,7 +445,11 @@ export function useSettings() {
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      if (data) return data as UserSettings;
+      if (data) {
+        const cur = (data as { currency?: string }).currency;
+        if (cur && typeof window !== "undefined") window.localStorage.setItem("ft-currency", cur);
+        return data as UserSettings;
+      }
       const { data: created, error: insertError } = await supabase
         .from("user_settings")
         .insert({ user_id: user!.id })
