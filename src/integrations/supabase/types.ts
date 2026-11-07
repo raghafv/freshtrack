@@ -562,6 +562,7 @@ export type Database = {
           assistant_blocked_until: string | null
           assistant_offtopic_count: number
           created_at: string
+          currency: string
           default_storage: string
           default_unit: string
           expiry_reminder_days: number
@@ -582,6 +583,7 @@ export type Database = {
           assistant_blocked_until?: string | null
           assistant_offtopic_count?: number
           created_at?: string
+          currency?: string
           default_storage?: string
           default_unit?: string
           expiry_reminder_days?: number
@@ -602,6 +604,7 @@ export type Database = {
           assistant_blocked_until?: string | null
           assistant_offtopic_count?: number
           created_at?: string
+          currency?: string
           default_storage?: string
           default_unit?: string
           expiry_reminder_days?: number
