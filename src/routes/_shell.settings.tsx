@@ -71,7 +71,15 @@ function SettingsPage() {
   const { signOut, user } = useAuth();
   const [evaluatorOn, setEvaluatorOn] = useState(false);
   const [currency, setCurrencyState] = useState<CurrencyCode>("INR");
-  useEffect(() => setCurrencyState(getCurrency()), []);
+  useEffect(() => {
+    const saved = (settings as { currency?: string } | undefined)?.currency;
+    if (saved && CURRENCIES.some((c) => c.code === saved)) {
+      setCurrency(saved as CurrencyCode);
+      setCurrencyState(saved as CurrencyCode);
+    } else {
+      setCurrencyState(getCurrency());
+    }
+  }, [settings]);
   useEffect(() => {
     setEvaluatorOn(isEvaluatorUser(user?.email) || isEvaluatorSession());
   }, [user?.email]);
@@ -195,6 +203,7 @@ function SettingsPage() {
               onValueChange={(v) => {
                 setCurrency(v as CurrencyCode);
                 setCurrencyState(v as CurrencyCode);
+                update.mutate({ currency: v } as never);
                 toast.success("Currency updated");
               }}
             >
